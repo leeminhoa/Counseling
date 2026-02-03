@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "사용자 요청에 따라 데이터 아키텍처를 Hybrid (Local Storage + Supabase Read-Only)로 변경",
+  "updatedAt": "2026-02-03T03:57:41.800625Z",
+  "version": "3"
+}

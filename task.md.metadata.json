@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "하이브리드(Local + Supabase Read) 개발 방향성을 반영하여 태스크 리스트를 업데이트했습니다.",
+  "updatedAt": "2026-02-03T03:57:44.619356Z",
+  "version": "16"
+}

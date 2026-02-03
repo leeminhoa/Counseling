@@ -1,0 +1,23 @@
+# 프로젝트 완료 보고서: 기획 및 와이어프레임 (수정본)
+
+사용자 피드백에 따라 원본 문서(Google Docs)를 정밀 재분석하여, 누락된 기능과 잘못된 로직을 전면 수정한 최종 결과물입니다.
+
+## 수정/보완된 핵심 기능
+
+### 1. [기획서 (implementation_plan.md)](file:///Users/mildang/.gemini/antigravity/brain/e21f51b4-7b3c-4855-9957-9249d1a056a5/implementation_plan.md)
+| 항목 | 변경 전 | 변경 후 (수정본) |
+| :--- | :--- | :--- |
+| **Input** | 학년, 관심분야(단순) | **학생ID**, **학교명(DB연동)**, 계열(대분류)->학과(소분류) |
+| **Logic** | 단순 과목 추천 | **학교별 개설 과목 데이터 매칭 (Available Check)** |
+| **Process** | 입력 -> 조회 | 입력 -> **AI Agent 분석/싱크** -> 리포트 |
+| **Design** | Academic (Classical) | **Intelligent Analytical (Tech/Trust)** |
+
+### 2. [와이어프레임 (wireframe.md)](file:///Users/mildang/.gemini/antigravity/brain/e21f51b4-7b3c-4855-9957-9249d1a056a5/wireframe.md)
+- **과목 데이터 시각화 강화**: 내 학교에 해당 과목이 개설되었는지 여부(**[Available]** vs **[Not Opened]**)를 명확히 표시.
+- **가이드 문서 접근성**: '세특/창체 가이드'를 대시보드 내에서 바로 미리보기 가능하도록 배치.
+
+## 결과물 요약
+원본 문서의 "I/O 설계", "원천데이터 수집" 탭 내용을 반영하여, 단순 정보 제공이 아닌 **데이터 기반의 실질적인 진학 컨설팅 도구**로서의 면모를 갖추었습니다.
+
+---
+![Dashboard Preview](file:///Users/mildang/.gemini/antigravity/brain/e21f51b4-7b3c-4855-9957-9249d1a056a5/wireframe_dashboard_v2_1769736694051.png)

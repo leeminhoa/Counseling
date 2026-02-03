@@ -1,0 +1,63 @@
+# 생기부 프로젝트 기획서 (Career & Admission Consulting Service)
+
+본 프로젝트는 고등학생들의 생활기록부 데이터를 기반으로 인기 학과 리스트, 최저 학력 기준, 고교학점제 선택 과목 등을 분석하여 개인 맞춤형 진학 가이드를 제공하는 웹 서비스를 목표로 합니다.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **디자인 컨셉: Academic Excellence**
+> 전통적인 대학의 신뢰감과 현대적인 데이터 분석의 명확함을 결합한 'Academic Excellence' 테마를 제안합니다. 전통 세리프 서체(EB Garamond)와 신뢰를 상징하는 네이비/골드 컬러를 사용하여 전문성을 강조하겠습니다.
+
+> [!NOTE]
+> **핵심 기능 범위**
+> 1. 학생 맞춤형 입력 폼 (학년, 학교, 관심 분야)
+> 2. AI 기반 상위 3개 대학 및 학과별 최저 등급 안내
+> 3. 고교학점제 연계 필수 및 권장 선택 과목 리스트 제공
+
+## Proposed Changes
+
+### 1. 서비스 설계 (UX Strategy)
+
+#### [Architecture] Information Hierarchy
+- **Intro**: 서비스 가치 제안 및 간단한 사용 통계.
+- **Input Journey**: 단계별 학생 정보 수집 (학년 -> 관심 대분류 -> 세부 분류).
+- **Result Dashboard (Bento Grid)**: 
+  - 학과별 상위 대학 카드
+  - 최저학력등급 요약
+  - 고교학점제 이수 권장 과목 리스트
+  - 우수 세특/창체 자료 (PDF 링크/미리보기)
+
+### 2. 디자인 시스템 (UI Design)
+
+#### [Aesthetic Direction]
+- **Style Name**: Academic Professionalism
+- **DFII Score**: 16 (Impact 4, Fit 5, Feasibility 5, Performance 4 - Risk 2)
+- **Key Anchor**: 'University Crest' 스타일의 심볼과 세련된 Bento Grid 레이아웃.
+
+#### [Design Tokens]
+| Category | Selection | Rationale |
+| :--- | :--- | :--- |
+| **Typography (Heading)** | `EB Garamond` | 정통 학문적 권위와 신뢰감 전달 |
+| **Typography (Body)** | `Crimson Text` | 가독성이 높으며 전문적인 인상을 유지 |
+| **Primary Color** | `#0F172A` (Navy) | 신뢰, 지성, 깊이감 |
+| **Secondary Color** | `#D4AF37` (Gold/Muted) | 우수성, 가치, 보상 |
+| **Accent Color** | `#0369A1` (Bright Blue) | 디지털 인터랙션 강조 (CTA) |
+
+### 3. 와이어프레임 설계 방향
+
+#### [Screen 1] Discovery & Input
+- **Top Navigation**: 로고, 메뉴, 로그인 버튼.
+- **Hero Section**: "당신의 생기부가 대학을 결정합니다" - 강렬한 메시지.
+- **Interactive Form**: 카드 슬라이드 방식의 입력 UI (Cognitive Load 감소).
+
+#### [Screen 2] Insight Dashboard
+- **Bento Layout**: 정보를 한눈에 파악할 수 있는 격자 구조.
+- **Comparison Table**: 학교별 최저 등급을 직관적으로 비교.
+- **Course Timeline**: 1~3학년별 필수 수강 과목 로드맵 시각화.
+
+## Verification Plan
+
+### Manual Verification
+- [ ] 입력 시나리오에 따른 데이터 출력의 정합성 확인.
+- [ ] 모바일 및 데스크탑 반응형 레이아웃 검토.
+- [ ] `EB Garamond` 서체의 로딩 성능 및 가독성 테스트.

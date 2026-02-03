@@ -1,0 +1,34 @@
+# 프로젝트 실행 태스크 (Project Execution Tasks)
+
+> **Team Composition (Based on CATALOG.md)**
+> - **PM**: `product-manager-toolkit` (일정 및 스펙 관리)
+> - **Planning**: `senior-architect` (아키텍처 및 데이터 설계)
+> - **Design**: `ui-ux-pro-max` (Clean White 테마 및 UX 고도화)
+> - **Dev**: `senior-fullstack` (Supabase + Vanilla JS 구현) & `ai-engineer` (Gemini 3.0 연동)
+
+---
+
+## 📅 1. Project Management (PM: `product-manager-toolkit`)
+- [ ] **Kick-off**: 기획서(v2.3) 및 디자인 가이드 확정
+- [ ] **Sprint Planning**: 개발 우선순위(Core Feature) 선정
+    - *Priority*: DB Schema → API → UI Components → AI Integration
+
+## 🏗️ 2. Architecture & Planning (Plan: `senior-architect`)
+- [ ] **DB Modeling**: Supabase 테이블(`Students`, `Universities`, `Prompts`) 생성 및 RLS 설정
+- [ ] **API Spec**: Edge Functions (Gemini 3.0 Proxy) 인터페이스 정의
+- [ ] **Data Flow**: Master-Detail 상태 관리 로직 설계
+
+## 🎨 3. Design & UX (Design: `ui-ux-pro-max`)
+- [ ] **Design System**: Global CSS Variables (`--primary`, `--bg-color`) 선언 (Clean White Tone)
+- [ ] **Component**: `RoadmapPanel`, `UnivCard`, `Badge` 마크업 및 스타일링
+- [ ] **Responsive**: 1920x1080 Full-Height 레이아웃 구현 (No Global Scroll)
+
+## 💻 4. Development (Dev: `senior-fullstack` & `ai-engineer`)
+- [ ] **Project Setup**: Github Repo 및 Vercel/Netlify 배포 환경 구성
+- [ ] **Backend Dev**: Supabase Client 연동 및 Data Fetching 로직 구현
+- [ ] **Frontend Dev**: Stage 1 (대학 분석) & Admin 대시보드 UI 연동
+- [ ] **AI Dev**: Gemini 3.0 Flash API 연동 및 Prompt Chaining(`Chain-of-Thought`) 구현
+
+## ✅ 5. Final Review (QA)
+- [ ] **Walkthrough**: 전체 시나리오(입력 → 분석 → AI생성) 테스트
+- [ ] **Optimization**: Gemini 응답 속도 및 UI 렌더링 최적화

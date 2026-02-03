@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "대학 상세 페이지의 입시 결과 통계 섹션에 소제목을 추가하여 정보의 가독성을 개선했습니다. 또한 DB 연결 및 프로필 UI 고도화 등 이전 작업 내용이 포함되어 있습니다.",
+  "updatedAt": "2026-02-03T09:01:33.109783Z",
+  "version": "11"
+}

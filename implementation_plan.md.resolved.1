@@ -1,0 +1,67 @@
+# 생기부 프로젝트 기획서 (Revised)
+
+Google Docs 문서("생기부 프로젝트") 및 킥오프 미팅 내용을 기반으로 재작성된 상세 기획서입니다.
+이전 버전의 오류(입력 필드 누락, 매칭 로직 부재 등)를 수정하고, **'학교별 고교학점제 개설 과목 매칭'**이라는 핵심 기능을 구체화했습니다.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **핵심 변경 사항 (User Feedback 반영)**
+> 1. **Input 필드 보완**: `학생ID` 필드 추가, `관심 대분류/세부 분류` 체계 명확화.
+> 2. **매칭 로직 구체화**: 단순 과목 추천이 아닌, **"우리 학교 개설 과목"** 데이터와 비교하여 수강 가능한 과목을 우선 추천하는 로직 반영.
+> 3. **AI Agent 시나리오**: 단발성 결과가 아니라, Input -> Data Processing -> Result로 이어지는 순차적 분석 경험 제공.
+
+## Proposed Changes
+
+### 1. Functional Specification (기능 명세)
+
+#### [Input] Discovery Phase
+- **기본 정보**: `학생ID` (필수), `학년`, `학교명`.
+- **진로 정보**:
+  - `계열 선택` (문과 / 이과 / 예체능 등 대분류)
+  - `관심 학과` (상경계열, 어문계열, 의학계열 등 세부 분류)
+
+#### [Process] AI Agent Logic
+1. **School Data Matching**: 입력된 `학교명`을 기반으로 해당 학교의 '고교학점제 개설 과목 리스트' 로드 (스크래핑 DB 연동).
+2. **Subject Mapping**: 희망 학과(세부 분류)에 필요한 '핵심 권장 과목' 리스트 추출.
+3. **Availability Check**: 권장 과목이 해당 학교에 개설되었는지 교차 검증 (Available / Not Available).
+
+#### [Output] Consultation Report
+- **University Targets**: 희망 학과 기준 상위 3개 대학 및 내신 최저 등급(Cutline) 표시.
+- **Subject Roadmap (핵심 기능)**:
+  - 학년별(1/2/3학년) 이수해야 할 과목 리스트.
+  - **[개설]** / **[미개설]** 태그로 학교 상황 반영.
+  - 미개설 시 대체 과목 혹은 외부 공동 교육 과정 등 가이드 제안.
+- **Activity Guide**: '세특/창체 가이드 초안' 문서를 기반으로 한 학과별 우수 활동 예시(PDF/Viewer).
+
+### 2. Design Strategy & System
+
+#### [Aesthetic Theme] "Intelligent Analytical"
+- **Keywords**: Data-driven, Trustworthy, Precision.
+- **Color Palette**:
+  - Primary: `#0F172A` (Slate 900 - 신뢰/무게감)
+  - Secondary: `#2563EB` (Royal Blue - 지성/AI)
+  - Alert: `#F59E0B` (Amber - 중요 정보/Cutline)
+- **Typography**: `Inter` (숫자와 가독성에 최적화된 산세리프) + `Garamond` (제목 포인트).
+- **Layout**: Bento Grid 스타일의 대시보드 (정보 밀집도 최적화).
+
+### 3. Wireframe Structure
+
+#### Screen 1: Agent Input & Analysis
+- **Step 1**: 로그인/학생식별 (Student ID).
+- **Step 2**: 학교 및 학년 설정 (School Search API).
+- **Step 3**: 관심 분야 설정 (Depth 1: 계열 -> Depth 2: 학과).
+- **Loading State**: "OO고등학교 교육과정 데이터를 분석 중입니다..." 애니메이션.
+
+#### Screen 2: Personalized Report
+- **Section A (Target)**: 목표 대학(Top 3) 카드 & 합격 컷라인 그래프.
+- **Section B (Subject Match)**: 고교학점제 과목 매칭 테이블.
+  - *Column*: 학년 / 구분(필수,선택) / 과목명 / **개설여부(학교 DB 매칭)**.
+- **Section C (Activity Insight)**: 세특/창체 가이드 미리보기 및 다운로드.
+
+## Verification Plan
+
+### Test Scenarios
+- [ ] **Data Validity**: 실제 특정 고등학교(예: 경기고)를 선택했을 때, 해당 학교의 미개설 과목이 정확히 "미개설"로 뜨는지 검증.
+- [ ] **Input Flow**: 학생 ID 입력 후 다음 단계로 매끄럽게 넘어가는지 확인.
+- [ ] **Responsive**: 모바일 환경에서 데이터 테이블(과목 리스트)이 깨지지 않는지 확인.
