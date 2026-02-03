@@ -1,6 +1,0 @@
-{
-  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
-  "summary": "학생 프로필 입력 및 과목 매칭 기능 복구 계획. 초기 설정 모달, 과목 편집기, Stage 1 매칭 UI 업데이트 포함.",
-  "updatedAt": "2026-02-03T08:09:25.168337Z",
-  "version": "10"
-}
