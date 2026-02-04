@@ -76,7 +76,7 @@ function renderAdmin(container) {
 
                                 <div class="form-group">
                                     <label>Gemini API Key</label>
-                                    <input type="password" id="apiKeyInput" value="${settings.apiKey || ''}" placeholder="sk-...">
+                                    <input type="password" id="apiKeyInput" value="${settings.geminiKey || settings.apiKey || ''}" placeholder="AIzaSy...">
                                     <p class="param-desc">입력하신 키는 브라우저 로컬 스토리지에만 보관됩니다.</p>
                                 </div>
                             </div>
@@ -112,7 +112,7 @@ function saveAdminSettings() {
         ...data.appSettings,
         supabaseUrl: sbUrl,
         supabaseKey: sbKey,
-        apiKey: apiKey,
+        geminiKey: apiKey,  // Changed from apiKey to geminiKey for consistency
         temperature: temp
     };
     dataManager.saveData(data);
