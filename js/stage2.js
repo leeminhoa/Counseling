@@ -25,8 +25,19 @@ async function renderStage2(container, autoStart = false) {
     container.innerHTML = `
         <div class="stage2-wrapper">
             <div id="aiLoading" class="ai-loading-box" style="display: none;">
-                <div class="spinner"></div>
-                <p>Gemini 3.0 Flash가 학생의 데이터를 분석하여<br>최적의 탐구 주제를 생성하고 있습니다...</p>
+                <div class="spinner-premium"></div>
+                <div class="loading-steps" id="loadingSteps">
+                    <p class="loading-step-text">학생 데이터를 분석하고 있습니다...</p>
+                </div>
+                
+                <div class="skeleton-wrapper" style="margin-top: 3rem; opacity: 0.6;">
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-title"></div>
+                        <div class="skeleton skeleton-line"></div>
+                        <div class="skeleton skeleton-line"></div>
+                        <div class="skeleton skeleton-line short"></div>
+                    </div>
+                </div>
             </div>
 
             <div id="aiResult" class="ai-result-grid" style="${existingResult ? 'display: grid;' : 'display: none;'}">
@@ -61,17 +72,36 @@ async function startAIGeneration(container) {
     const initialView = document.getElementById('aiInitial');
     const loadingView = document.getElementById('aiLoading');
     const resultView = document.getElementById('aiResult');
+    const stepsContainer = document.getElementById('loadingSteps');
 
     initialView.style.display = 'none';
     loadingView.style.display = 'flex';
 
-    try {
-        // 2. Prepare Data for AI
-        const profile = dataManager.getProfile();
-        const univData = stage1State.searchResults.find(u => u.id === stage1State.selectedUnivId);
+    // Loading steps animation
+    const steps = [
+        "학생 데이터를 분석하고 있습니다...",
+        "목표 대학 및 학과 연계성을 검토 중입니다...",
+        "최적의 심화 탐구 주제를 도출하고 있습니다...",
+        "관련 교과 개념을 매칭하는 중입니다...",
+        "전문가 추천 도서를 선정하고 있습니다...",
+        "최종 리포트를 구성하고 있습니다..."
+    ];
+    let stepIdx = 0;
+    const stepInterval = setInterval(() => {
+        stepIdx = (stepIdx + 1) % steps.length;
+        if (stepsContainer) {
+            stepsContainer.innerHTML = `<p class="loading-step-text" style="animation: slide-up 0.5s ease-out forwards;">${steps[stepIdx]}</p>`;
+        }
+    }, 2800);
 
-        // Fetch subjects again or use from state if available
-        const univSubjects = await dbService.getMajorSubjects(stage1State.selectedUnivId);
+    try {
+        const profile = dataManager.getProfile();
+        // Use lastSelectedUniv for consistency if searchResults is empty on refresh
+        const univData = profile.lastSelectedUniv;
+
+        if (!univData) throw new Error('대학을 먼저 선택해주세요.');
+
+        const univSubjects = await dbService.getMajorSubjects(univData.id);
 
         const context = {
             student: {
@@ -87,6 +117,7 @@ async function startAIGeneration(container) {
 
         const result = await aiService.generateExplorationGuide(context);
 
+        clearInterval(stepInterval);
         displayAIResult(result, resultView);
         loadingView.style.display = 'none';
         resultView.style.display = 'grid';
@@ -98,8 +129,9 @@ async function startAIGeneration(container) {
         });
 
     } catch (error) {
+        clearInterval(stepInterval);
         console.error('AI Generation Failed:', error);
-        alert('AI 생성 도중 오류가 발생했습니다.');
+        alert('AI 생성 실패: ' + (error.message || '알 수 없는 오류'));
         loadingView.style.display = 'none';
         initialView.style.display = 'block';
     }
