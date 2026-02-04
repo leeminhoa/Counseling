@@ -598,28 +598,54 @@ input[type="password"] {
 }
 
 .subject-group {
-    background: #FFF;
+    background: #FFFFFF;
     border: 1px solid var(--border-color);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 .group-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.6rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #F1F5F9;
 }
 
+/* 핵심 과목 타이틀 강조 */
 .core-group .group-title {
+    color: #0369A1;
+    border-bottom-color: #BAE6FD;
+}
+
+.core-group .group-title::before {
+    content: '\f058';
+    /* fa-circle-check */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
     color: #0EA5E9;
 }
 
+/* 권장 과목 타이틀 강조 */
 .rec-group .group-title {
     color: #15803D;
+    border-bottom-color: #BBF7D0;
 }
+
+.rec-group .group-title::before {
+    content: '\f05a';
+    /* fa-circle-info */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #22C55E;
+}
+
 
 .subject-chips {
     display: flex;
