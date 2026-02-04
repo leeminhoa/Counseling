@@ -5,7 +5,7 @@
 class AIService {
     constructor() {
         this.MODEL = 'gemini-3-flash-preview';
-        this.API_KEY = 'AIzaSyC72AlExrv9dA7Om0iGXlU_dUuJ3rs2zjg'; // Hardcoded for immediate use
+        this.API_KEY = ''; // Removed hardcoded key for security
     }
 
     /**
@@ -14,10 +14,10 @@ class AIService {
      */
     async generateExplorationGuide(context) {
         const settings = dataManager.getData().appSettings || {};
-        const apiKey = this.API_KEY || settings.apiKey;
+        const apiKey = settings.geminiKey || this.API_KEY;
 
         if (!apiKey) {
-            throw new Error('API Key가 설정되지 않았습니다.');
+            throw new Error('Google Gemini API Key가 설정되지 않았습니다. 설정에서 키를 입력해주세요.');
         }
 
         const { student, target } = context;
