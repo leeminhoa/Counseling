@@ -18,6 +18,10 @@ async function renderStage2(container, autoStart = false) {
         return;
     }
 
+    // Check for existing result for this university from dataManager
+    const savedResults = dataManager.getData().consultingResults || [];
+    const existingResult = savedResults.reverse().find(r => r.univ && r.univ.id === selectedUnivId);
+
     container.innerHTML = `
         <div class="stage2-wrapper">
             <div id="aiLoading" class="ai-loading-box" style="display: none;">
@@ -25,11 +29,11 @@ async function renderStage2(container, autoStart = false) {
                 <p>Gemini 3.0 Flash가 학생의 데이터를 분석하여<br>최적의 탐구 주제를 생성하고 있습니다...</p>
             </div>
 
-            <div id="aiResult" class="ai-result-grid" style="display: none;">
+            <div id="aiResult" class="ai-result-grid" style="${existingResult ? 'display: grid;' : 'display: none;'}">
                 <!-- Result cards will be injected here -->
             </div>
 
-            <div id="aiInitial" class="ai-initial-view">
+            <div id="aiInitial" class="ai-initial-view" style="${existingResult ? 'display: none;' : 'display: block;'}">
                  <div class="card" style="max-width: 600px; margin: auto; text-align: center;">
                     <h2 style="margin-bottom: 1rem;">AI 탐구 가이드 생성</h2>
                     <p style="color: var(--text-sub); margin-bottom: 2rem;">선택하신 대학과 학과의 정보를 바탕으로, 학생부 세특에 활용 가능한 심화 탐구 가이드를 생성합니다.</p>
@@ -41,9 +45,14 @@ async function renderStage2(container, autoStart = false) {
         </div>
     `;
 
+    const resultView = document.getElementById('aiResult');
+    if (existingResult) {
+        displayAIResult(existingResult.aiResult, resultView);
+    }
+
     document.getElementById('generateBtn').addEventListener('click', () => startAIGeneration(container));
 
-    if (autoStart) {
+    if (autoStart && !existingResult) {
         startAIGeneration(container);
     }
 }
@@ -98,33 +107,85 @@ async function startAIGeneration(container) {
 
 function displayAIResult(data, container) {
     container.innerHTML = `
-        <div class="card result-card topic-card">
-            <span class="label">최종 선정 탐구 주제</span>
-            <h2 class="res-topic">${data.topic}</h2>
-            <div class="res-keywords">
-                ${data.keywords.map(k => `<span class="k-badge">#${k}</span>`).join('')}
-            </div>
-        </div>
-
-        <div class="card result-card detail-card">
-            <h3 class="res-title">1. 탐구 배경 및 필요성</h3>
-            <p class="res-content">${data.background}</p>
-        </div>
-
-        <div class="card result-card detail-card">
-            <h3 class="res-title">2. 구체적 탐구 방향</h3>
-            <div class="res-content res-list">${data.direction.split('\n').map(l => `<p>${l}</p>`).join('')}</div>
-        </div>
-
-        <div class="card result-card book-card">
-            <h3 class="res-title"><i class="fa-solid fa-book"></i> 추천 도서</h3>
-            <div class="book-info">
-                <div class="book-cover"></div>
+        <div class="card result-card topic-card" id="pdf-area" style="grid-column: 1 / -1;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
                 <div>
-                    <p class="book-name">${data.book}</p>
-                    <p class="book-desc">학과 관련 소양을 쌓기에 적합한 필독서입니다.</p>
+                     <span class="label" style="display: block; margin-bottom: 0.5rem;">최종 선정 탐구 주제</span>
+                     <h2 class="res-topic" style="font-size: 1.8rem; margin: 0;">${data.topic}</h2>
+                </div>
+                <div class="result-actions no-pdf" style="display: flex; gap: 0.5rem;">
+                    <button class="btn-secondary btn-sm" onclick="downloadPDF()" style="padding: 0.5rem 0.8rem;">
+                        <i class="fa-solid fa-file-pdf"></i> PDF 다운로드
+                    </button>
+                    <button class="btn-secondary btn-sm" onclick="resetAIResult()" style="padding: 0.5rem 0.8rem; color: #EF4444; border-color: #FEE2E2;">
+                        <i class="fa-solid fa-rotate-right"></i> 초기화
+                    </button>
+                </div>
+            </div>
+            
+            <div class="res-keywords" style="margin-bottom: 2rem;">
+                ${data.keywords.map(k => `<span class="k-badge" style="background: rgba(235, 244, 255, 1); color: #1E40AF; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.85rem; margin-right: 0.5rem;">#${k}</span>`).join('')}
+            </div>
+            
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid #E2E8F0;">
+
+            <div class="detail-section" style="margin-bottom: 2.5rem;">
+                <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;">1. 탐구 배경 및 필요성</h3>
+                <p class="res-content" style="line-height: 1.7; color: #475569;">${data.background}</p>
+            </div>
+
+            <div class="detail-section" style="margin-bottom: 2.5rem;">
+                <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;">2. 구체적 탐구 방향</h3>
+                <div class="res-content res-list" style="line-height: 1.7; color: #475569;">
+                    ${data.direction.split('\n').map(l => `<p style="margin-bottom: 0.5rem;">${l}</p>`).join('')}
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;"><i class="fa-solid fa-book"></i> 추천 도서</h3>
+                <div class="book-info" style="background: #F8FAFC; padding: 1.2rem; border-radius: 12px; border: 1px solid #E2E8F0;">
+                    <p class="book-name" style="font-weight: 700; color: #0F172A; margin-bottom: 0.3rem;">${data.book}</p>
+                    <p class="book-desc" style="font-size: 0.9rem; color: #64748B;">목표 학과 관련 심화 지식을 확장하기 위한 전문가 추천 도서입니다.</p>
                 </div>
             </div>
         </div>
     `;
+}
+
+async function resetAIResult() {
+    if (!confirm('현재 생성된 가이드 데이터를 초기화하고 다시 생성하시겠습니까?')) return;
+
+    const selectedUnivId = stage1State.selectedUnivId;
+    const data = dataManager.getData();
+
+    // Filter out results for the current university
+    data.consultingResults = data.consultingResults.filter(r => r.univ && r.univ.id !== selectedUnivId);
+    dataManager.saveData(data);
+
+    // Refresh view
+    const content = document.getElementById('contentContainer');
+    renderStage2(content);
+}
+
+function downloadPDF() {
+    const element = document.getElementById('pdf-area');
+    const profile = dataManager.getProfile();
+    const fileName = `${profile.name || '학생'}_AI_탐구가이드.pdf`;
+
+    // Temporarily hide buttons for PDF
+    const actions = element.querySelector('.no-pdf');
+    if (actions) actions.style.display = 'none';
+
+    const opt = {
+        margin: [15, 15, 15, 15],
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Restore buttons
+        if (actions) actions.style.display = 'flex';
+    });
 }

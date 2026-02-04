@@ -47,7 +47,11 @@ class AIService {
   "keywords": ["키워드1", "키워드2", "키워드3"]
 }`;
 
-        console.log('🚀 Gemini API call initiated...');
+        console.group('🤖 Gemini AI Request');
+        console.log('Model:', this.MODEL);
+        console.log('System Prompt:', systemPrompt);
+        console.log('User Prompt:', userPrompt);
+        console.groupEnd();
 
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`, {
@@ -64,12 +68,18 @@ class AIService {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('API Response Error:', errorData);
+                console.group('❌ Gemini API Error');
+                console.error('Status:', response.status);
+                console.error('Error Data:', errorData);
+                console.groupEnd();
                 throw new Error(errorData.error?.message || 'Gemini API 호출에 실패했습니다.');
             }
 
             const data = await response.json();
             let text = data.candidates[0].content.parts[0].text;
+
+            console.group('✅ Gemini AI Response');
+            console.log('Raw Text:', text);
 
             // Extract JSON from potential code blocks
             const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -77,7 +87,11 @@ class AIService {
                 text = jsonMatch[0];
             }
 
-            return JSON.parse(text);
+            const parsedData = JSON.parse(text);
+            console.log('Parsed Data:', parsedData);
+            console.groupEnd();
+
+            return parsedData;
 
         } catch (error) {
             console.error('AI Service Error:', error);
