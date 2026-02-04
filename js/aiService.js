@@ -4,7 +4,7 @@
  */
 class AIService {
     constructor() {
-        this.MODEL = 'gemini-3-flash';
+        this.MODEL = 'gemini-3-flash-preview';
         this.API_KEY = 'AIzaSyC72AlExrv9dA7Om0iGXlU_dUuJ3rs2zjg'; // Hardcoded for immediate use
     }
 
@@ -50,7 +50,7 @@ class AIService {
         console.log('🚀 Gemini API call initiated...');
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${this.MODEL}:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
