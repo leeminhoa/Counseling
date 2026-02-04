@@ -103,10 +103,7 @@ function saveAdminSettings() {
     const apiKey = document.getElementById('apiKeyInput').value;
     const temp = document.getElementById('tempSlider').value;
 
-    // Update Services
-    aiService.setApiKey(apiKey);
-
-    // Update LocalStorage
+    // Update LocalStorage (aiService will read from appSettings.geminiKey)
     const data = dataManager.getData();
     data.appSettings = {
         ...data.appSettings,
