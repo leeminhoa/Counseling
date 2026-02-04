@@ -5,6 +5,7 @@
 class AIService {
     constructor() {
         this.MODEL = 'gemini-1.5-flash';
+        this.API_KEY = 'AIzaSyC72AlExrv9dA7Om0iGXlU_dUuJ3rs2zjg'; // Hardcoded for immediate use
     }
 
     /**
@@ -13,7 +14,7 @@ class AIService {
      */
     async generateExplorationGuide(context) {
         const settings = dataManager.getData().appSettings || {};
-        const apiKey = settings.apiKey;
+        const apiKey = this.API_KEY || settings.apiKey;
 
         if (!apiKey) {
             throw new Error('API Key가 설정되지 않았습니다.');
