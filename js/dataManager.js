@@ -24,7 +24,7 @@ class DataManager {
                 appSettings: {
                     supabaseUrl: 'https://ytpycfenjtmvzjsvjwds.supabase.co',
                     supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cHljZmVuanRtdnpqc3Zqd2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NzAxMTgsImV4cCI6MjA4NTI0NjExOH0.-k0r-Ct3mof9I0iQHOiCptgCkiiVXksgH2q3Be79620',
-                    apiKey: '',
+                    apiKey: 'AIzaSyC72AlExrv9dA7Om0iGXlU_dUuJ3rs2zjg',
                     temperature: 0.7,
                     theme: 'light',
                     lastActiveTab: 'stage1'
