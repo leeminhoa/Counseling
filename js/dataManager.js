@@ -18,7 +18,8 @@ class DataManager {
                     gpa: 0.0,
                     targetMajor: '',
                     selectedUniversities: [], // { id, name, major }
-                    subjects: [] // Array of strings for matching
+                    subjects: [], // Array of strings for matching
+                    lastSelectedUniv: null // { id, univ_name, raw_major_name, ... }
                 },
                 consultingResults: [], // History of AI generated reports
                 appSettings: {

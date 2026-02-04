@@ -38,7 +38,17 @@ async function renderStage1(container) {
     const searchInput = document.getElementById('univSearchInput');
     searchInput.addEventListener('input', debounce(handleSearch, 300));
 
-    // Load initial empty or recent search if needed
+    // Load initial empty or recent selection
+    const profile = dataManager.getProfile();
+    if (profile && profile.lastSelectedUniv) {
+        // Restore state
+        stage1State.selectedUnivId = profile.lastSelectedUniv.id;
+        // Search results need to contain the selected univ for renderUnivDetail to work
+        stage1State.searchResults = [profile.lastSelectedUniv];
+
+        // Render Detail View
+        renderUnivDetail(profile.lastSelectedUniv.id);
+    }
 }
 
 // --- Event Handlers ---
@@ -60,7 +70,13 @@ async function handleSearch(e) {
 }
 
 function handleUnivSelect(univId) {
+    const univData = stage1State.searchResults.find(u => u.id === univId);
+    if (!univData) return;
+
     stage1State.selectedUnivId = univId;
+
+    // Save selection to DataManager for persistence
+    dataManager.updateProfile({ lastSelectedUniv: univData });
 
     // Update List UI (Active State)
     document.querySelectorAll('.univ-item').forEach(item => {
