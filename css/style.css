@@ -629,12 +629,52 @@ input[type="password"] {
 
 .subject-chip {
     background: #F1F5F9;
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem 0.9rem;
     border-radius: 99px;
-    font-size: 0.9rem;
-    color: var(--text-main);
-    border: 1px solid transparent;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748B;
+    border: 1px solid #E2E8F0;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
+
+.subject-chip:hover {
+    border-color: #CBD5E1;
+    background-color: #E2E8F0;
+    transform: translateY(-1px);
+}
+
+/* 핵심 과목 이수 완료 강조 (Sky Blue Theme) */
+.core-group .subject-chip.matched {
+    background-color: #E0F2FE;
+    color: #0369A1;
+    border-color: #7DD3FC;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(12, 165, 233, 0.1);
+}
+
+/* 권장 과목 이수 완료 강조 (Emerald Green Theme) */
+.rec-group .subject-chip.matched {
+    background-color: #DCFCE7;
+    color: #15803D;
+    border-color: #86EFAC;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+}
+
+.subject-chip.matched i {
+    font-size: 0.8rem;
+}
+
+.subject-chip.not-matched {
+    border-style: dashed;
+    opacity: 0.8;
+}
+
 
 /* --- AI Loading & Skeleton Styles --- */
 .ai-loading-box {
