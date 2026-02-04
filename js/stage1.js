@@ -142,39 +142,84 @@ async function renderUnivDetail(univId) {
             </div>
         </div>
 
-        <div class="stats-row" style="margin-top: 1.5rem;">
-            <h3 style="font-size: 1rem; font-weight: 700; color: #1E293B; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-chart-simple" style="color: var(--primary); font-size: 0.9rem;"></i> 
-                전년도 입시 결과 통계
-            </h3>
-            ${stats ? `
-            <div class="stats-box" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.25rem;">
-                ${stats.admission_type ? `
-                <div class="stat-item">
-                    <span class="stat-label" style="color: #64748B; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">전형</span>
-                    <span class="stat-value" style="font-size: 1rem; font-weight: 700; color: #0F172A;">${stats.admission_type}</span>
-                </div>
-                ` : ''}
-                ${stats.competition_rate ? `
-                <div class="stat-item">
-                    <span class="stat-label" style="color: #64748B; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">경쟁률</span>
-                    <span class="stat-value" style="font-size: 1rem; font-weight: 700; color: #0F172A;">${stats.competition_rate}:1</span>
-                </div>
-                ` : ''}
-                ${stats.kor_math_sci_pct ? `
-                <div class="stat-item">
-                    <span class="stat-label" style="color: #64748B; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">백분위 합</span>
-                    <span class="stat-value" style="font-size: 1rem; font-weight: 700; color: #0F172A;">${stats.kor_math_sci_pct}</span>
-                </div>
-                ` : ''}
-                ${stats.eng_grade ? `
-                <div class="stat-item">
-                    <span class="stat-label" style="color: #64748B; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">영어</span>
-                    <span class="stat-value" style="font-size: 1rem; font-weight: 700; color: #0F172A;">${stats.eng_grade}등급</span>
-                </div>
-                ` : ''}
+        <div class="stats-row" style="margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #1E293B; margin: 0; display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-chart-line" style="color: var(--primary-color);"></i> 
+                    입시 결과 상세 분석
+                </h3>
+                <span style="font-size: 0.8rem; color: #94A3B8;">*최근 1개년 입결 기준</span>
             </div>
-            ` : '<div class="stats-placeholder" style="color: #94A3B8; font-size: 0.9rem; padding: 2rem; text-align: center; background: #F8FAFC; border-radius: 12px; border: 1px dashed #E2E8F0;">입시 결과 데이터(전형, 경쟁률 등) 정보가 아직 등록되지 않았습니다.</div>'}
+
+            ${stats ? `
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="stat-card" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #64748B; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">전형 유형</span>
+                    <span style="font-size: 1rem; font-weight: 800; color: #0F172A;">${stats.admission_type || '-'}</span>
+                </div>
+                <div class="stat-card" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #64748B; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">경쟁률</span>
+                    <span style="font-size: 1.1rem; font-weight: 800; color: #E11D48;">${stats.competition_rate ? stats.competition_rate + ':1' : '-'}</span>
+                </div>
+                <div class="stat-card" style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369A1; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">백분위 합(컷)</span>
+                    <span style="font-size: 1.1rem; font-weight: 800; color: #0284C7;">${stats.kor_math_sci_pct || '-'}</span>
+                </div>
+                <div class="stat-card" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.25rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.7rem; font-weight: 700; color: #64748B; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">영어 등급</span>
+                    <span style="font-size: 1.1rem; font-weight: 800; color: #0F172A;">${stats.eng_grade ? stats.eng_grade + '등급' : '-'}</span>
+                </div>
+            </div>
+
+            <!-- Stability Analysis Widget -->
+            ${(profile.totalPercentile && stats.kor_math_sci_pct) ? `
+                <div class="stability-widget" style="background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border: 1px solid #E2E8F0; border-radius: 16px; padding: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 1.2rem;">
+                         <div class="analysis-indicator" style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: ${(() => {
+                    const diff = profile.totalPercentile - stats.kor_math_sci_pct;
+                    if (diff >= 5) return '#DCFCE7';
+                    if (diff >= -2) return '#FEF9C3';
+                    return '#FEE2E2';
+                })()};">
+                            <i class="fa-solid ${(() => {
+                    const diff = profile.totalPercentile - stats.kor_math_sci_pct;
+                    if (diff >= 5) return 'fa-shield-check';
+                    if (diff >= -2) return 'fa-person-running';
+                    return 'fa-triangle-exclamation';
+                })()}" style="color: ${(() => {
+                    const diff = profile.totalPercentile - stats.kor_math_sci_pct;
+                    if (diff >= 5) return '#166534';
+                    if (diff >= -2) return '#854d0e';
+                    return '#991b1b';
+                })()};"></i>
+                         </div>
+                         <div>
+                            <span style="display: block; font-size: 0.8rem; font-weight: 600; color: #64748B; margin-bottom: 0.2rem;">합격 안정성 분석 결과</span>
+                            <h4 style="font-size: 1.15rem; font-weight: 800; color: #0F172A; margin: 0;">
+                                ${(() => {
+                    const diff = profile.totalPercentile - stats.kor_math_sci_pct;
+                    const diffText = (diff > 0 ? '+' : '') + diff.toFixed(1);
+                    if (diff >= 5) return `<span style="color: #15803D;">안성 맞춤 (안정)</span> <span style="font-size: 0.9rem; font-weight: 600; color: #64748B; margin-left: 0.5rem;">[${diffText}점]</span>`;
+                    if (diff >= -2) return `<span style="color: #A16207;">소신 지원 (적정)</span> <span style="font-size: 0.9rem; font-weight: 600; color: #64748B; margin-left: 0.5rem;">[${diffText}점]</span>`;
+                    return `<span style="color: #B91C1C;">도전 지원 (상향)</span> <span style="font-size: 0.9rem; font-weight: 600; color: #64748B; margin-left: 0.5rem;">[${diffText}점]</span>`;
+                })()}
+                            </h4>
+                         </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: block; font-size: 0.75rem; color: #94A3B8; margin-bottom: 0.3rem;">나의 점수 : ${profile.totalPercentile}점</span>
+                        <div style="width: 120px; height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${Math.min(100, (profile.totalPercentile / 300) * 100)}%; height: 100%; background: var(--primary-color);"></div>
+                        </div>
+                    </div>
+                </div>
+            ` : `
+                <div class="analysis-placeholder" style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; padding: 1.5rem; text-align: center; color: #64748B; font-size: 0.9rem;">
+                    <i class="fa-solid fa-circle-info" style="margin-right:0.4rem;"></i> 프로필에서 나의 **백분위 합**을 입력하면 합격 안정성을 분석해 드립니다.
+                </div>
+            `}
+
+            ` : '<div class="stats-placeholder" style="color: #94A3B8; font-size: 0.9rem; padding: 2rem; text-align: center; background: #F8FAFC; border-radius: 12px; border: 1px dashed #E2E8F0;">입시 결과 데이터 정보가 등록되지 않았습니다.</div>'}
         </div>
 
         <div class="roadmap-section">

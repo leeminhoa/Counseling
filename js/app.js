@@ -87,6 +87,7 @@ function loadUserStatus() {
             <span class="status-name" onclick="openProfileModal()" style="cursor:pointer; font-weight:700;">${profile.name} 학생님</span>
             <span class="status-school badge" style="background-color: #F1F5F9; color: #475569;">${profile.schoolName || '학교 미설정'}</span>
             <span class="status-gpa badge">내신 ${profile.gpa || '-.-'}등급</span>
+            <span class="status-tp badge" style="background-color: #FFF1F2; color: #E11D48;">백분위 ${profile.totalPercentile || '0.0'}점</span>
         `;
     } else {
         statusEl.innerHTML = `

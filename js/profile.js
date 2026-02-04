@@ -49,6 +49,15 @@ function openProfileModal() {
                         <span style="position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94A3B8;">등급</span>
                     </div>
                 </div>
+
+                <div class="form-section">
+                    <label for="profileTp" style="font-size: 0.85rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.6rem;">수능 백분위 합 (국수탐)</label>
+                    <div class="tp-input-group" style="position: relative;">
+                        <input type="number" id="profileTp" value="${profile.totalPercentile || ''}" step="0.1" min="0" max="300" placeholder="0.0"
+                            style="width: 100%; border: 1px solid #E2E8F0; background: #F8FAFC; padding: 1rem 3.5rem 1rem 1.25rem; border-radius: 12px; font-size: 1.1rem; font-weight: 700; color: #E11D48; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+                        <span style="position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94A3B8;">점</span>
+                    </div>
+                </div>
             </div>
             
             <div class="modal-footer" style="margin-top: 2.5rem; display: flex; gap: 1rem;">
@@ -70,9 +79,10 @@ function saveProfileData() {
     const name = document.getElementById('profileName').value.trim();
     const schoolName = document.getElementById('profileSchool').value.trim();
     const gpa = document.getElementById('profileGpa').value;
+    const tp = document.getElementById('profileTp').value;
 
     if (!name || !schoolName || !gpa) {
-        alert('모든 정보를 입력해주세요.');
+        alert('이름, 학교, 내신 성적은 필수 입력 항목입니다.');
         return;
     }
 
@@ -82,6 +92,7 @@ function saveProfileData() {
         name: name,
         schoolName: schoolName,
         gpa: parseFloat(gpa),
+        totalPercentile: tp ? parseFloat(tp) : 0,
         subjects: currentProfile.subjects || []
     });
 

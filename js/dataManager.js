@@ -16,6 +16,7 @@ class DataManager {
                     name: '',
                     schoolName: '',
                     gpa: 0.0,
+                    totalPercentile: 0.0, // 국수탐 백분위 합
                     targetMajor: '',
                     selectedUniversities: [], // { id, name, major }
                     subjects: [], // Array of strings for matching
