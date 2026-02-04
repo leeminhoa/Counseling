@@ -16,38 +16,46 @@ function openProfileModal() {
     const profile = dataManager.getProfile() || { name: '', schoolName: '', gpa: 0, subjects: [] };
 
     modal.innerHTML = `
-        <div class="modal-content profile-editor" style="max-width: 600px; padding: 1rem;">
-            <div class="modal-header" style="border-bottom: none; padding-bottom: 0.5rem;">
-                <h2 style="font-size: 1.5rem; letter-spacing: -0.5px;"><i class="fa-solid fa-user-graduate" style="color: var(--primary);"></i> 학생 정보 입력</h2>
-                <button class="close-btn" onclick="closeProfileModal()" aria-label="닫기">&times;</button>
+        <div class="modal-content profile-editor" style="max-width: 600px; padding: 1.5rem; position: relative; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+            <button class="close-btn" onclick="closeProfileModal()" aria-label="닫기" 
+                style="position: absolute; top: 1.25rem; right: 1.25rem; border: none; background: none; font-size: 1.75rem; cursor: pointer; color: #94A3B8; line-height: 1; padding: 0.5rem; transition: color 0.2s;">&times;</button>
+            
+            <div class="modal-header" style="border-bottom: none; padding: 0.5rem 0 1rem 0;">
+                <h2 style="font-size: 1.5rem; letter-spacing: -0.5px; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-user-graduate" style="color: var(--primary);"></i> 
+                    학생 정보 입력
+                </h2>
             </div>
-            <p style="padding: 0 1.5rem; color: #64748B; font-size: 0.95rem; margin-bottom: 1rem;">정확한 입시 분석을 위해 학생의 기본 정보를 입력해주세요.</p>
+            <p style="color: #64748B; font-size: 0.95rem; margin-bottom: 2rem; margin-top: 0;">정확한 입시 분석을 위해 학생의 기본 정보를 입력해주세요.</p>
             
             <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <div class="form-section" style="grid-column: span 2; margin-bottom: 0.5rem;">
-                    <label for="profileName" style="font-size: 0.85rem; font-weight: 700; color: #475569;">학생 이름</label>
+                <div class="form-section" style="grid-column: span 2;">
+                    <label for="profileName" style="font-size: 0.85rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.6rem;">학생 이름</label>
                     <input type="text" id="profileName" value="${profile.name || ''}" placeholder="예: 홍길동" 
-                        style="width: 100%; border: 1px solid #E2E8F0; background: #F8FAFC; padding: 1rem; border-radius: 12px; font-size: 1rem;">
+                        style="width: 100%; border: 1px solid #E2E8F0; background: #F8FAFC; padding: 1rem 1.25rem; border-radius: 12px; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
                 </div>
 
-                <div class="form-section" style="margin-bottom: 0.5rem;">
-                    <label for="profileSchool" style="font-size: 0.85rem; font-weight: 700; color: #475569;">소속 학교명</label>
+                <div class="form-section">
+                    <label for="profileSchool" style="font-size: 0.85rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.6rem;">소속 학교명</label>
                     <input type="text" id="profileSchool" value="${profile.schoolName || ''}" placeholder="예: 서울고등학교"
-                        style="width: 100%; border: 1px solid #E2E8F0; background: #F8FAFC; padding: 1rem; border-radius: 12px; font-size: 1rem;">
+                        style="width: 100%; border: 1px solid #E2E8F0; background: #F8FAFC; padding: 1rem 1.25rem; border-radius: 12px; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
                 </div>
 
-                <div class="form-section" style="margin-bottom: 0.5rem;">
-                    <label for="profileGpa" style="font-size: 0.85rem; font-weight: 700; color: #475569;">평균 내신 성적</label>
+                <div class="form-section">
+                    <label for="profileGpa" style="font-size: 0.85rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.6rem;">평균 내신 성적</label>
                     <div class="gpa-input-group" style="position: relative;">
                         <input type="number" id="profileGpa" value="${profile.gpa || ''}" step="0.01" min="1" max="9" placeholder="1.00"
-                            style="width: 100%; border: 1px solid #E2E8F0; background: #F8FAFC; padding: 1rem 3rem 1rem 1rem; border-radius: 12px; font-size: 1.1rem; font-weight: 700; color: var(--primary);">
-                        <span style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94A3B8;">등급</span>
+                            style="width: 100%; border: 1px solid #E2E8F0; background: #F8FAFC; padding: 1rem 3.5rem 1rem 1.25rem; border-radius: 12px; font-size: 1.1rem; font-weight: 700; color: var(--primary); box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+                        <span style="position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); font-weight: 600; color: #94A3B8;">등급</span>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="background: none; border-top: none; padding: 1.5rem; gap: 1rem;">
-                <button class="btn-secondary" onclick="closeProfileModal()" style="flex: 1; height: 50px; border-radius: 12px;">취소</button>
-                <button class="btn-primary" onclick="saveProfileData()" style="flex: 2; height: 50px; border-radius: 12px; font-size: 1rem; font-weight: 700;">분석 시작하기</button>
+            
+            <div class="modal-footer" style="margin-top: 2.5rem; display: flex; gap: 1rem;">
+                <button class="btn-secondary" onclick="closeProfileModal()" 
+                    style="flex: 1; height: 56px; border-radius: 14px; border: 1px solid #E2E8F0; background: #F8FAFC; color: #64748B; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">취소</button>
+                <button class="btn-primary" onclick="saveProfileData()" 
+                    style="flex: 2; height: 56px; border-radius: 14px; border: none; background: var(--primary); color: #FFFFFF; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">분석 시작하기</button>
             </div>
         </div>
     `;
