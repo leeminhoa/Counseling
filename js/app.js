@@ -20,8 +20,8 @@ function initApp() {
     // 초기 상태 로드 (from DataManager)
     loadUserStatus();
 
-    // 기본 탭 로드 (Stage 1)
-    loadView('stage1');
+    // 기본 탭 로드 (Stage 1-1: 계열 추천)
+    loadView('stage1_1');
 
     // 프로필 정보가 없으면 모달 띄우기 (지연 실행)
     const profile = dataManager.getProfile();
@@ -50,7 +50,21 @@ function loadView(viewName) {
     </div>`;
 
     // TODO: 각 뷰별(Stage1, Stage2) 렌더링 함수 호출 로직 추가 예정
-    if (viewName === 'stage1') {
+    if (viewName === 'stage1_1') {
+        if (typeof renderStage1_1 === 'function') {
+            renderStage1_1(container);
+        } else {
+            console.error('renderStage1_1 function is missing!');
+            container.innerHTML = 'Stage 1-1 (Recommendation) Not Loaded';
+        }
+    } else if (viewName === 'stage1_2') {
+        if (typeof renderStage1_2 === 'function') {
+            renderStage1_2(container);
+        } else {
+            console.error('renderStage1_2 function is missing!');
+            container.innerHTML = 'Stage 1-2 (Major Selection) Error';
+        }
+    } else if (viewName === 'stage1') {
         if (typeof renderStage1 === 'function') {
             renderStage1(container);
         } else {
@@ -61,6 +75,12 @@ function loadView(viewName) {
             renderStage2(container);
         } else {
             console.error('renderStage2 function is missing!');
+        }
+    } else if (viewName === 'chatbot') {
+        if (typeof renderChatbot === 'function') {
+            renderChatbot(container);
+        } else {
+            container.innerHTML = 'Chatbot Module Loading Error';
         }
     } else if (viewName === 'admin') {
         if (typeof renderAdmin === 'function') {

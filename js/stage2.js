@@ -138,6 +138,9 @@ async function startAIGeneration(container) {
 }
 
 function displayAIResult(data, container) {
+    // Legacy support for 'book' string
+    const books = data.books || (data.book ? [{ title: data.book, author: '', desc: '목표 학과 관련 심화 지식을 확장하기 위한 추천 도서입니다.' }] : []);
+
     container.innerHTML = `
         <div class="card result-card topic-card" id="pdf-area" style="grid-column: 1 / -1;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
@@ -158,9 +161,20 @@ function displayAIResult(data, container) {
             <div class="res-keywords" style="margin-bottom: 2rem;">
                 ${data.keywords.map(k => `<span class="k-badge" style="background: rgba(235, 244, 255, 1); color: #1E40AF; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.85rem; margin-right: 0.5rem;">#${k}</span>`).join('')}
             </div>
+
+            <!-- Chain of Thought (Rationale) -->
+            ${data.rationale ? `
+            <div class="detail-section" style="margin-bottom: 2rem; background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 1rem 1.25rem; border-radius: 0 0.5rem 0.5rem 0;">
+                <h3 class="res-title" style="font-size: 1rem; color: #0369A1; margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="fa-solid fa-lightbulb"></i> 주제 선정 논리
+                </h3>
+                <p class="res-content" style="font-size: 0.95rem; color: #0C4A6E; line-height: 1.6; margin:0;">${data.rationale}</p>
+            </div>
+            ` : ''}
             
             <hr style="margin: 2rem 0; border: none; border-top: 1px solid #E2E8F0;">
 
+            <!-- Background & Direction -->
             <div class="detail-section" style="margin-bottom: 2.5rem;">
                 <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;">1. 탐구 배경 및 필요성</h3>
                 <p class="res-content" style="line-height: 1.7; color: #475569;">${data.background}</p>
@@ -173,11 +187,16 @@ function displayAIResult(data, container) {
                 </div>
             </div>
 
+            <!-- Recommended Books -->
             <div class="detail-section">
-                <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;"><i class="fa-solid fa-book"></i> 추천 도서</h3>
-                <div class="book-info" style="background: #F8FAFC; padding: 1.2rem; border-radius: 12px; border: 1px solid #E2E8F0;">
-                    <p class="book-name" style="font-weight: 700; color: #0F172A; margin-bottom: 0.3rem;">${data.book}</p>
-                    <p class="book-desc" style="font-size: 0.9rem; color: #64748B;">목표 학과 관련 심화 지식을 확장하기 위한 전문가 추천 도서입니다.</p>
+                <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;"><i class="fa-solid fa-book"></i> 전문가 추천 도서</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                    ${books.map(book => `
+                    <div class="book-info" style="background: #F8FAFC; padding: 1.2rem; border-radius: 12px; border: 1px solid #E2E8F0;">
+                        <p class="book-name" style="font-weight: 700; color: #0F172A; margin-bottom: 0.3rem;">${book.title} <span style="font-weight:400; font-size:0.85rem; color:#64748B;">${book.author ? `- ${book.author}` : ''}</span></p>
+                        <p class="book-desc" style="font-size: 0.9rem; color: #475569;">${book.desc || ''}</p>
+                    </div>
+                    `).join('')}
                 </div>
             </div>
         </div>

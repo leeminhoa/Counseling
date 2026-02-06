@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 입시 고도화 기능 프로토타입</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            overflow-y: auto !important;
+            height: auto !important;
+            padding: 40px;
+        }
+
+        .proto-section {
+            margin-bottom: 80px;
+        }
+
+        .proto-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0F172A;
+            margin-bottom: 2rem;
+            border-left: 6px solid var(--primary-color);
+            padding-left: 1rem;
+        }
+
+        /* 1. 창체 로드맵 스타일 */
+        .roadmap-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #E2E8F0;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: calc(-2rem - 6px);
+            top: 10px;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border: 3px solid var(--primary-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .timeline-card {
+            background: white;
+            border: 1px solid #E2E8F0;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .timeline-card:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .activity-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #0EA5E9;
+            background: #E0F2FE;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 0.75rem;
+        }
+
+        /* 2. 고교 전략 스타일 */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+        }
+
+        .strategy-badge {
+            background: #F1F5F9;
+            color: #475569;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strategy-box {
+            background: linear-gradient(135deg, #0E7490 0%, #155E75 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 1.25rem;
+        }
+
+        .analysis-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .point-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="proto-section">
+        <h1 class="proto-title">1. AI 창의적 체험활동(창체) 로드맵</h1>
+        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <button class="nav-item active">전체보기</button>
+            <button class="nav-item">자율활동</button>
+            <button class="nav-item">동아리활동</button>
+            <button class="nav-item">진로활동</button>
+        </div>
+
+        <div class="roadmap-timeline">
+            <!-- 자율활동 (Autonomy) -->
+            <div class="timeline-item">
+                <div class="timeline-dot" style="border-color: #0EA5E9;"></div>
+                <div class="timeline-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <span class="activity-tag">자율활동 (학년 공동 프로젝트)</span>
+                        <span style="font-size: 0.8rem; color: #94A3B8; font-weight: 600;">1학년 2학기</span>
+                    </div>
+                    <h3 style="margin-bottom: 0.75rem;"><i class="fa-solid fa-utensils" style="color: #0EA5E9;"></i>
+                        [컴퓨터공학] 교내 급식 잔반 감소를 위한 데이터 기반 솔루션 제안</h3>
+                    <p style="color: #64748B; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                        단순한 불만이 아닌, 요일별/메뉴별 잔반 데이터를 직접 수집하여 문제의 원인을 공학적으로 분석합니다. 학급 자치 시간에 설문 조사를 주도하고 데이터 리터러시 역량을
+                        증명하세요.
+                    </p>
+                    <div style="background: #F8FAFC; border: 1px dashed #BAE6FD; border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-size: 0.85rem; color: #0369A1; margin-bottom: 0.5rem;"><i
+                                class="fa-solid fa-file-export"></i> 최종 아웃풋 (Output)</h4>
+                        <ul style="font-size: 0.9rem; color: #334155; padding-left: 1.25rem; margin: 0;">
+                            <li>요일별 잔반 상관관계 분석 리포트 (통계 그래프 포함)</li>
+                            <li>메뉴 추천 알고리즘 로직 설계도 (Flowchart)</li>
+                            <li>학급 게시판용 데이터 시각화 포스터</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 동아리활동 (Clubs) -->
+            <div class="timeline-item">
+                <div class="timeline-dot" style="border-color: #10B981;"></div>
+                <div class="timeline-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <span class="activity-tag" style="background: #DCFCE7; color: #15803D;">동아리활동 (SW 전공 탐구)</span>
+                        <span style="font-size: 0.8rem; color: #94A3B8; font-weight: 600;">2학년 1학기</span>
+                    </div>
+                    <h3 style="margin-bottom: 0.75rem;"><i class="fa-solid fa-code" style="color: #10B981;"></i> [AI/SW]
+                        검색 알고리즘의 효율성 비교 및 웹 시뮬레이터 구현</h3>
+                    <p style="color: #64748B; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                        정렬 및 검색 알고리즘(Binary Search 등)의 속도 차이를 데이터셋 크기에 따라 측정합니다. 동아리 부원들에게 알고리즘의 시간 복잡도(Big-O) 개념을 교육하는
+                        멘토링 활동을 병행하세요.
+                    </p>
+                    <div style="background: #F0FDF4; border: 1px dashed #86EFAC; border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-size: 0.85rem; color: #15803D; margin-bottom: 0.5rem;"><i
+                                class="fa-solid fa-code-branch"></i> 최종 아웃풋 (Output)</h4>
+                        <ul style="font-size: 0.9rem; color: #334155; padding-left: 1.25rem; margin: 0;">
+                            <li>Python 기반 알고리즘 성능 측정 스크립트 (Github 저장소)</li>
+                            <li>알고리즘별 실행 시간 비교 데이터 테이블 및 분석 보고서</li>
+                            <li>부원 대상 '쉽게 설명하는 알고리즘' 카드뉴스 (5장 내외)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 진로활동 (Career) -->
+            <div class="timeline-item">
+                <div class="timeline-dot" style="border-color: #8B5CF6;"></div>
+                <div class="timeline-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <span class="activity-tag" style="background: #F3E8FF; color: #7E22CE;">진로활동 (심화 학술 탐구)</span>
+                        <span style="font-size: 0.8rem; color: #94A3B8; font-weight: 600;">2학년 연간</span>
+                    </div>
+                    <h3 style="margin-bottom: 0.75rem;"><i class="fa-solid fa-microscope" style="color: #8B5CF6;"></i>
+                        [융합 탐구] 의료 빅데이터가 질병 예측에 미치는 영향 연구</h3>
+                    <p style="color: #64748B; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                        컴퓨터공학과 보건/의료를 융합한 심화 주제입니다. 공공 데이터를 활용하여 당뇨나 고혈압과 생활 습관의 상관관계를 탐색하고, 미래의 디지털 헬스케어 전문가로서의 포부를
+                        밝히세요.
+                    </p>
+                    <div style="background: #FAF5FF; border: 1px dashed #D8B4FE; border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-size: 0.85rem; color: #7E22CE; margin-bottom: 0.5rem;"><i
+                                class="fa-solid fa-microscope"></i> 최종 아웃풋 (Output)</h4>
+                        <ul style="font-size: 0.9rem; color: #334155; padding-left: 1.25rem; margin: 0;">
+                            <li>'디지털 헬스케어의 미래' 주제의 학술 소논문(또는 탐구 보고서)</li>
+                            <li>현직 개발자 또는 관련 학과 선배 인터뷰 결과 정리록</li>
+                            <li>교내 학술 발표 대회용 PPT 및 스피치 대본</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="proto-section">
+        <h1 class="proto-title">2. 고교 유형별 상향/적정 전략 분석</h1>
+        <div class="strategy-grid">
+            <div class="card">
+                <div style="margin-bottom: 1.5rem;">
+                    <div class="strategy-badge"><i class="fa-solid fa-school"></i> 과학고/영재고 소속</div>
+                </div>
+                <h2 style="margin-bottom: 1rem;">현재 나의 위치</h2>
+                <div style="margin-bottom: 1.5rem;">
+                    <span style="font-size: 0.85rem; color: #64748B;">서울대 컴공 합격자 평균 (특목고)</span>
+                    <div
+                        style="height: 12px; background: #E2E8F0; border-radius: 6px; position: relative; margin-top: 0.5rem;">
+                        <div style="width: 75%; height: 100%; background: #0EA5E9; border-radius: 6px;"></div>
+                        <div style="position: absolute; left: 65%; top: -5px; width: 22px; height: 22px; background: white; border: 4px solid #E11D48; border-radius: 50%;"
+                            title="내 위치"></div>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: #94A3B8;">
+                        <span>4.0등급</span>
+                        <span>2.0등급</span>
+                    </div>
+                </div>
+                <div
+                    style="background: #FFF1F2; color: #991B1B; padding: 1rem; border-radius: 12px; font-weight: 700; text-align: center;">
+                    <i class="fa-solid fa-bolt"></i> 특목고 전형 기준 [안정권] 진입
+                </div>
+            </div>
+
+            <div class="strategy-box">
+                <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-brain"></i> AI 고교 유형별 필살 전략
+                </h2>
+                <div class="analysis-point">
+                    <div class="point-icon"><i class="fa-solid fa-1"></i></div>
+                    <div>
+                        <h4 style="margin-bottom: 0.3rem;">심화 과목 이수 증명</h4>
+                        <p style="opacity: 0.85; font-size: 0.9rem;">일반고에서 접하기 힘든 '고급 수학' 및 '정보과학' 이수 여부가 핵심입니다. 성적보다 이수
+                            과정의 깊이를 강조하세요.</p>
+                    </div>
+                </div>
+                <div class="analysis-point">
+                    <div class="point-icon"><i class="fa-solid fa-2"></i></div>
+                    <div>
+                        <h4 style="margin-bottom: 0.3rem;">R&E 탐구 실적 연결</h4>
+                        <p style="opacity: 0.85; font-size: 0.9rem;">특목고 특성상 진행한 탐구 활동을 '서울대 직업 적성'과 연결하는 스토리가 필요합니다. 현재
+                            작성된 세특의 85%가 우수합니다.</p>
+                    </div>
+                </div>
+                <div class="analysis-point">
+                    <div class="point-icon"><i class="fa-solid fa-3"></i></div>
+                    <div>
+                        <h4 style="margin-bottom: 0.3rem;">수능 최저 면제 전략</h4>
+                        <p style="opacity: 0.85; font-size: 0.9rem;">본 전형은 수능 최저가 없으므로 10월 이후의 모든 에너지를 구술 면접 준비에 쏟는 것을
+                            추천합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

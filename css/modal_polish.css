@@ -1,0 +1,321 @@
+
+/* --- V3.0 Profile Modal Polishing --- */
+
+/* Modal Backdrop & Container */
+.modal-overlay {
+    background: rgba(15, 23, 42, 0.6) !important; /* Slate 900 with opacity */
+    backdrop-filter: blur(4px);
+}
+
+.modal-content.profile-editor {
+    border: none;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    padding: 0 !important; /* Reset padding to handle header/body/footer separately */
+    border-radius: 1.5rem !important;
+    overflow: hidden !important; /* For header radius */
+    max-width: 720px !important; 
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh !important;
+}
+
+/* Header */
+.modal-header {
+    background: #FFFFFF;
+    padding: 1.5rem 2rem 1rem;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1E293B;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.modal-header-desc {
+    color: #64748B;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.close-btn {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    background: transparent;
+    border: none;
+    color: #94A3B8;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #F1F5F9;
+    color: #64748B;
+}
+
+/* Body Scroll Area */
+.modal-body-scroll {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Layout Grid */
+.modal-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem; /* Increased gap */
+}
+
+/* Headings */
+.profile-section h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0px;
+    border-bottom: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.profile-section h3 i {
+    color: var(--primary-color);
+}
+
+/* Inputs - Unified Style */
+.input-wrapper {
+    margin-bottom: 1.25rem;
+}
+
+.input-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748B;
+    margin-bottom: 0.6rem;
+}
+
+.styled-input {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    color: #1E293B;
+    background: #F8FAFC;
+    transition: all 0.2s ease;
+    outline: none;
+    font-weight: 500;
+}
+
+.styled-input:focus {
+    background: #FFFFFF;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+}
+
+.styled-input::placeholder {
+    color: #CBD5E1;
+}
+
+/* Suffix Input Wrapper */
+.suffix-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.suffix-wrapper input {
+    padding-right: 3.5rem; /* Space for suffix */
+}
+
+.suffix-text {
+    position: absolute;
+    right: 1.2rem;
+    color: #64748B;
+    font-size: 0.9rem;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+/* Subject Search Area */
+.section-divider {
+    height: 1px;
+    background: #F1F5F9;
+    margin: 1rem 0 2rem;
+    grid-column: span 2;
+}
+
+.full-width {
+    grid-column: span 2;
+}
+
+.subject-search-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.subject-search-input {
+    width: 100%;
+    padding: 0.9rem 1rem 0.9rem 2.8rem; /* Space for search icon */
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem;
+    background: #F8FAFC;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.subject-search-input:focus {
+    border-color: var(--primary-color);
+    background: #FFF;
+}
+
+.search-icon-inside {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+}
+
+/* Chips Container */
+.chips-area {
+    min-height: 60px;
+    background: #FFFFFF;
+    border: 1px dashed #E2E8F0; /* Dashed border for droppable feel */
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+
+.chips-area.has-items {
+    border-style: solid;
+}
+
+.subject-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.subject-chip.completed {
+    background: #F0F9FF;
+    color: #0284C7;
+    border: 1px solid #BAE6FD;
+}
+
+.subject-chip.inprogress {
+    background: #F0FDF4;
+    color: #16A34A;
+    border: 1px solid #BBF7D0;
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: currentColor;
+    opacity: 0.5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 1rem;
+    transition: opacity 0.2s;
+}
+
+.chip-remove:hover {
+    opacity: 1;
+}
+
+/* Footer Actions */
+.modal-footer {
+    padding: 1.5rem 2rem;
+    background: #FFFFFF;
+    border-top: 1px solid #F1F5F9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn-cancel {
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+    color: #64748B;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #F1F5F9;
+    color: #475569;
+}
+
+.btn-save {
+    padding: 0.8rem 2rem;
+    border-radius: 0.75rem;
+    border: none;
+    background: var(--primary-color);
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(14, 116, 144, 0.2);
+    transition: all 0.2s;
+}
+
+.btn-save:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(14, 116, 144, 0.3);
+}
+
+/* Search Dropdown */
+.search-results-dropdown {
+    top: calc(100% + 5px);
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    max-height: 240px;
+}
+
+.search-item {
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    color: #334155;
+    transition: background 0.15s;
+}
+
+.search-item:hover {
+    background: #F1F5F9;
+    color: var(--primary-color);
+}
+

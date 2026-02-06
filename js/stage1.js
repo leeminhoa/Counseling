@@ -40,7 +40,18 @@ async function renderStage1(container) {
 
     // Load initial empty or recent selection
     const profile = dataManager.getProfile();
-    if (profile && profile.lastSelectedUniv) {
+
+    // Auto-Search if targetMajor exists and NO specific university is selected (Stage 1-2 flow)
+    if (profile && profile.targetMajor && !profile.lastSelectedUniv) {
+        // Clear any stale local state
+        stage1State.selectedUnivId = null;
+
+        searchInput.value = profile.targetMajor;
+        // Trigger search logic manually
+        await handleSearch({ target: { value: profile.targetMajor } });
+    }
+    // Restore state if lastSelectedUniv exists (and not overridden by new major selection flow if we wanted priority)
+    else if (profile && profile.lastSelectedUniv) {
         // Restore state
         stage1State.selectedUnivId = profile.lastSelectedUniv.id;
         // Search results need to contain the selected univ for renderUnivDetail to work
@@ -54,7 +65,7 @@ async function renderStage1(container) {
 // --- Event Handlers ---
 
 async function handleSearch(e) {
-    const query = e.target.value.trim();
+    const query = (e.target ? e.target.value : e).trim(); // Handle both Event and direct string/object
     const listContainer = document.getElementById('univList');
 
     if (query.length < 2) {
@@ -98,8 +109,10 @@ function renderUnivList(data, container) {
 
     container.innerHTML = data.map(univ => `
         <div class="univ-item" data-id="${univ.id}" onclick="handleUnivSelect(${univ.id})">
-            <div class="univ-name">${univ.univ_name}</div>
-            <div class="major-name">${univ.raw_major_name}</div>
+            <div class="univ-item-header">
+                <div class="univ-name" style="margin:0;">${univ.univ_name}</div>
+            </div>
+            <div class="major-name" style="text-align: left;">${univ.raw_major_name}</div>
             <div class="category-badge">${univ.top_category} > ${univ.canonical_major}</div>
         </div>
     `).join('');

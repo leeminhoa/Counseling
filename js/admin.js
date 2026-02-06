@@ -29,21 +29,21 @@ function renderAdmin(container) {
                         <div class="admin-col">
                             <div class="form-group">
                                 <label>System Prompt (Persona & Instructions)</label>
-                                <textarea id="sysPrompt" class="prompt-editor">당신은 대한민국 대입 입시 컨설턴트입니다. 학생의 목표 학과와 교과 이수 현황을 바탕으로, 생활기록부에 기재할 수 있는 깊이 있는 탐구 주제와 활동 방향을 제시하는 것이 당신의 역할입니다. 
+                                <textarea id="sysPrompt" class="prompt-editor">${settings.systemPrompt || `당신은 대한민국 대입 입시 컨설턴트입니다. 학생의 목표 학과와 교과 이수 현황을 바탕으로, 생활기록부에 기재할 수 있는 깊이 있는 탐구 주제와 활동 방향을 제시하는 것이 당신의 역할입니다. 
 
 [지침]
 - 전문적이고 신뢰감 있는 어조를 유지하세요.
 - 구체적인 탐구 방법론과 추천 도서를 포함하세요.
-- 답변은 반드시 정해진 JSON 형식을 따르세요.</textarea>
+- 답변은 반드시 정해진 JSON 형식을 따르세요.`}</textarea>
                             </div>
                             <div class="form-group">
                                 <label>User Prompt Template (Data Injection)</label>
-                                <textarea id="userPrompt" class="prompt-editor">[학생 데이터]
+                                <textarea id="userPrompt" class="prompt-editor">${settings.userPromptTemplate || `[학생 데이터]
 - 목표 학과: {{major}}
 - 관련 이수 과목: {{subjects}}
 - 내신 성적: {{gpa}}
 
-위 데이터를 바탕으로 탐구 가이드를 생성해 주세요.</textarea>
+위 데이터를 바탕으로 탐구 가이드를 생성해 주세요.`}</textarea>
                             </div>
                         </div>
 
@@ -109,8 +109,10 @@ function saveAdminSettings() {
         ...data.appSettings,
         supabaseUrl: sbUrl,
         supabaseKey: sbKey,
-        geminiKey: apiKey,  // Changed from apiKey to geminiKey for consistency
-        temperature: temp
+        geminiKey: apiKey,
+        temperature: temp,
+        systemPrompt: document.getElementById('sysPrompt').value,
+        userPromptTemplate: document.getElementById('userPrompt').value
     };
     dataManager.saveData(data);
 
