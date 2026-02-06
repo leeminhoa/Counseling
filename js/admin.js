@@ -54,9 +54,9 @@ function renderAdmin(container) {
                                 <div class="param-item">
                                     <div class="param-info">
                                         <label>Temperature</label>
-                                        <span id="tempVal">0.7</span>
+                                        <span id="tempVal">${settings.temperature || 0.7}</span>
                                     </div>
-                                    <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="0.7">
+                                    <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="${settings.temperature || 0.7}">
                                     <p class="param-desc">높을수록 창의적이고, 낮을수록 정교한 결과가 나옵니다.</p>
                                 </div>
 

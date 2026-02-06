@@ -4,8 +4,68 @@
  */
 class AIService {
     constructor() {
-        this.MODEL = 'gemini-3-flash-preview';
+        this.MODEL = 'gemini-1.5-flash'; // Updated to stable model version
         this.API_KEY = ''; // Removed hardcoded key for security
+    }
+
+    /**
+     * Chatbot API Call
+     * @param {string} userMessage User's input message
+     * @param {Array} history Chat history [{role: 'user'|'model', parts: [{text: '...'}]}]
+     */
+    async chat(userMessage, history = []) {
+        const settings = dataManager.getData().appSettings || {};
+        const apiKey = settings.geminiKey || this.API_KEY;
+        const temperature = parseFloat(settings.temperature) || 0.7;
+
+        if (!apiKey) {
+            throw new Error('Google Gemini API Key가 설정되지 않았습니다. 설정에서 키를 입력해주세요.');
+        }
+
+        const systemPrompt = settings.systemPrompt || "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요.";
+
+        console.group('🤖 Gemini AI Chat Request');
+        console.log('Model:', this.MODEL);
+        console.log('Temp:', temperature);
+        console.log('Message:', userMessage);
+        console.groupEnd();
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [
+                        ...history,
+                        { role: 'user', parts: [{ text: userMessage }] }
+                    ],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                    generationConfig: {
+                        temperature: temperature,
+                        maxOutputTokens: 1000,
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Gemini Chat Error:', errorData);
+                throw new Error(errorData.error?.message || 'Chat API 호출 실패');
+            }
+
+            const data = await response.json();
+            const reply = data.candidates[0].content.parts[0].text;
+
+            return reply;
+
+        } catch (error) {
+            console.error('Chat Service Error:', error);
+            throw error;
+        }
     }
 
     /**
@@ -15,6 +75,7 @@ class AIService {
     async generateExplorationGuide(context) {
         const settings = dataManager.getData().appSettings || {};
         const apiKey = settings.geminiKey || this.API_KEY;
+        const temperature = parseFloat(settings.temperature) || 0.7;
 
         if (!apiKey) {
             throw new Error('Google Gemini API Key가 설정되지 않았습니다. 설정에서 키를 입력해주세요.');
@@ -77,6 +138,7 @@ class AIService {
         console.log('Model:', this.MODEL);
         console.log('System Prompt:', systemPrompt);
         console.log('User Prompt:', userPrompt);
+        console.log('Temperature:', temperature);
         console.groupEnd();
 
         try {
@@ -87,8 +149,15 @@ class AIService {
                 },
                 body: JSON.stringify({
                     contents: [{
-                        parts: [{ text: systemPrompt + "\n" + userPrompt }]
-                    }]
+                        parts: [{ text: userPrompt }] // System prompt moved to systemInstruction for better performance in v1beta/1.5
+                    }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                    generationConfig: {
+                        temperature: temperature,
+                        responseMimeType: "application/json"
+                    }
                 })
             });
 

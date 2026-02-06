@@ -3,6 +3,8 @@
  * AI Chatbot for Counseling Support
  */
 
+let chatHistoryState = []; // Stores conversation history for API
+
 async function renderChatbot(container) {
     container.innerHTML = `
         <div class="chatbot-container" style="height: 100%; display: flex; flex-direction: column;">
@@ -35,6 +37,9 @@ async function renderChatbot(container) {
         </div>
     `;
 
+    // Reset history on re-render (optional, maybe want to persist?)
+    // chatHistoryState = []; 
+
     // Auto-resize textarea
     const textarea = document.getElementById('chatInput');
     textarea.addEventListener('keydown', (e) => {
@@ -45,38 +50,50 @@ async function renderChatbot(container) {
     });
 }
 
-function sendChatMessage() {
+async function sendChatMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
     if (!message) return;
 
-    // Add User Bubble
+    // 1. Add User Bubble
     addChatBubble(message, 'user');
     input.value = '';
 
-    // Simulate Bot Typing/Response
-    // In real implementation, this would call aiService.chat()
+    // 2. Show Typing Indicator
     showTypingIndicator();
 
-    setTimeout(async () => {
+    try {
+        // 3. Call AI Service
+        const reply = await aiService.chat(message, chatHistoryState);
+
+        // 4. Remove Typing Indicator
         removeTypingIndicator();
-        try {
-            // Placeholder: Simple Echo or Static response for now
-            // Future: await aiService.getChatResponse(message);
-            const response = "죄송합니다. 현재 챗봇 기능은 UI 프로토타입 단계입니다. 실제 연동은 곧 구현될 예정입니다.";
-            addChatBubble(response, 'bot');
-        } catch (error) {
-            addChatBubble("오류가 발생했습니다.", 'bot');
-        }
-    }, 1000);
+
+        // 5. Add Bot Bubble
+        addChatBubble(reply, 'bot');
+
+        // 6. Update History State
+        chatHistoryState.push({ role: 'user', parts: [{ text: message }] });
+        chatHistoryState.push({ role: 'model', parts: [{ text: reply }] });
+
+    } catch (error) {
+        console.error(error);
+        removeTypingIndicator();
+        addChatBubble("죄송합니다. 오류가 발생했습니다. API 키를 확인해주세요.", 'bot');
+    }
 }
 
 function addChatBubble(text, sender) {
     const history = document.getElementById('chatHistory');
     const div = document.createElement('div');
     div.className = `chat-bubble ${sender}`;
+
+    // Markdown-like formatting (simple)
+    let formattedText = text.replace(/\n/g, '<br>');
+    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+
     div.innerHTML = `
-        <div class="bubble-content">${text.replace(/\n/g, '<br>')}</div>
+        <div class="bubble-content">${formattedText}</div>
         <span class="bubble-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
     `;
     history.appendChild(div);
@@ -103,3 +120,4 @@ function removeTypingIndicator() {
     const el = document.getElementById('typingIndicator');
     if (el) el.remove();
 }
+
