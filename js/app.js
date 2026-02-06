@@ -88,6 +88,12 @@ function loadView(viewName) {
         } else {
             console.error('renderAdmin function is missing!');
         }
+    } else if (viewName === 'manager') {
+        if (typeof renderManager === 'function') {
+            renderManager(container);
+        } else {
+            container.innerHTML = 'Manager Module Loading Error';
+        }
     }
 }
 

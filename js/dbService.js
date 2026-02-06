@@ -422,6 +422,247 @@ class DBService {
 
         return mapping[category] || [];
     }
+
+    // --- Student Management (Counselor Mode) ---
+
+    async getAllStudents(query = '') {
+        try {
+            // 1. Fetch Students
+            let dbQuery = this.client
+                .from('students')
+                .select(`
+                    id, 
+                    student_name, 
+                    grade, 
+                    mildang_id,
+                    created_at,
+                    school_id
+                `)
+                .order('created_at', { ascending: false });
+
+            if (query) {
+                dbQuery = dbQuery.or(`student_name.ilike.%${query}%,mildang_id.ilike.%${query}%`);
+            }
+
+            const { data: students, error } = await dbQuery;
+            if (error) throw error;
+            if (!students || students.length === 0) return [];
+
+            // 2. Fetch Schools (Manual Join to avoid PGRST200 Schema Cache issues)
+            const schoolIds = [...new Set(students.map(s => s.school_id).filter(id => id))];
+
+            let schoolsMap = {};
+            if (schoolIds.length > 0) {
+                const { data: schools, error: schoolError } = await this.client
+                    .from('school')
+                    .select('id, school_name')
+                    .in('id', schoolIds);
+
+                if (!schoolError && schools) {
+                    schools.forEach(s => {
+                        schoolsMap[s.id] = s.school_name;
+                    });
+                }
+            }
+
+            // 3. Merge
+            return students.map(s => ({
+                ...s,
+                school: {
+                    school_name: schoolsMap[s.school_id] || '학교 미지정'
+                }
+            }));
+
+        } catch (error) {
+            console.error('Error fetching students:', error);
+            return [];
+        }
+    }
+
+    // --- DB Migration Methods ---
+
+    /**
+     * 학교 정보 조회 (없으면 null 반환)
+     */
+    /**
+     * 학교 정보 조회 및 생성 (Upsert-like)
+     */
+    async ensureSchool(schoolName) {
+        if (!this.client || !schoolName) return null;
+
+        // 1. Try to find existing school
+        const { data, error } = await this.client
+            .from('school')
+            .select('id')
+            .eq('school_name', schoolName)
+            .maybeSingle();
+
+        if (error) {
+            console.warn('School lookup error:', error);
+            return null;
+        }
+
+        if (data) return data.id;
+
+        // 2. Create new school if not found
+        const { data: inserted, error: insertError } = await this.client
+            .from('school')
+            .insert({
+                school_name: schoolName,
+                region: '미정',
+                type: 'general' // Default to 'general' to satisfy NOT NULL 'school_type' enum
+            })
+            .select('id')
+            .single();
+
+        if (insertError) {
+            console.error('School creation error:', insertError);
+            return null;
+        }
+
+        return inserted.id;
+    }
+
+    /**
+     * 학생 정보 Upsert (이름 + 학교 + 학년 기준)
+     */
+    async upsertStudent(profile) {
+        if (!this.client) {
+            console.warn('DB not connected. Skipping student sync.');
+            return null;
+        }
+
+        let schoolId = await this.ensureSchool(profile.schoolName);
+        const grade = profile.grade || 'HIGH1';
+
+        // 1. Check if student exists
+        let query = this.client
+            .from('students')
+            .select('id, mildang_id')
+            .eq('student_name', profile.name)
+            .eq('grade', grade);
+
+        if (schoolId) {
+            query = query.eq('school_id', schoolId);
+        } else {
+            // Cannot save without school_id due to NOT NULL constraint
+            // We must have a schoolId. If ensureSchool failed, we can't proceed or need a fallback "Unknown School"
+            console.warn('School ID missing, attempting to use fallback school...');
+            // Try to use a fallback or create a placeholder? 
+            // For now, let's try to pass null and see if we can fix the constraint later, 
+            // but user said constraint violation. 
+            // Better strategy: Create a "기타 고등학교" if schoolName was empty?
+            if (!profile.schoolName) {
+                schoolId = await this.ensureSchool('기타 고등학교');
+            }
+        }
+
+        const { data: existing, error: searchError } = await query.maybeSingle();
+
+        if (searchError) {
+            console.error('Student search error:', searchError);
+            throw searchError;
+        }
+
+        if (existing) {
+            console.log('Student found:', existing.id);
+            return existing.id;
+        }
+
+        // 2. Create new student
+        const newMildangId = crypto.randomUUID();
+        const newStudent = {
+            student_name: profile.name,
+            grade: grade,
+            school_id: schoolId, // Now hopefully valid
+            mildang_id: newMildangId
+        };
+
+        // If school_id is still null here, it will fail. ensureSchool handles creation.
+
+        const { data: created, error: createError } = await this.client
+            .from('students')
+            .insert(newStudent)
+            .select()
+            .single();
+
+        if (createError) {
+            console.error('Student create error:', createError);
+            throw createError;
+        }
+
+        console.log('Student created:', created.id);
+        return created.id;
+    }
+
+    /**
+     * 상담 세션 저장 (JSON 직렬화)
+     */
+    async saveCounselingSession(studentId, profile) {
+        if (!this.client || !studentId) return;
+
+        // Check for existing active session
+        const { data: activeSession, error: searchError } = await this.client
+            .from('counseling')
+            .select('id')
+            .eq('student_id', studentId)
+            .in('status', ['draft', 'in_progress'])
+            .maybeSingle();
+
+        const activityNotes = JSON.stringify({
+            gpa: profile.gpa,
+            totalPercentile: profile.totalPercentile,
+            completedSubjects: profile.completedSubjects,
+            inprogressSubjects: profile.inprogressSubjects,
+            updatedAt: new Date().toISOString()
+        });
+
+        const payload = {
+            student_id: studentId,
+            status: 'in_progress',
+            rec_date: new Date().toISOString(),
+            activity_notes: [activityNotes],
+            desired_category: profile.desiredCategory || '미정',
+            desired_univ: profile.targetUniv || '미정',
+            desired_major: profile.targetMajor || '미정'
+        };
+
+        if (activeSession) {
+            const { error } = await this.client
+                .from('counseling')
+                .update(payload)
+                .eq('id', activeSession.id);
+            if (error) console.error('Counseling update error:', error);
+            else console.log('Counseling session updated:', activeSession.id);
+        } else {
+            const { error } = await this.client
+                .from('counseling')
+                .insert(payload);
+            if (error) console.error('Counseling insert error:', error);
+            else console.log('New Counseling session created');
+        }
+    }
+
+    /**
+     * 상담 이력 조회
+     * Switch to 'counseling' table directly as 'counseling_archive' seems to be deprecated or viewless
+     */
+    async getCounselingHistory(studentId) {
+        if (!this.client || !studentId) return [];
+
+        const { data, error } = await this.client
+            .from('counseling')
+            .select('*')
+            .eq('student_id', studentId)
+            .order('rec_date', { ascending: false });
+
+        if (error) {
+            console.error('History fetch error:', error);
+            return [];
+        }
+
+        return data;
+    }
 }
 
 // Global Instance

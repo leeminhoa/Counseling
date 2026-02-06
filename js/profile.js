@@ -6,10 +6,11 @@
 // Local state for the modal interaction
 let modalState = {
     completedSubjects: [],
-    inprogressSubjects: []
+    inprogressSubjects: [],
+    currentTab: 'info' // 'info' or 'history'
 };
 
-function openProfileModal() {
+function openProfileModal(initialTab = 'info') {
     // Create Modal if not exists
     let modal = document.getElementById('profileModal');
     if (!modal) {
@@ -24,73 +25,179 @@ function openProfileModal() {
     // Initialize local state
     modalState.completedSubjects = [...(profile.completedSubjects || [])];
     modalState.inprogressSubjects = [...(profile.inprogressSubjects || [])];
+    modalState.currentTab = initialTab;
 
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h3 style="margin: 0; font-size: 1.25rem;">학생 정보 입력</h3>
-                <button class="close-btn" onclick="closeProfileModal()"><i class="fa-solid fa-xmark"></i></button>
+        <div class="modal-content profile-editor" style="max-width: 550px; height: 80vh;">
+            <div class="modal-header" style="padding-bottom: 0;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; font-size: 1.25rem;">학생 정보 관리</h3>
+                    <button class="close-btn" onclick="closeProfileModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-tabs">
+                    <div class="modal-tab ${modalState.currentTab === 'info' ? 'active' : ''}" onclick="switchProfileTab('info')">기본 정보</div>
+                    <div class="modal-tab ${modalState.currentTab === 'history' ? 'active' : ''}" onclick="switchProfileTab('history')">상담 이력</div>
+                </div>
             </div>
             
-            <div class="modal-body" style="padding: 1.5rem;">
-                <div class="input-group">
-                    <label>이름</label>
-                    <input type="text" id="profileName" value="${profile.name || ''}" placeholder="이름을 입력하세요">
-                </div>
-                <div class="input-group">
-                    <label>학교</label>
-                    <input type="text" id="profileSchool" value="${profile.schoolName || ''}" placeholder="학교명을 입력하세요">
-                </div>
+            <div class="modal-body-scroll">
                 
-                <div style="display: flex; gap: 1rem;">
-                    <div class="input-group" style="flex: 1;">
-                        <label>평균 내신</label>
-                        <input type="number" id="profileGpa" value="${profile.gpa || ''}" step="0.01" placeholder="1.00">
+                <!-- TAB: INFO -->
+                <div id="tabContent_info" class="tab-content ${modalState.currentTab === 'info' ? 'active' : ''}">
+                    
+                    <div class="input-group">
+                        <label>이름</label>
+                        <input type="text" id="profileName" class="styled-input" value="${profile.name || ''}" placeholder="이름을 입력하세요">
                     </div>
-                    <div class="input-group" style="flex: 1;">
-                        <label>수능 백분위 합</label>
-                        <input type="number" id="profileTp" value="${profile.totalPercentile || ''}" step="1" placeholder="0">
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="input-group" style="flex: 2;">
+                            <label>학교</label>
+                            <input type="text" id="profileSchool" class="styled-input" value="${profile.schoolName || ''}" placeholder="학교명을 입력하세요">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label>학년</label>
+                            <select id="profileGrade" class="styled-input" style="padding: 0.9rem 0.5rem;">
+                                <option value="HIGH1" ${profile.grade === 'HIGH1' ? 'selected' : ''}>1학년</option>
+                                <option value="HIGH2" ${profile.grade === 'HIGH2' ? 'selected' : ''}>2학년</option>
+                                <option value="HIGH3" ${profile.grade === 'HIGH3' ? 'selected' : ''}>3학년</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="input-group" style="flex: 1;">
+                            <label>평균 내신</label>
+                            <input type="number" id="profileGpa" class="styled-input" value="${profile.gpa || ''}" step="0.01" placeholder="1.00">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label>수능 백분위 합</label>
+                            <input type="number" id="profileTp" class="styled-input" value="${profile.totalPercentile || ''}" step="1" placeholder="0">
+                        </div>
+                    </div>
+
+                    <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #E2E8F0;">
+
+                     <!-- Subjects (Completed) -->
+                    <div style="margin-bottom: 1.5rem;">
+                         <label style="display:block; font-weight:600; margin-bottom:0.5rem; color:#475569;">이수 완료 과목</label>
+                         <div class="subject-search-container">
+                            <input type="text" class="subject-search-input" id="searchCompleted" placeholder="과목명 검색 (예: 수학I)" oninput="handleSubjectSearch(event, 'completed')">
+                            <i class="fa-solid fa-magnifying-glass search-icon-inside"></i>
+                            <div id="listCompleted" class="search-results-dropdown"></div>
+                         </div>
+                         <div id="chipsCompleted" class="chips-area" style="min-height: 40px;">
+                            ${renderSubjectChipsStr(modalState.completedSubjects, 'completed')}
+                         </div>
+                    </div>
+
+                    <!-- Subjects (In-Progress) -->
+                    <div>
+                         <label style="display:block; font-weight:600; margin-bottom:0.5rem; color:#475569;">이수 중 과목</label>
+                         <div class="subject-search-container">
+                            <input type="text" class="subject-search-input" id="searchInprogress" placeholder="과목명 검색 (예: 미적분)" oninput="handleSubjectSearch(event, 'inprogress')">
+                            <i class="fa-solid fa-magnifying-glass search-icon-inside"></i>
+                            <div id="listInprogress" class="search-results-dropdown"></div>
+                         </div>
+                         <div id="chipsInprogress" class="chips-area" style="min-height: 40px;">
+                            ${renderSubjectChipsStr(modalState.inprogressSubjects, 'inprogress')}
+                         </div>
                     </div>
                 </div>
 
-                <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid #E2E8F0;">
-
-                <!-- Subjects (Completed) -->
-                <div style="margin-bottom: 1.5rem;">
-                     <label style="display:block; font-weight:600; margin-bottom:0.5rem; color:#475569;">이수 완료 과목</label>
-                     <div class="subject-search-container">
-                        <input type="text" class="subject-search-input" id="searchCompleted" placeholder="과목명 검색 (예: 수학I)" onkeyup="handleSubjectSearch(event, 'completed')" style="width: 100%; padding: 0.8rem; border: 1px solid #E2E8F0; border-radius: 0.5rem;">
-                        <div id="listCompleted" class="search-results-dropdown"></div>
-                     </div>
-                     <div id="chipsCompleted" class="subject-chips-container" style="margin-top: 0.5rem;">
-                        ${renderSubjectChipsStr(modalState.completedSubjects, 'completed')}
-                     </div>
+                <!-- TAB: HISTORY -->
+                <div id="tabContent_history" class="tab-content ${modalState.currentTab === 'history' ? 'active' : ''}">
+                    <div id="historyListContainer">
+                        <div class="empty-history"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>
+                    </div>
                 </div>
 
-                <!-- Subjects (In-Progress) -->
-                <div>
-                     <label style="display:block; font-weight:600; margin-bottom:0.5rem; color:#475569;">이수 중 과목</label>
-                     <div class="subject-search-container">
-                        <input type="text" class="subject-search-input" id="searchInprogress" placeholder="과목명 검색 (예: 미적분)" onkeyup="handleSubjectSearch(event, 'inprogress')" style="width: 100%; padding: 0.8rem; border: 1px solid #E2E8F0; border-radius: 0.5rem;">
-                        <div id="listInprogress" class="search-results-dropdown"></div>
-                     </div>
-                     <div id="chipsInprogress" class="subject-chips-container" style="margin-top: 0.5rem;">
-                        ${renderSubjectChipsStr(modalState.inprogressSubjects, 'inprogress')}
-                     </div>
-                </div>
             </div>
             
-            <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button class="btn-secondary" onclick="closeProfileModal()" style="padding: 0.6rem 1.2rem; border-radius: 0.5rem; background: #F1F5F9; border: 1px solid #E2E8F0; cursor: pointer;">취소</button>
-                <button class="btn-primary" onclick="saveProfileData()" style="padding: 0.6rem 1.2rem; border-radius: 0.5rem; background: var(--primary-color); color: white; border: none; cursor: pointer;">저장</button>
+            <div id="modalFooter" class="modal-footer" style="${modalState.currentTab === 'history' ? 'display:none;' : 'display:flex;'}">
+                <button class="btn-cancel" onclick="closeProfileModal()">취소</button>
+                <button class="btn-save" onclick="saveProfileData()">저장</button>
             </div>
         </div>
     `;
     modal.style.display = 'flex';
+
+    if (initialTab === 'history') {
+        loadHistoryTab();
+    }
+}
+
+function switchProfileTab(tab) {
+    modalState.currentTab = tab;
+
+    // Update Tab UI
+    document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.modal-tab[onclick="switchProfileTab('${tab}')"]`).classList.add('active');
+
+    // Update Content Visibility
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tabContent_${tab}`).classList.add('active');
+
+    // Toggle Footer (Hide save button in history view)
+    const footer = document.getElementById('modalFooter');
+    if (tab === 'history') {
+        footer.style.display = 'none';
+        loadHistoryTab();
+    } else {
+        footer.style.display = 'flex';
+    }
+}
+
+async function loadHistoryTab() {
+    const container = document.getElementById('historyListContainer');
+    const profile = dataManager.getProfile();
+
+    if (!profile || !profile.studentId) {
+        container.innerHTML = '<div class="empty-history">상담 이력이 없습니다.<br>먼저 프로필을 저장하여 등록해주세요.</div>';
+        return;
+    }
+
+    try {
+        const history = await dbService.getCounselingHistory(profile.studentId);
+
+        if (!history || history.length === 0) {
+            container.innerHTML = '<div class="empty-history">아직 상담 기록이 없습니다.</div>';
+            return;
+        }
+
+        container.innerHTML = history.map(item => {
+            const date = new Date(item.rec_date || item.created_at).toLocaleDateString();
+            const notes = item.activity_notes ? JSON.parse(Array.isArray(item.activity_notes) ? item.activity_notes[0] : item.activity_notes) : {};
+            // Handle array unwrap if needed (since we store it as array now)
+
+            let statusBadge = '';
+            if (item.status === 'completed') statusBadge = '<span class="history-status done">완료</span>';
+            else statusBadge = '<span class="history-status">진행중</span>';
+
+            return `
+            <div class="history-item">
+                <div class="history-header">
+                    <span class="history-date">${date}</span>
+                    ${statusBadge}
+                </div>
+                <div class="history-detail">
+                    <div><strong>계열:</strong> ${item.desired_category || '-'}</div>
+                    <div><strong>대학:</strong> ${item.desired_univ || '-'}</div>
+                    <div style="margin-top:0.3rem; font-size:0.85rem; color:#64748B;">
+                        내신: ${notes.gpa || '-'} / 백분위: ${notes.totalPercentile || '-'}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error("History Fetch Error:", e);
+        container.innerHTML = '<div class="empty-history">이력을 불러오는 중 오류가 발생했습니다.</div>';
+    }
 }
 
 function renderSubjectChipsStr(subjects, type) {
-    if (!subjects || subjects.length === 0) return '<div style="width:100%; text-align:center; color:#CBD5E1; font-size:0.9rem; padding:1rem;">선택된 과목이 없습니다.</div>';
+    if (!subjects || subjects.length === 0) return '';
     return subjects.map((sub, index) => `
         <div class="subject-chip ${type}">
             <span>${sub}</span>
@@ -105,12 +212,14 @@ function updateChipsUI(type) {
     const list = type === 'completed' ? modalState.completedSubjects : modalState.inprogressSubjects;
 
     container.innerHTML = renderSubjectChipsStr(list, type);
+    // Toggle container border style based on items
+    container.classList.toggle('has-items', list.length > 0);
 }
 
 // Search Handler
 let searchDebounceTimer;
 async function handleSubjectSearch(event, type) {
-    clearTimeout(searchDebounceTimer); // Clear immediately to prevent race conditions
+    clearTimeout(searchDebounceTimer);
     const query = event.target.value.trim();
     const resultBox = document.getElementById(type === 'completed' ? 'listCompleted' : 'listInprogress');
 
@@ -144,7 +253,6 @@ function addSubject(subjectName, type) {
         updateChipsUI(type);
     }
 
-    // Clear Input and Hide List
     const input = document.getElementById(type === 'completed' ? 'searchCompleted' : 'searchInprogress');
     const resultBox = document.getElementById(type === 'completed' ? 'listCompleted' : 'listInprogress');
 
@@ -167,6 +275,7 @@ function closeProfileModal() {
 function saveProfileData() {
     const name = document.getElementById('profileName').value.trim();
     const schoolName = document.getElementById('profileSchool').value.trim();
+    const grade = document.getElementById('profileGrade').value;
     const gpa = document.getElementById('profileGpa').value;
     const tp = document.getElementById('profileTp').value;
 
@@ -177,15 +286,37 @@ function saveProfileData() {
 
     const currentProfile = dataManager.getProfile() || {};
 
-    dataManager.saveProfile({
+    const newProfile = {
         name: name,
         schoolName: schoolName,
+        grade: grade,
         gpa: gpa ? parseFloat(gpa) : 0,
         totalPercentile: tp ? parseFloat(tp) : 0,
         completedSubjects: modalState.completedSubjects,
         inprogressSubjects: modalState.inprogressSubjects,
-        subjects: [...modalState.completedSubjects, ...modalState.inprogressSubjects] // Backup for compatibility
-    });
+        subjects: [...modalState.completedSubjects, ...modalState.inprogressSubjects]
+    };
+
+    // 1. Save Locally
+    dataManager.saveProfile(newProfile);
+
+    // 2. Sync to DB (Background)
+    (async () => {
+        try {
+            const studentId = await dbService.upsertStudent(newProfile);
+            if (studentId) {
+                await dbService.saveCounselingSession(studentId, newProfile);
+                console.log('✅ DB Sync Complete');
+
+                // 3. Update Local Storage with Student ID
+                const updatedProfile = { ...newProfile, studentId: studentId };
+                dataManager.saveProfile(updatedProfile);
+            }
+        } catch (err) {
+            console.error('❌ DB Sync Failed:', err);
+            // alert('프로필은 로컬에 저장되었으나, 서버 동기화에 실패했습니다.'); // Optional: suppress to avoid annoying user
+        }
+    })();
 
     closeProfileModal();
     updateUserStatusUI();
@@ -194,10 +325,6 @@ function saveProfileData() {
     const activeTab = document.querySelector('.nav-item.active');
     if (activeTab && activeTab.dataset.tab === 'stage1' && typeof renderStage1 === 'function') {
         const container = document.getElementById('contentContainer');
-        // Simple refresh logic: re-render stage 1
-        // Ideally we might just update the components, but full re-render is safer for now
-        // But renderStage1 creates a fresh UI, so it might reset selection. 
-        // Let's just try to update the detail view if a univ is selected.
         if (stage1State && stage1State.selectedUnivId) {
             renderUnivDetail(stage1State.selectedUnivId);
         }
@@ -207,8 +334,6 @@ function saveProfileData() {
 }
 
 function updateUserStatusUI() {
-    // This function can be implemented in app.js or here
-    // Currently app.js doesn't seem to export it, so we check if global exists
     if (window.loadUserStatus) {
         window.loadUserStatus();
     }
