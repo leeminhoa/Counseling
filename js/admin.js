@@ -49,35 +49,77 @@ function renderAdmin(container) {
 
                         <!-- Right: Parameters -->
                         <div class="admin-col props-col">
-                            <div class="card param-card">
-                                <h3>Parameters</h3>
-                                <div class="param-item">
-                                    <div class="param-info">
+                            <div class="card param-card" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                                <h3><i class="fa-solid fa-sliders"></i> Parameters</h3>
+                                
+                                <!-- AI Model -->
+                                <div class="form-group">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                        <label style="font-weight: 600;"><i class="fa-solid fa-microchip"></i> AI Model</label>
+                                        <button id="fetchModelsBtn" class="btn-text" style="font-size: 0.8rem; color: var(--primary-color);">
+                                            <i class="fa-solid fa-rotate"></i> 갱신
+                                        </button>
+                                    </div>
+                                    <div style="position: relative;">
+                                        <select id="modelSelect" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-app); appearance: none;">
+                                            <option value="${settings.geminiModel || 'gemini-3-pro-preview'}">${settings.geminiModel || 'Gemini 3 Pro Preview (Default)'}</option>
+                                        </select>
+                                        <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-sub);">
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                    <p class="param-desc">사용할 생성형 AI 모델 엔진을 선택합니다. (Gemini 3.0 권장)</p>
+                                </div>
+
+                                <!-- Temperature -->
+                                <div class="form-group">
+                                    <div style="display: flex; justify-content: space-between;">
                                         <label>Temperature</label>
-                                        <span id="tempVal">${settings.temperature || 0.7}</span>
+                                        <span id="tempVal" style="color: var(--primary-color); font-weight: 600;">${settings.temperature || 0.7}</span>
                                     </div>
                                     <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="${settings.temperature || 0.7}">
-                                    <p class="param-desc">높을수록 창의적이고, 낮을수록 정교한 결과가 나옵니다.</p>
+                                    <p class="param-desc">
+                                        답변의 <b>창의성</b>을 조절합니다.<br>
+                                        (0.0: 정적/논리적 분석 <-> 1.0: 다양/창의적 아이디어)
+                                    </p>
                                 </div>
 
-                                <div class="param-separator"></div>
-
+                                <!-- Top P -->
                                 <div class="form-group">
-                                    <label>Supabase Project URL</label>
-                                    <input type="text" id="sbUrlInput" value="${settings.supabaseUrl || ''}" placeholder="https://xyz.supabase.co">
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <label>Top P (Nucleus)</label>
+                                        <span id="topPValue" style="color: var(--primary-color); font-weight: 600;">${settings.topP || 0.95}</span>
+                                    </div>
+                                    <input type="range" id="topPInput" min="0" max="1" step="0.05" value="${settings.topP || 0.95}">
+                                    <p class="param-desc">
+                                        확률 분포의 상위 <b>P%</b> 토큰만 고려합니다.<br>
+                                        높을수록 더 다양한 어휘와 표현을 사용합니다.
+                                    </p>
                                 </div>
 
+                                <!-- Top K -->
                                 <div class="form-group">
-                                    <label>Supabase Anon Key</label>
-                                    <input type="password" id="sbKeyInput" value="${settings.supabaseKey || ''}" placeholder="eyJhbGciOiJIUzI1NiI...">
+                                    <label style="display: flex; justify-content: space-between;">
+                                        Top K <span style="font-size: 0.8rem; color: #999;">(1-100)</span>
+                                    </label>
+                                    <input type="number" id="topKInput" class="form-input" style="width: 100%; padding: 0.5rem;" value="${settings.topK || 40}" min="1" max="100">
+                                    <p class="param-desc">
+                                        확률 상위 <b>K개</b>의 후보 단어 중에서 선택합니다.<br>
+                                        낮을수록 일관성 있고 안정적인 답변이 나옵니다.
+                                    </p>
                                 </div>
 
-                                <div class="param-separator"></div>
-
+                                <!-- Max Tokens -->
                                 <div class="form-group">
-                                    <label>Gemini API Key</label>
-                                    <input type="password" id="apiKeyInput" value="${settings.geminiKey || settings.apiKey || ''}" placeholder="AIzaSy...">
-                                    <p class="param-desc">입력하신 키는 브라우저 로컬 스토리지에만 보관됩니다.</p>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <label>Max Output Tokens</label>
+                                        <span id="maxTokensValue" style="color: var(--primary-color); font-weight: 600;">${settings.maxOutputTokens || 2048}</span>
+                                    </div>
+                                    <input type="range" id="maxTokensInput" min="100" max="8192" step="100" value="${settings.maxOutputTokens || 2048}">
+                                    <p class="param-desc">
+                                        한 번의 응답에서 생성할 <b>최대 길이</b>를 제한합니다.<br>
+                                        (입시 컨설팅은 긴 호흡이 필요하므로 2048 이상 권장)
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -95,6 +137,33 @@ function renderAdmin(container) {
     });
 
     document.getElementById('saveAdminBtn').addEventListener('click', saveAdminSettings);
+
+    // Model Fetch Logic
+    const fetchBtn = document.getElementById('fetchModelsBtn');
+    if (fetchBtn) {
+        fetchBtn.addEventListener('click', async () => {
+            const select = document.getElementById('modelSelect');
+            const originalText = fetchBtn.innerHTML;
+            fetchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            try {
+                const models = await aiService.getAvailableModels();
+                select.innerHTML = ''; // Clear
+                models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.name;
+                    opt.textContent = m.displayName;
+                    opt.title = m.description;
+                    if (m.name === (settings.geminiModel || 'gemini-2.5-pro')) opt.selected = true;
+                    select.appendChild(opt);
+                });
+                alert('모델 목록을 성공적으로 가져왔습니다.');
+            } catch (e) {
+                alert('모델 목록 가져오기 실패: ' + e.message);
+            } finally {
+                fetchBtn.innerHTML = originalText;
+            }
+        });
+    }
 }
 
 function saveAdminSettings() {
@@ -102,6 +171,7 @@ function saveAdminSettings() {
     const sbKey = document.getElementById('sbKeyInput').value;
     const apiKey = document.getElementById('apiKeyInput').value;
     const temp = document.getElementById('tempSlider').value;
+    const model = document.getElementById('modelSelect').value;
 
     // Update LocalStorage (aiService will read from appSettings.geminiKey)
     const data = dataManager.getData();
@@ -111,6 +181,7 @@ function saveAdminSettings() {
         supabaseKey: sbKey,
         geminiKey: apiKey,
         temperature: temp,
+        geminiModel: model, // Save selected model
         systemPrompt: document.getElementById('sysPrompt').value,
         userPromptTemplate: document.getElementById('userPrompt').value
     };

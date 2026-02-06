@@ -4,46 +4,120 @@
  */
 class AIService {
     constructor() {
-        this.MODEL = 'gemini-1.5-flash'; // Updated to stable model version
-        this.API_KEY = ''; // Removed hardcoded key for security
+        this.MODEL = 'gemini-3-pro-preview'; // Default updated to 3 Pro
+        this.apiKey = null; // Cache key
+    }
+
+    async ensureApiKey() {
+        if (this.apiKey) return this.apiKey;
+
+        const settings = dataManager.getData().appSettings || {};
+
+        // 1. Try DB first (Primary)
+        try {
+            const dbKey = await dbService.getApiKey('llm_api');
+            if (dbKey) {
+                this.apiKey = dbKey;
+                console.log('✅ API Key fetched from DB');
+                return this.apiKey;
+            }
+        } catch (e) {
+            console.warn('Failed to fetch key from DB:', e);
+        }
+
+        // 2. Fallback to Local Settings (Secondary - Dev/Override)
+        if (settings.geminiKey) {
+            this.apiKey = settings.geminiKey;
+            console.log('⚠️ API Key used from Local Settings (Fallback)');
+            return this.apiKey;
+        }
+
+        throw new Error('Google Gemini API Key가 설정되지 않았습니다. (DB common_info[llm_api] 또는 설정 확인 필요)');
+    }
+
+    /**
+     * Get Available Gemini Models
+     * Returns all models containing "gemini" in their name, sorted by version (descending).
+     */
+    async getAvailableModels() {
+        try {
+            const apiKey = await this.ensureApiKey();
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch models: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Filter: Show Gemini 2.5/3.x and Gemma 3 models
+            // Exclude internal/noise models (Nano, Banana, TTS, Audio)
+            const models = data.models.filter(m => {
+                const name = m.name.toLowerCase();
+                const displayName = (m.displayName || '').toLowerCase();
+
+                const isFamilyMatch = name.includes('gemini') || name.includes('gemma');
+                const isVersionMatch = name.includes('2.5') || name.includes('3'); // Matches "3.0", "3", "3-pro"
+
+                // Strict Exclusion List
+                const isExcluded = name.includes('banana') || name.includes('nano') ||
+                    name.includes('tts') || name.includes('audio') ||
+                    displayName.includes('banana') || displayName.includes('nano') ||
+                    displayName.includes('tts') || displayName.includes('audio');
+
+                return isFamilyMatch && isVersionMatch && !isExcluded;
+            }).map(m => ({
+                name: m.name.replace('models/', ''),
+                displayName: m.displayName,
+                description: m.description,
+                version: m.version || ''
+            }));
+
+            // Sort: Newest versions first (Descending)
+            models.sort((a, b) => {
+                const getVer = (name) => {
+                    const match = name.match(/(\d+\.\d+)/);
+                    return match ? parseFloat(match[1]) : 0;
+                };
+                return getVer(b.name) - getVer(a.name);
+            });
+
+            return models;
+
+        } catch (error) {
+            console.error('Error fetching models:', error);
+            // Fallback
+            return [
+                { name: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
+                { name: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' }
+            ];
+        }
     }
 
     /**
      * Chatbot API Call
-     * @param {string} userMessage User's input message
-     * @param {Array} history Chat history [{role: 'user'|'model', parts: [{text: '...'}]}]
      */
     async chat(userMessage, history = []) {
+        const apiKey = await this.ensureApiKey();
         const settings = dataManager.getData().appSettings || {};
-        const apiKey = settings.geminiKey || this.API_KEY;
         const temperature = parseFloat(settings.temperature) || 0.7;
-
-        if (!apiKey) {
-            throw new Error('Google Gemini API Key가 설정되지 않았습니다. 설정에서 키를 입력해주세요.');
-        }
-
         const systemPrompt = settings.systemPrompt || "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요.";
 
         console.group('🤖 Gemini AI Chat Request');
         console.log('Model:', this.MODEL);
-        console.log('Temp:', temperature);
         console.log('Message:', userMessage);
         console.groupEnd();
 
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [
                         ...history,
                         { role: 'user', parts: [{ text: userMessage }] }
                     ],
-                    systemInstruction: {
-                        parts: [{ text: systemPrompt }]
-                    },
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
                         temperature: temperature,
                         maxOutputTokens: 1000,
@@ -58,9 +132,7 @@ class AIService {
             }
 
             const data = await response.json();
-            const reply = data.candidates[0].content.parts[0].text;
-
-            return reply;
+            return data.candidates[0].content.parts[0].text;
 
         } catch (error) {
             console.error('Chat Service Error:', error);
@@ -70,16 +142,11 @@ class AIService {
 
     /**
      * 탐구 주제 및 가이드 생성 (Stage 2)
-     * @param {Object} context { student, target }
      */
     async generateExplorationGuide(context) {
+        const apiKey = await this.ensureApiKey();
         const settings = dataManager.getData().appSettings || {};
-        const apiKey = settings.geminiKey || this.API_KEY;
         const temperature = parseFloat(settings.temperature) || 0.7;
-
-        if (!apiKey) {
-            throw new Error('Google Gemini API Key가 설정되지 않았습니다. 설정에서 키를 입력해주세요.');
-        }
 
         const { student, target } = context;
 
@@ -111,49 +178,34 @@ class AIService {
             .replace('{{gpa}}', student.gpa)
             .replace('{{subjects}}', student.completedSubjects.join(', ') || '정보 없음')
             .replace('{{target_univ}}', target.univ)
-            .replace('{{major}}', target.major) // Legacy support for admin template
+            .replace('{{major}}', target.major) // Legacy support
             .replace('{{target_major}}', target.major)
             .replace('{{target_recommended}}', target.recommendedSubjects.join(', '));
 
-        // Ensure JSON format instructions exist if user deleted them
-        if (!userPrompt.includes('JSON')) {
-            userPrompt += `\n\n[답변 형식]\n다음 JSON 형식을 반드시 지켜주세요:\n{\n  "topic": "...",\n  "rationale": "...",\n  "background": "...",\n  "direction": "...",\n  "books": [{"title": "...", "author": "...", "desc": "..."}],\n  "keywords": [...]\n}`;
-        }
-
-        // Final fallback for json_format variable if it exists in template
         const jsonFormatStructure = `{
-  "topic": "주제 명칭 (구체적이고 학술적인 제목)",
-  "rationale": "주제 선정 논리 (과목과 학과를 연결하는 CoT)",
-  "background": "탐구 배경 및 필요성 (2~3문장)",
-  "direction": "1. [기초 조사] ...\\n2. [심화 분석] ...\\n3. [결론 도출] ...",
+  "topic": "주제 명칭",
+  "rationale": "주제 선정 논리",
+  "background": "탐구 배경",
+  "direction": "탐구 방향",
   "books": [
-    { "title": "도서명", "author": "저자", "desc": "추천 이유(한 줄)" },
-    { "title": "도서명", "author": "저자", "desc": "추천 이유(한 줄)" }
+    { "title": "도서명", "author": "저자", "desc": "추천 이유" }
   ],
-  "keywords": ["키워드1", "키워드2", "키워드3", "키워드4"]
+  "keywords": ["키워드"]
 }`;
         userPrompt = userPrompt.replace('{{json_format}}', jsonFormatStructure);
 
         console.group('🤖 Gemini AI Request');
-        console.log('Model:', this.MODEL);
-        console.log('System Prompt:', systemPrompt);
-        console.log('User Prompt:', userPrompt);
-        console.log('Temperature:', temperature);
+        console.log('%c Model:', 'color: #10B981; font-weight: bold;', modelName); // Highlighted Log
+        console.log('Prompt:', userPrompt);
         console.groupEnd();
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: userPrompt }] // System prompt moved to systemInstruction for better performance in v1beta/1.5
-                    }],
-                    systemInstruction: {
-                        parts: [{ text: systemPrompt }]
-                    },
+                    contents: [{ parts: [{ text: userPrompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
                         temperature: temperature,
                         responseMimeType: "application/json"
@@ -163,29 +215,18 @@ class AIService {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.group('❌ Gemini API Error');
-                console.error('Status:', response.status);
-                console.error('Error Data:', errorData);
-                console.groupEnd();
                 throw new Error(errorData.error?.message || 'Gemini API 호출에 실패했습니다.');
             }
 
             const data = await response.json();
             let text = data.candidates[0].content.parts[0].text;
 
-            console.group('✅ Gemini AI Response');
-            console.log('Raw Text:', text);
-
-            // Extract JSON from potential code blocks
+            // Extract JSON
             const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                text = jsonMatch[0];
-            }
+            if (jsonMatch) text = jsonMatch[0];
 
             const parsedData = JSON.parse(text);
-            console.log('Parsed Data:', parsedData);
-            console.groupEnd();
-
+            console.log('AI Response:', parsedData);
             return parsedData;
 
         } catch (error) {
