@@ -157,9 +157,22 @@ function displayAIResult(data, container) {
             background = `[강점] ${data.student_analysis.strength}\n[약점] ${data.student_analysis.weakness}`;
         }
 
-        // Direction fallback
         if (!direction) {
             direction = `관련 교과: ${guide.related_subject}\n세부 내용: ${guide.content || guide.description || '내용 없음'}`;
+        }
+    }
+
+    // Detect Schema C (Flat with different keys: motive, methodology)
+    if (!topic && (data.exploration_motive || data.methodology)) {
+        topic = data.topic || 'AI 추천 탐구 주제'; // Fallback title
+        rationale = data.exploration_motive || data.rationale || '';
+
+        // Background defaults
+        if (!background) background = data.exploration_motive || '';
+
+        // Direction from methodology array
+        if (!direction && data.methodology) {
+            direction = Array.isArray(data.methodology) ? data.methodology.join('\n') : data.methodology;
         }
     }
 
