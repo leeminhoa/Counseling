@@ -138,14 +138,50 @@ async function startAIGeneration(container) {
 }
 
 function displayAIResult(data, container) {
-    // Robust Data Handling (Defaults)
-    const keywords = Array.isArray(data.keywords) ? data.keywords : (data.keywords ? [data.keywords] : []);
-    const books = Array.isArray(data.books) ? data.books : (data.book ? [{ title: data.book, author: '', desc: '추천 도서' }] : []);
-    const direction = data.direction || '탐구 방향에 대한 내용이 없습니다.';
-    const background = data.background || '탐구 배경에 대한 내용이 없습니다.';
-    const rationale = data.rationale || '';
-    const topic = data.topic || '주제 생성 실패';
+    // --- Data Adapter (Schema A vs Schema B) ---
+    let topic = data.topic;
+    let rationale = data.rationale;
+    let background = data.background;
+    let direction = data.direction;
+    let books = data.books;
+    let keywords = data.keywords;
 
+    // Detect Schema B (Complex Report)
+    if (!topic && data.exploration_guides && data.exploration_guides.length > 0) {
+        const guide = data.exploration_guides[0];
+        topic = guide.topic;
+        rationale = data.consultant_comment || guide.explanation; // Fallback
+
+        // Background fallback from student analysis
+        if (!background && data.student_analysis) {
+            background = `[강점] ${data.student_analysis.strength}\n[약점] ${data.student_analysis.weakness}`;
+        }
+
+        // Direction fallback
+        if (!direction) {
+            direction = `관련 교과: ${guide.related_subject}\n세부 내용: ${guide.content || guide.description || '내용 없음'}`;
+        }
+    }
+
+    // Book Adapter (Object vs String)
+    if (data.recommended_books && (!books || books.length === 0)) {
+        books = data.recommended_books.map(b => {
+            if (typeof b === 'string') {
+                return { title: b, author: '', desc: '추천 도서' };
+            }
+            return b;
+        });
+    }
+
+    // Final Robust Defaults
+    keywords = Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []);
+    books = Array.isArray(books) ? books : [];
+    direction = direction || '탐구 방향에 대한 내용이 없습니다.';
+    background = background || '탐구 배경에 대한 내용이 없습니다.';
+    rationale = rationale || '';
+    topic = topic || '주제 생성 실패';
+
+    // UI Rendering
     container.innerHTML = `
         <div class="card result-card topic-card" id="pdf-area" style="grid-column: 1 / -1;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
