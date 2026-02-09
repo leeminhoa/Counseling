@@ -161,7 +161,7 @@ class AIService {
         const { student, target } = context;
 
         const defaultSystemPrompt = "당신은 대한민국 대학 입시 전문 컨설턴트입니다. 학생의 생활기록부 '세부능력 및 특기사항(세특)'에 기재할 수 있는 수준 높고 창의적인 심화 탐구 주제를 제안하는 것이 임무입니다.";
-        const systemPrompt = settings.systemPrompt || defaultSystemPrompt;
+        let systemPrompt = settings.systemPrompt || defaultSystemPrompt;
 
         const defaultUserPromptTemplate = `
 [학생 정보]
