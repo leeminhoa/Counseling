@@ -152,9 +152,27 @@ function renderAdmin(container) {
     // Event Listeners
     const tempSlider = document.getElementById('tempSlider');
     const tempVal = document.getElementById('tempVal');
-    tempSlider.addEventListener('input', (e) => {
-        tempVal.innerText = e.target.value;
-    });
+    if (tempSlider && tempVal) {
+        tempSlider.addEventListener('input', (e) => {
+            tempVal.innerText = e.target.value;
+        });
+    }
+
+    const topPInput = document.getElementById('topPInput');
+    const topPValue = document.getElementById('topPValue');
+    if (topPInput && topPValue) {
+        topPInput.addEventListener('input', (e) => {
+            topPValue.innerText = e.target.value;
+        });
+    }
+
+    const maxTokensInput = document.getElementById('maxTokensInput');
+    const maxTokensValue = document.getElementById('maxTokensValue');
+    if (maxTokensInput && maxTokensValue) {
+        maxTokensInput.addEventListener('input', (e) => {
+            maxTokensValue.innerText = e.target.value;
+        });
+    }
 
     document.getElementById('saveAdminBtn').addEventListener('click', saveAdminSettings);
 
@@ -173,7 +191,7 @@ function renderAdmin(container) {
                     opt.value = m.name;
                     opt.textContent = m.displayName;
                     opt.title = m.description;
-                    if (m.name === (settings.geminiModel || 'gemini-2.5-pro')) opt.selected = true;
+                    if (m.name === (settings.geminiModel || 'gemini-3-pro-preview')) opt.selected = true;
                     select.appendChild(opt);
                 });
                 alert('모델 목록을 성공적으로 가져왔습니다.');
@@ -187,27 +205,39 @@ function renderAdmin(container) {
 }
 
 function saveAdminSettings() {
-    const sbUrl = document.getElementById('sbUrlInput').value;
-    const sbKey = document.getElementById('sbKeyInput').value;
-    const apiKey = document.getElementById('apiKeyInput').value;
-    const temp = document.getElementById('tempSlider').value;
-    const model = document.getElementById('modelSelect').value;
-
-    // Update LocalStorage (aiService will read from appSettings.geminiKey)
+    // Safely get values, defaulting to existing or empty if not found in DOM
     const data = dataManager.getData();
-    data.appSettings = {
-        ...data.appSettings,
-        supabaseUrl: sbUrl,
-        supabaseKey: sbKey,
-        geminiKey: apiKey,
-        temperature: temp,
-        geminiModel: model, // Save selected model
-        systemPrompt: document.getElementById('sysPrompt').value,
-        userPromptTemplate: document.getElementById('userPrompt').value
+    const existingSettings = data.appSettings || {};
+
+    const sbUrlInput = document.getElementById('sbUrlInput');
+    const sbKeyInput = document.getElementById('sbKeyInput');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const tempInput = document.getElementById('tempSlider');
+    const topPInput = document.getElementById('topPInput');
+    const topKInput = document.getElementById('topKInput');
+    const maxTokensInput = document.getElementById('maxTokensInput');
+    const modelInput = document.getElementById('modelSelect');
+    const sysPromptInput = document.getElementById('sysPrompt');
+    const userPromptInput = document.getElementById('userPrompt');
+
+    const newSettings = {
+        ...existingSettings,
+        supabaseUrl: sbUrlInput ? sbUrlInput.value : existingSettings.supabaseUrl,
+        supabaseKey: sbKeyInput ? sbKeyInput.value : existingSettings.supabaseKey,
+        geminiKey: apiKeyInput ? apiKeyInput.value : existingSettings.geminiKey,
+        temperature: tempInput ? tempInput.value : existingSettings.temperature,
+        topP: topPInput ? topPInput.value : existingSettings.topP,
+        topK: topKInput ? topKInput.value : existingSettings.topK,
+        maxOutputTokens: maxTokensInput ? maxTokensInput.value : existingSettings.maxOutputTokens,
+        geminiModel: modelInput ? modelInput.value : existingSettings.geminiModel,
+        systemPrompt: sysPromptInput ? sysPromptInput.value : existingSettings.systemPrompt,
+        userPromptTemplate: userPromptInput ? userPromptInput.value : existingSettings.userPromptTemplate
     };
+
+    data.appSettings = newSettings;
     dataManager.saveData(data);
 
-    // Re-init DB Client
+    // Re-init DB Client if needed (though DB keys usually don't change here anymore)
     dbService.initClient();
 
     alert('설정이 성공적으로 저장되었습니다.');
