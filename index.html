@@ -60,6 +60,19 @@
                     <i class="fa-solid fa-sliders"></i>
                     <span>설정</span>
                 </li>
+                <li class="nav-item logout-btn" onclick="resetCounselingSession()"
+                    style="margin-top: auto; color: #F59E0B;">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>상담 초기화</span>
+                </li>
+                <li class="nav-item" id="counselorProfileDisplay"
+                    style="pointer-events: none; opacity: 0.8; font-size: 0.85rem; padding: 0.5rem 1rem;">
+                    <!-- Injected by JS -->
+                </li>
+                <li class="nav-item logout-btn" onclick="dbService.logout()" style="color: #EF4444;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>로그아웃</span>
+                </li>
             </ul>
         </nav>
 

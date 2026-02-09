@@ -9,6 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function initApp() {
     console.log('App Initialized');
 
+    // 0. Check Session (Counselor Login)
+    const session = dbService.checkSession();
+    if (!session) {
+        window.location.replace('login.html');
+        return; // Stop initialization
+    }
+
+
     // 탭 네비게이션 이벤트 연결
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -30,7 +38,29 @@ function initApp() {
             if (typeof openProfileModal === 'function') openProfileModal();
         }, 800);
     }
+
+    // [NEW] Display Counselor Info
+    const counselorSession = dbService.checkSession();
+    if (counselorSession) {
+        const displayEl = document.getElementById('counselorProfileDisplay');
+        if (displayEl) {
+            displayEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="font-weight: 700; color: var(--text-main);">${counselorSession.name || '상담사'}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-sub);">${counselorSession.email}</span>
+                </div>
+            `;
+        }
+    }
 }
+
+// [NEW] Reset Counseling Session
+window.resetCounselingSession = () => {
+    if (confirm('현재 상담 내용을 모두 초기화하시겠습니까?\n입력된 학생 정보와 상담 내역이 초기화됩니다.')) {
+        dataManager.resetData();
+        window.location.reload();
+    }
+};
 
 function handleTabChange(tabName) {
     // 1. Update Sidebar UI

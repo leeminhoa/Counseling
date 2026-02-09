@@ -12,8 +12,11 @@ function renderAdmin(container) {
             <div class="admin-sidebar">
                 <h3 class="admin-title">Settings</h3>
                 <div class="admin-nav">
-                    <div class="admin-nav-item active"><i class="fa-solid fa-code"></i> Prompt Control</div>
-                    <div class="admin-nav-item"><i class="fa-solid fa-key"></i> API Keys</div>
+                    <div class="admin-nav-item active" onclick="switchAdminTab('general')"><i class="fa-solid fa-code"></i> Prompt Control</div>
+                    <div class="admin-nav-item" onclick="switchAdminTab('api')"><i class="fa-solid fa-key"></i> API Keys</div>
+                     ${(settings.permission === 1 || settings.permission === 'master' || (profile.appSettings && profile.appSettings.permission === 'master') || (dataManager.currentCounselor && (dataManager.currentCounselor.permission === 1 || dataManager.currentCounselor.permission === 'master'))) ? `
+                    <div class="admin-nav-item" onclick="switchAdminTab('counselors')"><i class="fa-solid fa-user-shield"></i> 계정 관리</div>
+                    ` : ''}
                 </div>
             </div>
 
@@ -126,8 +129,115 @@ function renderAdmin(container) {
                     </div>
                 </div>
             </div>
+                </div>
+            </div>
+            
+            <!-- Tab: Counselors (Master Only) -->
+            <div id="adminTab_counselors" class="admin-tab-content" style="display:none;">
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2>상담사 계정 관리</h2>
+                    </div>
+                    
+                    <div class="card" style="max-width: 500px;">
+                        <h3 style="margin-bottom: 1.5rem;">새 상담사 등록</h3>
+                        <div class="form-group">
+                            <label>이름</label>
+                            <input type="text" id="new_counselor_name" class="styled-input" placeholder="상담사 이름">
+                        </div>
+                        <div class="form-group">
+                            <label>이메일</label>
+                            <input type="email" id="new_counselor_email" class="styled-input" placeholder="이메일 주소">
+                        </div>
+                         <div class="form-group">
+                            <label>비밀번호</label>
+                            <input type="password" id="new_counselor_password" class="styled-input" placeholder="비밀번호">
+                        </div>
+                        <button class="btn-primary" onclick="handleCreateCounselor()" style="width: 100%;">
+                            <i class="fa-solid fa-user-plus"></i> 계정 생성
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     `;
+
+    // ... (rest of the code)
+
+    window.switchAdminTab = (tabName) => {
+        // Sidebar highlighting
+        document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
+        // This is a simple approximation. Better to use dataset or ids.
+        // Let's assume order: general, api, counselors
+        const items = document.querySelectorAll('.admin-nav-item');
+        if (tabName === 'general' && items[0]) items[0].classList.add('active');
+        if (tabName === 'api' && items[1]) items[1].classList.add('active');
+        if (tabName === 'counselors' && items[2]) items[2].classList.add('active');
+
+        // Content switching
+        document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+
+        // 'general' is the default view with Prompt & Params
+        if (tabName === 'general') {
+            document.querySelector('.admin-main .admin-section').style.display = 'block';
+            // Hide others? Wait, my DOM structure is a bit shared.
+            // The original code had everything inside .admin-main > .admin-section
+            // I need to structure it so I can toggle.
+            // Let's wrap the original content in a tab div if possible, OR just hide/show what we added.
+
+            // Re-reading original structure:
+            // .admin-main > .admin-section > .section-header + .admin-grid
+
+            // So for 'general', show the original .admin-section
+            const originalSection = document.querySelector('.admin-main > .admin-section:not(#adminTab_counselors)');
+            if (originalSection) originalSection.style.display = 'block';
+
+            const counselorTab = document.getElementById('adminTab_counselors');
+            if (counselorTab) counselorTab.style.display = 'none';
+
+        } else if (tabName === 'counselors') {
+            const originalSection = document.querySelector('.admin-main > .admin-section:not(#adminTab_counselors)');
+            if (originalSection) originalSection.style.display = 'none';
+
+            const counselorTab = document.getElementById('adminTab_counselors');
+            if (counselorTab) counselorTab.style.display = 'block';
+        } else if (tabName === 'api') {
+            alert('API Key 관리는 준비 중입니다.');
+        }
+    };
+
+    window.handleCreateCounselor = async () => {
+        const name = document.getElementById('new_counselor_name').value;
+        const email = document.getElementById('new_counselor_email').value;
+        const password = document.getElementById('new_counselor_password').value;
+
+        if (!name || !email || !password) {
+            alert('모든 필드를 입력해주세요.');
+            return;
+        }
+
+        if (!confirm(`\${name} 상담사 계정을 생성하시겠습니까?`)) return;
+
+        const btn = document.querySelector('button[onclick="handleCreateCounselor()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 생성 중...';
+        btn.disabled = true;
+
+        const result = await dbService.createCounselor(email, password, name);
+
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        if (result.success) {
+            alert(`계정이 성공적으로 생성되었습니다.\n이메일: ${email}`);
+            document.getElementById('new_counselor_name').value = '';
+            document.getElementById('new_counselor_email').value = '';
+            document.getElementById('new_counselor_password').value = '';
+        } else {
+            alert('계정 생성 실패: ' + result.message);
+        }
+    };
 
     // Initialize UI from Settings
     if (settings) {

@@ -10,7 +10,10 @@ class DBService {
     }
 
     initClient() {
-        const settings = dataManager.getData().appSettings || {};
+        // Robust check for dataManager
+        const settings = (typeof dataManager !== 'undefined' && dataManager.getData)
+            ? (dataManager.getData()?.appSettings || {})
+            : {};
 
         // Fixed Connection Details (Hidden from UI)
         const url = 'https://ytpycfenjtmvzjsvjwds.supabase.co';
@@ -350,6 +353,129 @@ class DBService {
     /**
      * 학교 정보 조회 및 생성 (Upsert-like)
      */
+
+    // --- Counselor Login Methods ---
+
+    async loginCounselor(email, password) {
+        try {
+            const { data, error } = await this.client
+                .from('counselor')
+                .select('*')
+                .eq('email', email)
+                .eq('password', password) // Note: In production, use hashed passwords!
+                .single();
+
+            if (error) throw error;
+            if (!data) throw new Error('이메일 또는 비밀번호가 잘못되었습니다.');
+
+            // Save session
+            localStorage.setItem('counselor_session', JSON.stringify({
+                id: data.id,
+                name: data.name,
+                email: data.email,
+                permission: data.permission || 'counselor', // Default to counselor
+                loginTime: new Date().toISOString()
+            }));
+
+            return { success: true, user: data };
+        } catch (err) {
+            console.error('Login failed:', err);
+            return { success: false, message: err.message };
+        }
+    }
+
+    async createCounselor(email, password, name) {
+        try {
+            // check current session permission
+            const session = this.checkSession();
+            if (!session || (session.permission !== 'master' && session.permission !== 1)) {
+                throw new Error('권한이 없습니다 (Master Only).');
+            }
+
+            // Check if email already exists
+            const { data: existing } = await this.client
+                .from('counselor')
+                .select('id')
+                .eq('email', email)
+                .maybeSingle();
+
+            if (existing) throw new Error('이미 존재하는 이메일입니다.');
+
+            const { data, error } = await this.client
+                .from('counselor')
+                .insert([{
+                    email,
+                    password, // In production, hash this!
+                    name,
+                    permission: 2 // 2 = Counselor (1 = Master)
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+            return { success: true, data };
+        } catch (err) {
+            console.error('Create Counselor failed:', err);
+            return { success: false, message: err.message };
+        }
+    }
+
+    /**
+     * 상담 결과 DB 저장 (Counseling Result Sync)
+     */
+    async saveCounselingResult(studentId, resultData) {
+        try {
+            const session = this.checkSession();
+            // If no session, we might skip saving to DB or save as anonymous? 
+            // For now, let's assume session is required for DB save, or at least counselor_id is null.
+            const counselorId = session ? session.id : null;
+
+            if (!studentId) throw new Error('Student ID is required');
+
+            // Insert into counseling table
+            const payload = {
+                student_id: studentId,
+                counselor_id: counselorId,
+                desired_univ: resultData.univ ? resultData.univ.univ_name : '미정',
+                desired_major: resultData.univ ? resultData.univ.raw_major_name : '미정',
+                recommend_notes: resultData.aiResult, // Store JSON directly if column type is JSONB, otherwise stringify
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+                // Copy other fields if needed, e.g. from profile
+                desired_category: resultData.univ ? resultData.univ.category : '미정'
+            };
+
+            const { error } = await this.client
+                .from('counseling')
+                .insert([payload]);
+
+            if (error) throw error;
+            console.log('✅ Counseling Result Saved to DB');
+            return true;
+        } catch (err) {
+            console.error('❌ Save Counseling Result Failed:', err);
+            return false;
+        }
+    }
+
+    logout() {
+        localStorage.removeItem('counselor_session');
+        window.location.href = 'login.html';
+    }
+
+    checkSession() {
+        const session = localStorage.getItem('counselor_session');
+        if (!session) return null;
+        try {
+            return JSON.parse(session);
+        } catch (e) {
+            this.logout();
+            return null;
+        }
+    }
+
+    // --- End Login Methods ---
+
     async ensureSchool(schoolName) {
         if (!this.client || !schoolName) return null;
 

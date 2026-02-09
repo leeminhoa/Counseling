@@ -8,9 +8,9 @@ class DataManager {
         this.init();
     }
 
-    // 초기 데이터 구조 정의 (Schema)
     init() {
-        if (!localStorage.getItem(this.STORAGE_KEY)) {
+        const data = this.getData();
+        if (!data) {
             const initialSchema = {
                 studentProfile: {
                     name: '',
@@ -27,7 +27,6 @@ class DataManager {
                 consultingResults: [], // History of AI generated reports
                 appSettings: {
                     supabaseUrl: 'https://ytpycfenjtmvzjsvjwds.supabase.co',
-                    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cHljZmVuanRtdnpqc3Zqd2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NzAxMTgsImV4cCI6MjA4NTI0NjExOH0.-k0r-Ct3mof9I0iQHOiCptgCkiiVXksgH2q3Be79620',
                     geminiKey: '',
                     temperature: 0.7,
                     theme: 'light',
@@ -38,34 +37,62 @@ class DataManager {
         }
     }
 
+    resetData() {
+        const currentData = this.getData();
+        const initialSchema = {
+            studentProfile: {
+                name: '',
+                schoolName: '',
+                gpa: 0.0,
+                totalPercentile: 0.0,
+                targetMajor: '',
+                selectedUniversities: [],
+                subjects: [],
+                completedSubjects: [],
+                inprogressSubjects: [],
+                lastSelectedUniv: null
+            },
+            consultingResults: [], // Reset history for new student session
+            appSettings: currentData.appSettings || {} // Keep settings
+        };
+        this.saveData(initialSchema);
+        console.log('Use Data Reset Complete');
+    }
+
     getData() {
-        const data = JSON.parse(localStorage.getItem(this.STORAGE_KEY));
+        const dataStr = localStorage.getItem(this.STORAGE_KEY);
+        if (!dataStr) return null;
 
-        if (!data) return null;
+        try {
+            const data = JSON.parse(dataStr);
 
-        // Migrate old apiKey to geminiKey for backward compatibility
-        if (data.appSettings && data.appSettings.apiKey && !data.appSettings.geminiKey) {
-            data.appSettings.geminiKey = data.appSettings.apiKey;
-        }
-
-        // Migrate studentProfile to have new subject arrays
-        if (data.studentProfile) {
-            if (!data.studentProfile.completedSubjects) data.studentProfile.completedSubjects = [];
-            if (!data.studentProfile.inprogressSubjects) data.studentProfile.inprogressSubjects = [];
-
-            // If legacy subjects exist but new ones don't, migrate them to completed
-            if (data.studentProfile.subjects && data.studentProfile.subjects.length > 0 && data.studentProfile.completedSubjects.length === 0) {
-                data.studentProfile.completedSubjects = [...data.studentProfile.subjects];
+            // Migrate old apiKey to geminiKey for backward compatibility
+            if (data.appSettings && data.appSettings.apiKey && !data.appSettings.geminiKey) {
+                data.appSettings.geminiKey = data.appSettings.apiKey;
             }
-        }
 
-        // Ensure consultingResults array exists
-        if (!data.consultingResults) {
-            data.consultingResults = [];
-        }
+            // Migrate studentProfile to have new subject arrays
+            if (data.studentProfile) {
+                if (!data.studentProfile.completedSubjects) data.studentProfile.completedSubjects = [];
+                if (!data.studentProfile.inprogressSubjects) data.studentProfile.inprogressSubjects = [];
 
-        this.saveData(data); // Save the migrated structure
-        return data;
+                // If legacy subjects exist but new ones don't, migrate them to completed
+                if (data.studentProfile.subjects && data.studentProfile.subjects.length > 0 && data.studentProfile.completedSubjects.length === 0) {
+                    data.studentProfile.completedSubjects = [...data.studentProfile.subjects];
+                }
+            }
+
+            // Ensure consultingResults array exists
+            if (!data.consultingResults) {
+                data.consultingResults = [];
+            }
+
+            this.saveData(data); // Save the migrated structure
+            return data;
+        } catch (e) {
+            console.error('Error parsing data:', e);
+            return null;
+        }
     }
 
     saveData(data) {
@@ -76,8 +103,10 @@ class DataManager {
 
     updateProfile(profileData) {
         const data = this.getData();
-        data.studentProfile = { ...data.studentProfile, ...profileData };
-        this.saveData(data);
+        if (data) {
+            data.studentProfile = { ...data.studentProfile, ...profileData };
+            this.saveData(data);
+        }
     }
 
     getProfile() {
@@ -93,6 +122,8 @@ class DataManager {
 
     saveConsultingResult(result) {
         const data = this.getData();
+        if (!data) return;
+
         const newResult = {
             id: Date.now(),
             createdAt: new Date().toISOString(),
@@ -100,6 +131,25 @@ class DataManager {
         };
         data.consultingResults.push(newResult);
         this.saveData(data);
+
+        // [NEW] Sync/Save to Database
+        if (window.dbService && result.univ) {
+            const profile = this.getProfile();
+            // Ensure we have a studentId. If not, try to create one.
+            if (profile) {
+                if (profile.studentId) {
+                    dbService.saveCounselingResult(profile.studentId, result);
+                } else {
+                    console.warn('Student ID missing during result save. Attempting to get it...');
+                    dbService.upsertStudent(profile).then(id => {
+                        if (id) {
+                            this.updateProfile({ studentId: id });
+                            dbService.saveCounselingResult(id, result);
+                        }
+                    });
+                }
+            }
+        }
     }
 }
 
