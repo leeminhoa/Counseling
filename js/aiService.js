@@ -98,18 +98,27 @@ class AIService {
      * Chatbot API Call
      */
     async chat(userMessage, history = []) {
-        const apiKey = await this.ensureApiKey();
-        const settings = dataManager.getData().appSettings || {};
-        const temperature = parseFloat(settings.temperature) || 0.7;
-        const systemPrompt = settings.systemPrompt || "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요.";
-
-        console.group('🤖 Gemini AI Chat Request');
-        console.log('Model:', this.MODEL);
-        console.log('Message:', userMessage);
-        console.groupEnd();
-
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`, {
+            const apiKey = await this.ensureApiKey();
+            const settings = dataManager.getData().appSettings || {};
+
+            // Dynamic Generation Config
+            const temperature = parseFloat(settings.temperature ?? 0.7);
+            const topP = parseFloat(settings.topP ?? 0.95);
+            const topK = parseInt(settings.topK ?? 40);
+            const maxOutputTokens = parseInt(settings.maxOutputTokens ?? 2048);
+
+            // Select Model (Saved > Default)
+            const modelName = settings.geminiModel || this.MODEL;
+            const systemPrompt = settings.systemPrompt || "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요.";
+
+            console.group('🤖 Gemini AI Chat Request');
+            console.log('Model:', modelName);
+            console.log('Params:', { temperature, topP, topK, maxOutputTokens });
+            console.groupEnd();
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -147,6 +156,7 @@ class AIService {
         const apiKey = await this.ensureApiKey();
         const settings = dataManager.getData().appSettings || {};
         const temperature = parseFloat(settings.temperature) || 0.7;
+        const modelName = settings.geminiModel || this.MODEL;
 
         const { student, target } = context;
 
@@ -177,10 +187,9 @@ class AIService {
         userPrompt = userPrompt
             .replace('{{gpa}}', student.gpa)
             .replace('{{subjects}}', student.completedSubjects.join(', ') || '정보 없음')
-            .replace('{{target_univ}}', target.univ)
-            .replace('{{major}}', target.major) // Legacy support
-            .replace('{{target_major}}', target.major)
-            .replace('{{target_recommended}}', target.recommendedSubjects.join(', '));
+            .replace('{{target_univ}}', student.targetUniv)
+            .replace('{{target_major}}', student.targetMajor)
+            .replace('{{target_recommended}}', context.target.recommendedSubjects.join(', '));
 
         const jsonFormatStructure = `{
   "topic": "주제 명칭",
@@ -195,45 +204,45 @@ class AIService {
         userPrompt = userPrompt.replace('{{json_format}}', jsonFormatStructure);
 
         console.group('🤖 Gemini AI Request');
-        console.log('%c Model:', 'color: #10B981; font-weight: bold;', modelName); // Highlighted Log
+        console.log('%c Model:', 'color: #10B981; font-weight: bold;', modelName);
         console.log('Prompt:', userPrompt);
         console.groupEnd();
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
-                method: 'POST',
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: userPrompt }] }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    generationConfig: {
-                        temperature: temperature,
-                        responseMimeType: "application/json"
-                    }
-                })
-            });
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    temperature: temperature,
+                    responseMimeType: "application/json"
+                }
+            })
+        });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || 'Gemini API 호출에 실패했습니다.');
-            }
-
-            const data = await response.json();
-            let text = data.candidates[0].content.parts[0].text;
-
-            // Extract JSON
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) text = jsonMatch[0];
-
-            const parsedData = JSON.parse(text);
-            console.log('AI Response:', parsedData);
-            return parsedData;
-
-        } catch (error) {
-            console.error('AI Service Error:', error);
-            throw error;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || 'Gemini API 호출에 실패했습니다.');
         }
+
+        const data = await response.json();
+        let text = data.candidates[0].content.parts[0].text;
+
+        // Extract JSON
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) text = jsonMatch[0];
+
+        const parsedData = JSON.parse(text);
+        console.log('AI Response:', parsedData);
+        return parsedData;
+
+    } catch(error) {
+        console.error('AI Service Error:', error);
+        throw error;
     }
+}
 }
 
 const aiService = new AIService();

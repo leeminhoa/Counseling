@@ -272,7 +272,7 @@ class DBService {
         if (!this.client) return [];
 
         const { data, error } = await this.client
-            .from('univ_dept_subjects') // or univ_major_map depending on schema design
+            .from('v_univ_dept_subjects') // Updated to use the correct view
             .select('canonical_major')
             .eq('top_category', category); // Assuming top_category matches
 

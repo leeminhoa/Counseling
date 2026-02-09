@@ -129,6 +129,26 @@ function renderAdmin(container) {
         </div>
     `;
 
+    // Initialize UI from Settings
+    if (settings) {
+        if (document.getElementById('tempSlider')) {
+            document.getElementById('tempSlider').value = settings.temperature || 0.7;
+            document.getElementById('tempVal').innerText = settings.temperature || 0.7;
+        }
+        if (document.getElementById('topPInput')) {
+            document.getElementById('topPInput').value = settings.topP || 0.95;
+            document.getElementById('topPValue').innerText = settings.topP || 0.95;
+        }
+        if (document.getElementById('topKInput')) {
+            document.getElementById('topKInput').value = settings.topK || 40;
+        }
+        if (document.getElementById('maxTokensInput')) {
+            document.getElementById('maxTokensInput').value = settings.maxOutputTokens || 2048;
+            document.getElementById('maxTokensValue').innerText = settings.maxOutputTokens || 2048;
+        }
+        // ... (Other initializations if any)
+    }
+
     // Event Listeners
     const tempSlider = document.getElementById('tempSlider');
     const tempVal = document.getElementById('tempVal');
