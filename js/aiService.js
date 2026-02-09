@@ -220,7 +220,8 @@ class AIService {
 
         console.group('🤖 Gemini AI Request');
         console.log('%c Model:', 'color: #10B981; font-weight: bold;', modelName);
-        console.log('Prompt:', userPrompt);
+        console.log('System Prompt:', systemPrompt);
+        console.log('User Prompt:', userPrompt);
         console.groupEnd();
 
         try {
