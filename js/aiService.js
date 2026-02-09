@@ -184,18 +184,27 @@ class AIService {
         let userPrompt = settings.userPromptTemplate || defaultUserPromptTemplate;
 
         // Dynamic Injection
-        // Dynamic Injection
         // Fix: Use correct context paths (context.target.univ/major)
         // Fix: Support both new {{target_major}} and legacy {{major}} placeholders
-        userPrompt = userPrompt
-            .replace('{{gpa}}', student.gpa)
-            .replace('{{subjects}}', student.completedSubjects.join(', ') || '정보 없음')
-            .replace('{{target_univ}}', target.univ)
-            .replace('{{target_major}}', target.major)
-            .replace('{{target_recommended}}', target.recommendedSubjects.join(', '))
-            // Legacy / User Template Support
-            .replace('{{univ}}', target.univ)
-            .replace('{{major}}', target.major);
+        // Fix: Use split/join or replaceAll for global replacement
+
+        console.log('AI Context for Prompt:', context);
+
+        const safeReplace = (text, key, value) => {
+            const val = value || '(정보 없음)';
+            return text.split(key).join(val);
+        };
+
+        userPrompt = safeReplace(userPrompt, '{{gpa}}', student.gpa);
+        userPrompt = safeReplace(userPrompt, '{{subjects}}', student.completedSubjects.join(', '));
+
+        userPrompt = safeReplace(userPrompt, '{{target_univ}}', target.univ);
+        userPrompt = safeReplace(userPrompt, '{{target_major}}', target.major);
+        userPrompt = safeReplace(userPrompt, '{{target_recommended}}', target.recommendedSubjects.join(', '));
+
+        // Legacy / User Template Support
+        userPrompt = safeReplace(userPrompt, '{{univ}}', target.univ);
+        userPrompt = safeReplace(userPrompt, '{{major}}', target.major);
 
         const jsonFormatStructure = `{
   "topic": "주제 명칭",
