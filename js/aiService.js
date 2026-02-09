@@ -246,13 +246,46 @@ class AIService {
             }
 
             const data = await response.json();
-            let text = data.candidates[0].content.parts[0].text;
+            const text = data.candidates[0].content.parts[0].text;
 
-            // Extract JSON
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) text = jsonMatch[0];
+            // --- Robust JSON Extraction ---
+            let parsedData = null;
 
-            const parsedData = JSON.parse(text);
+            const tryParse = (str) => {
+                try { return JSON.parse(str); } catch (e) { return null; }
+            };
+
+            // Strategy 1: Markdown Code Block
+            const mdMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (mdMatch) {
+                parsedData = tryParse(mdMatch[1]);
+            }
+
+            // Strategy 2: Direct Regex (Greedy) -> Retry with Backtracking
+            if (!parsedData) {
+                const firstOpen = text.indexOf('{');
+                let lastClose = text.lastIndexOf('}');
+
+                if (firstOpen !== -1 && lastClose !== -1) {
+                    // Try longest match first
+                    let candidate = text.substring(firstOpen, lastClose + 1);
+                    parsedData = tryParse(candidate);
+
+                    // Backtracking: If failed, try finding previous '}' (Handle trailing text with braces)
+                    while (!parsedData && lastClose > firstOpen) {
+                        lastClose = text.lastIndexOf('}', lastClose - 1);
+                        if (lastClose === -1) break;
+                        candidate = text.substring(firstOpen, lastClose + 1);
+                        parsedData = tryParse(candidate);
+                    }
+                }
+            }
+
+            if (!parsedData) {
+                console.error('Failed to parse JSON. Raw Text:', text);
+                throw new Error('AI 응답에서 유효한 JSON 데이터를 추출할 수 없습니다.');
+            }
+
             console.log('AI Response:', parsedData);
             return parsedData;
 
