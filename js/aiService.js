@@ -206,17 +206,32 @@ class AIService {
         userPrompt = safeReplace(userPrompt, '{{univ}}', target.univ);
         userPrompt = safeReplace(userPrompt, '{{major}}', target.major);
 
-        const jsonFormatStructure = `{
-  "topic": "주제 명칭",
-  "rationale": "주제 선정 논리",
-  "background": "탐구 배경",
-  "direction": "탐구 방향",
-  "books": [
-    { "title": "도서명", "author": "저자", "desc": "추천 이유" }
-  ],
-  "keywords": ["키워드"]
-}`;
-        userPrompt = userPrompt.replace('{{json_format}}', jsonFormatStructure);
+        // --- Enforce JSON Schema in System Prompt (Critical Fix) ---
+        const requiredSchema = JSON.stringify({
+            topic: "주제 명칭 (문장형 제목)",
+            rationale: "주제 선정 논리 (왜 이 주제가 학생에게 적합한지)",
+            background: "탐구 배경 (학문적 배경 및 필요성)",
+            direction: "탐구 방향 (구체적인 탐구 내용 및 방법)",
+            books: [
+                { title: "도서명", author: "저자", desc: "추천 이유" }
+            ],
+            keywords: ["키워드1", "키워드2", "키워드3"]
+        }, null, 2);
+
+        const systemSchemaInstruction = `
+\n[IMPORTANT]
+You MUST answer in the following JSON format. Do NOT deviate from this structure.
+Response Format:
+${requiredSchema}
+`;
+
+        // Append to System Prompt
+        systemPrompt += systemSchemaInstruction;
+
+        // Legacy Support for {{json_format}} in User Prompt (if used)
+        if (userPrompt.includes('{{json_format}}')) {
+            userPrompt = userPrompt.replace('{{json_format}}', ''); // Remove it as it's now in System Prompt
+        }
 
         console.group('🤖 Gemini AI Request');
         console.log('%c Model:', 'color: #10B981; font-weight: bold;', modelName);
