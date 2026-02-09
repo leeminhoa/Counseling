@@ -138,15 +138,20 @@ async function startAIGeneration(container) {
 }
 
 function displayAIResult(data, container) {
-    // Legacy support for 'book' string
-    const books = data.books || (data.book ? [{ title: data.book, author: '', desc: '목표 학과 관련 심화 지식을 확장하기 위한 추천 도서입니다.' }] : []);
+    // Robust Data Handling (Defaults)
+    const keywords = Array.isArray(data.keywords) ? data.keywords : (data.keywords ? [data.keywords] : []);
+    const books = Array.isArray(data.books) ? data.books : (data.book ? [{ title: data.book, author: '', desc: '추천 도서' }] : []);
+    const direction = data.direction || '탐구 방향에 대한 내용이 없습니다.';
+    const background = data.background || '탐구 배경에 대한 내용이 없습니다.';
+    const rationale = data.rationale || '';
+    const topic = data.topic || '주제 생성 실패';
 
     container.innerHTML = `
         <div class="card result-card topic-card" id="pdf-area" style="grid-column: 1 / -1;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
                 <div>
                      <span class="label" style="display: block; margin-bottom: 0.5rem;">최종 선정 탐구 주제</span>
-                     <h2 class="res-topic" style="font-size: 1.8rem; margin: 0;">${data.topic}</h2>
+                     <h2 class="res-topic" style="font-size: 1.8rem; margin: 0;">${topic}</h2>
                 </div>
                 <div class="result-actions no-pdf" style="display: flex; gap: 0.5rem;">
                     <button class="btn-secondary btn-sm" onclick="downloadPDF()" style="padding: 0.5rem 0.8rem;">
@@ -159,16 +164,16 @@ function displayAIResult(data, container) {
             </div>
             
             <div class="res-keywords" style="margin-bottom: 2rem;">
-                ${data.keywords.map(k => `<span class="k-badge" style="background: rgba(235, 244, 255, 1); color: #1E40AF; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.85rem; margin-right: 0.5rem;">#${k}</span>`).join('')}
+                ${keywords.map(k => `<span class="k-badge" style="background: rgba(235, 244, 255, 1); color: #1E40AF; padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.85rem; margin-right: 0.5rem;">#${k}</span>`).join('')}
             </div>
 
             <!-- Chain of Thought (Rationale) -->
-            ${data.rationale ? `
+            ${rationale ? `
             <div class="detail-section" style="margin-bottom: 2rem; background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 1rem 1.25rem; border-radius: 0 0.5rem 0.5rem 0;">
                 <h3 class="res-title" style="font-size: 1rem; color: #0369A1; margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.5rem;">
                     <i class="fa-solid fa-lightbulb"></i> 주제 선정 논리
                 </h3>
-                <p class="res-content" style="font-size: 0.95rem; color: #0C4A6E; line-height: 1.6; margin:0;">${data.rationale}</p>
+                <p class="res-content" style="font-size: 0.95rem; color: #0C4A6E; line-height: 1.6; margin:0;">${rationale}</p>
             </div>
             ` : ''}
             
@@ -177,13 +182,13 @@ function displayAIResult(data, container) {
             <!-- Background & Direction -->
             <div class="detail-section" style="margin-bottom: 2.5rem;">
                 <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;">1. 탐구 배경 및 필요성</h3>
-                <p class="res-content" style="line-height: 1.7; color: #475569;">${data.background}</p>
+                <p class="res-content" style="line-height: 1.7; color: #475569;">${background}</p>
             </div>
 
             <div class="detail-section" style="margin-bottom: 2.5rem;">
                 <h3 class="res-title" style="font-size: 1.2rem; color: #1E293B; margin-bottom: 1rem;">2. 구체적 탐구 방향</h3>
                 <div class="res-content res-list" style="line-height: 1.7; color: #475569;">
-                    ${data.direction.split('\n').map(l => `<p style="margin-bottom: 0.5rem;">${l}</p>`).join('')}
+                    ${direction.split('\n').map(l => `<p style="margin-bottom: 0.5rem;">${l}</p>`).join('')}
                 </div>
             </div>
 

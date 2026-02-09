@@ -45,21 +45,30 @@ async function renderStage1_2(container) {
         </div>
     `;
 
+    const majorGridRef = container.querySelector('#majorGrid') || document.getElementById('majorGrid');
+
     try {
         const majors = await dbService.getMajorsByCategory(selectedCategory);
-        renderMajors(majors);
+        renderMajors(majors, majorGridRef);
     } catch (error) {
         console.error('Major Fetch Error:', error);
-        document.getElementById('majorGrid').innerHTML = `
+        if (majorGridRef) {
+            majorGridRef.innerHTML = `
              <div class="error-state" style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #EF4444;">
                 <i class="fa-solid fa-triangle-exclamation"></i> 목록을 불러오는 중 오류가 발생했습니다.
             </div>
-        `;
+            `;
+        }
     }
 }
 
-function renderMajors(majors) {
-    const grid = document.getElementById('majorGrid');
+function renderMajors(majors, gridElement) {
+    const grid = gridElement || document.getElementById('majorGrid');
+
+    if (!grid) {
+        console.error('Major Grid Element Not Found');
+        return;
+    }
 
     if (!majors || majors.length === 0) {
         grid.innerHTML = '<div style="grid-column: 1/-1; padding: 2rem; text-align: center; color: #64748B;">해당 계열에 등록된 학부 데이터가 없습니다.</div>';

@@ -184,12 +184,18 @@ class AIService {
         let userPrompt = settings.userPromptTemplate || defaultUserPromptTemplate;
 
         // Dynamic Injection
+        // Dynamic Injection
+        // Fix: Use correct context paths (context.target.univ/major)
+        // Fix: Support both new {{target_major}} and legacy {{major}} placeholders
         userPrompt = userPrompt
             .replace('{{gpa}}', student.gpa)
             .replace('{{subjects}}', student.completedSubjects.join(', ') || '정보 없음')
-            .replace('{{target_univ}}', student.targetUniv)
-            .replace('{{target_major}}', student.targetMajor)
-            .replace('{{target_recommended}}', context.target.recommendedSubjects.join(', '));
+            .replace('{{target_univ}}', target.univ)
+            .replace('{{target_major}}', target.major)
+            .replace('{{target_recommended}}', target.recommendedSubjects.join(', '))
+            // Legacy / User Template Support
+            .replace('{{univ}}', target.univ)
+            .replace('{{major}}', target.major);
 
         const jsonFormatStructure = `{
   "topic": "주제 명칭",
