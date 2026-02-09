@@ -66,17 +66,17 @@ function renderMajors(majors) {
         return;
     }
 
-    grid.innerHTML = majors.map(major => `
-        <div class="major-card" onclick="selectMajor('${major.name}')">
+    grid.innerHTML = majors.map(major => {
+        const safeMajor = major.replace(/'/g, "\\'");
+        return `
+        <div class="major-card" onclick="selectMajor('${safeMajor}')">
             <div class="major-icon">
                 <i class="fa-solid fa-book-open"></i>
             </div>
-            <span class="major-name">${major.name}</span>
-            <span class="major-examples">
-                ${major.examples}
-            </span>
+            <span class="major-name">${major}</span>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function selectMajor(majorName) {

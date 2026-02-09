@@ -59,6 +59,11 @@ class DataManager {
             }
         }
 
+        // Ensure consultingResults array exists
+        if (!data.consultingResults) {
+            data.consultingResults = [];
+        }
+
         this.saveData(data); // Save the migrated structure
         return data;
     }

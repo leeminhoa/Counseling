@@ -210,39 +210,41 @@ class AIService {
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-            method: 'POST',
+
+            const response = await fetch(url, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: userPrompt }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    temperature: temperature,
-                    responseMimeType: "application/json"
-                }
-            })
-        });
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: userPrompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        temperature: temperature,
+                        responseMimeType: "application/json"
+                    }
+                })
+            });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error?.message || 'Gemini API 호출에 실패했습니다.');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Gemini API 호출에 실패했습니다.');
+            }
+
+            const data = await response.json();
+            let text = data.candidates[0].content.parts[0].text;
+
+            // Extract JSON
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) text = jsonMatch[0];
+
+            const parsedData = JSON.parse(text);
+            console.log('AI Response:', parsedData);
+            return parsedData;
+
+        } catch (error) {
+            console.error('AI Service Error:', error);
+            throw error;
         }
-
-        const data = await response.json();
-        let text = data.candidates[0].content.parts[0].text;
-
-        // Extract JSON
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) text = jsonMatch[0];
-
-        const parsedData = JSON.parse(text);
-        console.log('AI Response:', parsedData);
-        return parsedData;
-
-    } catch(error) {
-        console.error('AI Service Error:', error);
-        throw error;
     }
-}
 }
 
 const aiService = new AIService();
