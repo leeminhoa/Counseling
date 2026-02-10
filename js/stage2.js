@@ -294,3 +294,55 @@ function downloadPDF() {
         if (actions) actions.style.display = 'flex';
     });
 }
+
+/**
+ * [NEW] Load History Result directly
+ */
+window.loadHistoryToStage2 = function (historyItem) {
+    handleTabChange('stage2');
+
+    // Slight delay to ensure DOM is ready if tab switching takes time
+    setTimeout(() => {
+        const container = document.getElementById('contentContainer');
+        if (!container) return;
+
+        // Force render Stage 2 layout without checks
+        container.innerHTML = `
+        <div class="stage2-wrapper">
+            <div id="aiLoading" class="ai-loading-box" style="display: none;"></div>
+            <div id="aiResult" class="ai-result-grid" style="display: grid;">
+                <!-- Result injected below -->
+            </div>
+            <div id="aiInitial" class="ai-initial-view" style="display: none;"></div>
+        </div>
+        `;
+
+        const resultView = document.getElementById('aiResult');
+
+        // Extract data
+        // Check if recommend_notes is array or string or object
+        let resultData = historyItem.activity_notes || historyItem.recommend_notes;
+
+        if (Array.isArray(resultData)) resultData = resultData[0];
+        if (typeof resultData === 'string') {
+            try { resultData = JSON.parse(resultData); } catch (e) { }
+        }
+
+        // Render
+        displayAIResult(resultData, resultView);
+
+        // Add a banner indicating this is history
+        const banner = document.createElement('div');
+        banner.style.gridColumn = '1 / -1';
+        banner.style.background = '#FEF3C7';
+        banner.style.color = '#B45309';
+        banner.style.padding = '1rem';
+        banner.style.borderRadius = '0.5rem';
+        banner.style.marginBottom = '1rem';
+        banner.style.textAlign = 'center';
+        banner.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> <b>과거 상담 이력 조회 모드</b> (${new Date(historyItem.rec_date || historyItem.created_at).toLocaleDateString()})`;
+
+        resultView.insertBefore(banner, resultView.firstChild);
+
+    }, 100);
+};

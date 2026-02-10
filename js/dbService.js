@@ -433,21 +433,51 @@ class DBService {
             if (!studentId) throw new Error('Student ID is required');
 
             // Insert into counseling table
+            // Extract University Data Robustly
+            // Extract University Data Robustly
+            const univ = resultData.univ || {};
+
+            // Check for existing active session to close
+            const { data: activeSession } = await this.client
+                .from('counseling')
+                .select('id')
+                .eq('student_id', studentId)
+                .in('status', ['draft', 'in_progress'])
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
             const payload = {
                 student_id: studentId,
                 counselor_id: counselorId,
-                desired_univ: resultData.univ ? resultData.univ.univ_name : '미정',
-                desired_major: resultData.univ ? resultData.univ.raw_major_name : '미정',
-                recommend_notes: resultData.aiResult, // Store JSON directly if column type is JSONB, otherwise stringify
+                desired_univ: univ.univ_name || '미정',
+                desired_major: univ.raw_major_name || '미정',
+                recommend_notes: [resultData.aiResult], // Store as array to match schema
                 status: 'completed',
                 completed_at: new Date().toISOString(),
                 // Copy other fields if needed, e.g. from profile
-                desired_category: resultData.univ ? resultData.univ.category : '미정'
+                desired_category: univ.category || '미정',
+                rec_date: new Date().toISOString().split('T')[0] // Required field (Date only is cleaner)
             };
 
-            const { error } = await this.client
-                .from('counseling')
-                .insert([payload]);
+            let error; // Declare error variable
+
+            if (activeSession) {
+                // Update existing session to completed
+                const { error: updateError } = await this.client
+                    .from('counseling')
+                    .update(payload)
+                    .eq('id', activeSession.id);
+                error = updateError;
+                console.log(`✅ Updated Session ${activeSession.id} to Completed`);
+            } else {
+                // Insert new completed session
+                const { error: insertError } = await this.client
+                    .from('counseling')
+                    .insert([payload]);
+                error = insertError;
+                console.log('✅ Created New Completed Session');
+            }
 
             if (error) throw error;
             console.log('✅ Counseling Result Saved to DB');
@@ -677,3 +707,4 @@ class DBService {
 
 // Global Instance
 const dbService = new DBService();
+window.dbService = dbService;

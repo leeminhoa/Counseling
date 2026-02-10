@@ -173,8 +173,12 @@ async function loadHistoryTab() {
             if (item.status === 'completed') statusBadge = '<span class="history-status done">완료</span>';
             else statusBadge = '<span class="history-status">진행중</span>';
 
+            // Store data temporarily for click handler
+            if (!window._historyCache) window._historyCache = {};
+            window._historyCache[item.id] = item;
+
             return `
-            <div class="history-item">
+            <div class="history-item" onclick="onHistoryClick('${item.id}')" style="cursor: pointer; transition: background 0.2s;">
                 <div class="history-header">
                     <span class="history-date">${date}</span>
                     ${statusBadge}
@@ -185,6 +189,9 @@ async function loadHistoryTab() {
                     <div style="margin-top:0.3rem; font-size:0.85rem; color:#64748B;">
                         내신: ${notes.gpa || '-'} / 백분위: ${notes.totalPercentile || '-'}
                     </div>
+                </div>
+                <div style="margin-top: 0.5rem; text-align: right; font-size: 0.8rem; color: var(--primary-color);">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> 불러오기
                 </div>
             </div>
             `;
@@ -338,3 +345,33 @@ function updateUserStatusUI() {
         window.loadUserStatus();
     }
 }
+
+/**
+ * Handle History Click
+ */
+window.onHistoryClick = function (id) {
+    if (!window._historyCache || !window._historyCache[id]) {
+        alert('이력 데이터를 찾을 수 없습니다.');
+        return;
+    }
+    const item = window._historyCache[id];
+
+    // Only load if completed
+    if (item.status !== 'completed') {
+        alert('아직 진행 중인 상담입니다. 이어서 진행하시겠습니까? (기능 준비중)');
+        return;
+    }
+
+    if (confirm('선택하신 과거 상담 결과를 불러오시겠습니까?')) {
+        closeProfileModal();
+
+        // Wait for modal close transition
+        setTimeout(() => {
+            if (window.loadHistoryToStage2) {
+                window.loadHistoryToStage2(item);
+            } else {
+                alert('해당 기능을 실행할 수 없습니다. (Stage 2 모듈 로드 필요)');
+            }
+        }, 300);
+    }
+};

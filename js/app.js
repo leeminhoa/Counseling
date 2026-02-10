@@ -21,7 +21,8 @@ function initApp() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            handleTabChange(e.currentTarget.dataset.tab);
+            const tab = e.currentTarget.dataset.tab;
+            if (tab) handleTabChange(tab);
         });
     });
 
