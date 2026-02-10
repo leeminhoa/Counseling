@@ -12,7 +12,8 @@ function renderAdmin(container) {
             <div class="admin-sidebar">
                 <h3 class="admin-title">Settings</h3>
                 <div class="admin-nav">
-                    <div class="admin-nav-item active" onclick="switchAdminTab('general')"><i class="fa-solid fa-code"></i> Prompt Control</div>
+                    <div class="admin-nav-item active" onclick="switchAdminTab('general')"><i class="fa-solid fa-sliders"></i> General Settings</div>
+                    <div class="admin-nav-item" onclick="switchAdminTab('prompts')"><i class="fa-solid fa-comment-dots"></i> Prompt Management</div>
                     <div class="admin-nav-item" onclick="switchAdminTab('api')"><i class="fa-solid fa-key"></i> API Keys</div>
                      ${(settings.permission === 1 || settings.permission === 'master' || (profile.appSettings && profile.appSettings.permission === 'master') || (dataManager.currentCounselor && (dataManager.currentCounselor.permission === 1 || dataManager.currentCounselor.permission === 'master'))) ? `
                     <div class="admin-nav-item" onclick="switchAdminTab('counselors')"><i class="fa-solid fa-user-shield"></i> 계정 관리</div>
@@ -31,7 +32,12 @@ function renderAdmin(container) {
                         <!-- Left: Prompt Editors -->
                         <div class="admin-col">
                             <div class="form-group">
-                                <label>System Prompt (Persona & Instructions)</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                    <label>System Prompt (Persona & Instructions)</label>
+                                    <select id="sysPresetSelect" onchange="applyPreset('system', this.value)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
+                                        <option value="">📂 프리셋 불러오기</option>
+                                    </select>
+                                </div>
                                 <textarea id="sysPrompt" class="prompt-editor">${settings.systemPrompt || `당신은 대한민국 대입 입시 컨설턴트입니다. 학생의 목표 학과와 교과 이수 현황을 바탕으로, 생활기록부에 기재할 수 있는 깊이 있는 탐구 주제와 활동 방향을 제시하는 것이 당신의 역할입니다. 
 
 [지침]
@@ -40,7 +46,12 @@ function renderAdmin(container) {
 - 답변은 반드시 정해진 JSON 형식을 따르세요.`}</textarea>
                             </div>
                             <div class="form-group">
-                                <label>User Prompt Template (Data Injection)</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                    <label>User Prompt Template (Data Injection)</label>
+                                    <select id="userPresetSelect" onchange="applyPreset('user', this.value)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
+                                        <option value="">📂 프리셋 불러오기</option>
+                                    </select>
+                                </div>
                                 <textarea id="userPrompt" class="prompt-editor">${settings.userPromptTemplate || `[학생 데이터]
 - 목표 학과: {{major}}
 - 관련 이수 과목: {{subjects}}
@@ -82,8 +93,11 @@ function renderAdmin(container) {
                                     </div>
                                     <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="${settings.temperature || 0.7}">
                                     <p class="param-desc">
-                                        답변의 <b>창의성</b>을 조절합니다.<br>
-                                        (0.0: 정적/논리적 분석 <-> 1.0: 다양/창의적 아이디어)
+                                        답변의 <b>창의성(Creativity)</b>을 조절합니다.<br>
+                                        <span style="font-size:0.8rem; color:#64748B;">
+                                        • 0.2: 논리적, 사실 기반 (분석용)<br>
+                                        • 0.8: 창의적, 다양한 표현 (브레인스토밍)
+                                        </span>
                                     </p>
                                 </div>
 
@@ -96,7 +110,10 @@ function renderAdmin(container) {
                                     <input type="range" id="topPInput" min="0" max="1" step="0.05" value="${settings.topP || 0.95}">
                                     <p class="param-desc">
                                         확률 분포의 상위 <b>P%</b> 토큰만 고려합니다.<br>
-                                        높을수록 더 다양한 어휘와 표현을 사용합니다.
+                                        <span style="font-size:0.8rem; color:#64748B;">
+                                        • 낮은 값: 뻔하고 안전한 단어 선택<br>
+                                        • 높은 값: 더 다채로운 어휘 사용
+                                        </span>
                                     </p>
                                 </div>
 
@@ -121,14 +138,78 @@ function renderAdmin(container) {
                                     <input type="range" id="maxTokensInput" min="100" max="8192" step="100" value="${settings.maxOutputTokens || 2048}">
                                     <p class="param-desc">
                                         한 번의 응답에서 생성할 <b>최대 길이</b>를 제한합니다.<br>
-                                        (입시 컨설팅은 긴 호흡이 필요하므로 2048 이상 권장)
+                                        <span style="font-size:0.8rem; color:#64748B;">입시 컨설팅 리포트는 내용이 길 수 있으므로 <b>4096 이상</b>을 권장합니다.</span>
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+
+            
+            <!-- Tab: Prompt Management -->
+            <div id="adminTab_prompts" class="admin-tab-content" style="display:none;">
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-robot"></i> LLM 프롬프트 관리</h2>
+                        <button class="btn-primary" id="btnAddPromptVersion"><i class="fa-solid fa-plus"></i> 새 버전 추가</button>
+                    </div>
+                    
+                    <div class="card" style="margin-bottom:1.5rem;">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-layer-group"></i> 프롬프트 그룹 선택</label>
+                            <select id="promptGroupSelect" class="styled-input">
+                                <option value="">로딩 중...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="promptLoading" style="display:none; text-align:center; padding:2rem; color:#64748B;">
+                        <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    </div>
+
+                    <div id="promptListContainer">
+                        <div style="text-align:center; padding:2rem; color:#94A3B8;">그룹을 선택해주세요.</div>
+                    </div>
+                </div>
+
+                <!-- Modal -->
+                <div id="promptModal" class="modal">
+                    <div class="modal-content modal-lg">
+                        <div class="modal-header">
+                            <h2 style="margin:0;">프롬프트 버전 편집</h2>
+                            <span class="close" onclick="promptManager.closePromptModal()">&times;</span>
+                        </div>
+                        
+                        <div class="modal-body" style="padding: 2rem;">
+                            <form id="promptForm" onsubmit="return false;">
+                                <div class="form-group">
+                                    <label>제목</label>
+                                    <input type="text" id="promptTitle" class="styled-input" placeholder="버전 제목 (예: v1.0 초기 버전)">
+                                </div>
+                                <div class="form-group">
+                                    <label>유형</label>
+                                    <select id="promptType" class="styled-input">
+                                        <option value="system">System Prompt (페르소나/지침)</option>
+                                        <option value="user">User Prompt (데이터 주입)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>설명</label>
+                                    <input type="text" id="promptDesc" class="styled-input" placeholder="변경 사항이나 특징 설명">
+                                </div>
+                                <div class="form-group">
+                                    <label>내용</label>
+                                    <textarea id="promptContent" class="prompt-editor" style="height:400px; font-family:monospace; line-height:1.5;"></textarea>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="promptManager.closePromptModal()">취소</button>
+                            <button class="btn-primary" id="btnSavePrompt">저장</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -161,6 +242,7 @@ function renderAdmin(container) {
             </div>
 
         </div>
+    </div>
     `;
 
     // ... (rest of the code)
@@ -170,38 +252,36 @@ function renderAdmin(container) {
         document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
         // This is a simple approximation. Better to use dataset or ids.
         // Let's assume order: general, api, counselors
+        // Tab switching logic
+        // Updated mapping: 0=General, 1=Prompts, 2=API, 3=Counselors
         const items = document.querySelectorAll('.admin-nav-item');
         if (tabName === 'general' && items[0]) items[0].classList.add('active');
-        if (tabName === 'api' && items[1]) items[1].classList.add('active');
-        if (tabName === 'counselors' && items[2]) items[2].classList.add('active');
+        if (tabName === 'prompts' && items[1]) items[1].classList.add('active');
+        if (tabName === 'api' && items[2]) items[2].classList.add('active');
+        if (tabName === 'counselors' && items[3]) items[3].classList.add('active');
 
         // Content switching
         document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+        const generalSection = document.querySelector('.admin-main > .admin-section:not(#adminTab_counselors):not(#adminTab_prompts)');
+        if (generalSection) generalSection.style.display = 'none';
 
-        // 'general' is the default view with Prompt & Params
         if (tabName === 'general') {
-            document.querySelector('.admin-main .admin-section').style.display = 'block';
-            // Hide others? Wait, my DOM structure is a bit shared.
-            // The original code had everything inside .admin-main > .admin-section
-            // I need to structure it so I can toggle.
-            // Let's wrap the original content in a tab div if possible, OR just hide/show what we added.
-
-            // Re-reading original structure:
-            // .admin-main > .admin-section > .section-header + .admin-grid
-
-            // So for 'general', show the original .admin-section
-            const originalSection = document.querySelector('.admin-main > .admin-section:not(#adminTab_counselors)');
-            if (originalSection) originalSection.style.display = 'block';
-
-            const counselorTab = document.getElementById('adminTab_counselors');
-            if (counselorTab) counselorTab.style.display = 'none';
-
+            if (generalSection) generalSection.style.display = 'block';
+        } else if (tabName === 'prompts') {
+            const tab = document.getElementById('adminTab_prompts');
+            if (tab) {
+                tab.style.display = 'block';
+                if (window.promptManager && typeof window.promptManager.init === 'function') {
+                    // Initialize if mostly first time or reload groups
+                    // To avoid flicker we could check a flag, but for now safe to call.
+                    if (document.getElementById('promptGroupSelect').options.length <= 1) {
+                        window.promptManager.init();
+                    }
+                }
+            }
         } else if (tabName === 'counselors') {
-            const originalSection = document.querySelector('.admin-main > .admin-section:not(#adminTab_counselors)');
-            if (originalSection) originalSection.style.display = 'none';
-
-            const counselorTab = document.getElementById('adminTab_counselors');
-            if (counselorTab) counselorTab.style.display = 'block';
+            const tab = document.getElementById('adminTab_counselors');
+            if (tab) tab.style.display = 'block';
         } else if (tabName === 'api') {
             alert('API Key 관리는 준비 중입니다.');
         }
@@ -312,6 +392,8 @@ function renderAdmin(container) {
             }
         });
     }
+    // Initialize Presets
+    loadPresets();
 }
 
 function saveAdminSettings() {
@@ -348,7 +430,64 @@ function saveAdminSettings() {
     dataManager.saveData(data);
 
     // Re-init DB Client if needed (though DB keys usually don't change here anymore)
-    dbService.initClient();
+    // dbService.initClient(); // [REMOVED] Causing multiple instance warnings. Credentials are fixed in dbService.
 
     alert('설정이 성공적으로 저장되었습니다.');
 }
+
+// Prompt Preset Helpers
+async function loadPresets() {
+    // console.log('Loading presets...');
+    try {
+        const { data: prompts, error } = await dbService.client
+            .from('prompt')
+            .select('id, title, type, contents')
+            .eq('valid', true)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Preset Load Error:', error);
+            return;
+        }
+
+        const sysSelect = document.getElementById('sysPresetSelect');
+        const userSelect = document.getElementById('userPresetSelect');
+
+        // Reset
+        if (sysSelect) sysSelect.innerHTML = '<option value="">📂 프리셋 불러오기</option>';
+        if (userSelect) userSelect.innerHTML = '<option value="">📂 프리셋 불러오기</option>';
+
+        // Store globally for access
+        window.loadedPresets = prompts;
+
+        prompts.forEach(p => {
+            const option = `<option value="${p.id}">[${p.type.toUpperCase()}] ${p.title}</option>`;
+            if (p.type === 'system' && sysSelect) sysSelect.innerHTML += option;
+            if (p.type === 'user' && userSelect) userSelect.innerHTML += option;
+        });
+
+    } catch (err) {
+        console.error('Failed to load presets:', err);
+    }
+}
+
+window.applyPreset = function (type, id) {
+    if (!id) return;
+
+    const prompt = window.loadedPresets ? window.loadedPresets.find(p => p.id == id) : null;
+    if (!prompt) return;
+
+    if (!confirm(`[${prompt.title}] 내용을 불러오시겠습니까?\n현재 에디터의 내용은 덮어씌워집니다.`)) {
+        document.getElementById(type === 'system' ? 'sysPresetSelect' : 'userPresetSelect').value = "";
+        return;
+    }
+
+    if (type === 'system') {
+        document.getElementById('sysPrompt').value = prompt.contents;
+    } else {
+        document.getElementById('userPrompt').value = prompt.contents;
+    }
+
+    // Reset selection to allow re-selection
+    document.getElementById(type === 'system' ? 'sysPresetSelect' : 'userPresetSelect').value = "";
+};

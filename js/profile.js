@@ -325,7 +325,7 @@ function saveProfileData() {
         }
     })();
 
-    closeProfileModal();
+    // Immediate UI Update
     updateUserStatusUI();
 
     // Refresh Stage 1 if active
@@ -337,7 +337,20 @@ function saveProfileData() {
         }
     }
 
-    alert('프로필이 저장되었습니다.');
+    // Show temporary success feedback on the save button instead of blocking alert
+    const saveBtn = document.querySelector('.btn-save');
+    if (saveBtn) {
+        const originalText = saveBtn.innerText;
+        saveBtn.innerText = '저장 완료';
+        saveBtn.style.backgroundColor = '#10B981'; // Green
+        setTimeout(() => {
+            saveBtn.innerText = originalText;
+            saveBtn.style.backgroundColor = '';
+            closeProfileModal();
+        }, 800);
+    } else {
+        closeProfileModal();
+    }
 }
 
 function updateUserStatusUI() {

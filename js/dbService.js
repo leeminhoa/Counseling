@@ -143,129 +143,156 @@ class DBService {
     }
 
     /**
-     * Stage 1-1: 계열 추천 로직
+     * Stage 1-1: 계열 추천 로직 (DB-driven Refactor)
      * studentSubjects: 학생이 이수한 과목 리스트 (Array of Strings)
-     * Returns: Array of { category: string, score: number, coreMatches: number, recMatches: number, matchedSubjects: [] }
+     * Returns: Array of { category: string, totalScore: number, coreMatches: number, recMatches: number, matchedSubjects: [] }
      */
     async getFieldRecommendations(studentSubjects) {
-        // In a real Supabase setup, this might be a complex join or RPC. 
-        // For Prototype, we will use a robust Mock implementation that reflects the logic.
-        // We simulate fetching all mapping rules and calculating scores client-side.
+        if (!this.client) return [];
 
-        // Mock Mapping Rules (This represents univ_dept_subjects_map + univ_major_map joined)
-        // Grouped by Top Category
-        // Valid Categories available in DB (v_univ_dept_subjects.top_category)
-        const validCategories = new Set(['공학계열', '인문계열', '자연과학계열', '사회과학계열', '보건의료계열', '교육계열', '정보컴퓨팅계열']);
+        try {
+            // Step 1: Resolve Subject Keys (Fuzzy Match)
+            // Fetch all subjects (cached) to map input names to keys
+            const allSubjects = await this.getAllSubjects();
+            const subjectKeys = [];
+            const matchedSubjectNames = new Set(); // For result display
 
-        // Mock Mapping Rules (This logic acts as a heuristic to calculate scores, but output will be filtered)
-        // Note: Some categories below (e.g. '상경 계열', '예술/체육 계열') might not exist in DB, so they will be filtered out.
-        // We map our logic categories to DB categories: 
-        // - '공학 계열' -> '공학계열'
-        // - '자연과학 계열' -> '자연과학계열'
-        // - '인문/사회 계열' -> '인문계열' or '사회과학계열' (Split logic needed?)
-        // - For prototype simple fix, we just rename keys to match DB where possible or allow mismatch but filter result.
-
-        const mockRules = [
-            {
-                category: '공학계열', // Matches DB
-                core: ['미적분', '기하', '물리학I', '물리학II'],
-                recommended: ['화학I', '지구과학I', '정보', '인공지능 수학']
-            },
-            {
-                category: '자연과학계열', // Matches DB
-                core: ['미적분', '화학I', '화학II', '생명과학I'],
-                recommended: ['기하', '물리학I', '확률과 통계']
-            },
-            {
-                category: '보건의료계열', // Matches DB
-                core: ['화학I', '생명과학I', '생명과학II'],
-                recommended: ['미적분', '확률과 통계', '윤리와 사상']
-            },
-            {
-                category: '인문계열', // Matches DB
-                core: ['생활과 윤리', '사회·문화', '한국지리'],
-                recommended: ['세계사', '윤리와 사상', '국어']
-            },
-            {
-                category: '사회과학계열', // Matches DB (New heuristic)
-                core: ['사회·문화', '정치와 법', '경제', '확률과 통계'],
-                recommended: ['세계지리', '생활과 윤리']
-            },
-            {
-                category: '교육계열', // Matches DB
-                core: ['교육학', '심리학'],
-                recommended: ['생활과 윤리', '철학']
-            },
-            {
-                category: '정보컴퓨팅계열', // Matches DB
-                core: ['정보', '수학I', '수학II', '미적분'],
-                recommended: ['인공지능 수학', '확률과 통계']
-            }
-        ];
-
-        // Helper for Flexible Matching
-        const checkSubjectMatch = (ruleSubj, studentSubjs) => {
             const normalize = (str) => str.replace(/\s+/g, '').replace(/I/g, '1').replace(/II/g, '2').toLowerCase();
-            const ruleNorm = normalize(ruleSubj);
 
-            return studentSubjs.some(studentSubj => {
-                const studentNorm = normalize(studentSubj);
-
-                // 1. Exact Normalized Match
-                if (ruleNorm === studentNorm) return true;
-
-                // 2. Alias Handling (Specific known variations)
-                if (ruleSubj === '미적분' && (studentNorm === '미적분1' || studentNorm === '미적분2')) return true;
-                if (ruleSubj === '수학I' && studentNorm === '수학') return true; // Loose matching for Math
-
-                // 3. Containment (Caution: can be broad, but useful for prototypes)
-                // e.g. "심화수학I" contains "수학I" -> true
-                if (studentNorm.includes(ruleNorm) && ruleNorm.length > 1) return true;
-
-                return false;
-            });
-        };
-
-        // Calculation Logic
-        const results = mockRules.map(rule => {
-            let coreCount = 0;
-            let recCount = 0;
-            let matchedItems = [];
-
-            rule.core.forEach(subj => {
-                if (checkSubjectMatch(subj, studentSubjects)) {
-                    coreCount++;
-                    matchedItems.push({ name: subj, type: 'core' });
+            studentSubjects.forEach(sName => {
+                const sNorm = normalize(sName);
+                const found = allSubjects.find(dbSub => {
+                    const dbNorm = normalize(dbSub.course_name);
+                    return dbNorm === sNorm || dbNorm.includes(sNorm) || sNorm.includes(dbNorm);
+                });
+                if (found) {
+                    subjectKeys.push(found.course_key);
+                    matchedSubjectNames.add(found.course_name); // Use DB name
                 }
             });
 
-            rule.recommended.forEach(subj => {
-                if (checkSubjectMatch(subj, studentSubjects)) {
-                    recCount++;
-                    matchedItems.push({ name: subj, type: 'recommended' });
+            if (subjectKeys.length === 0) return [];
+
+            // Step 2: Fetch Mapping Hits
+            // Find which departments use these subjects
+            const { data: hits, error: hitError } = await this.client
+                .from('univ_dept_subjects_map')
+                .select('univ_map_id, bucket, course_key')
+                .in('course_key', subjectKeys);
+
+            if (hitError) throw hitError;
+            if (!hits || hits.length === 0) return [];
+
+            // Step 3: Fetch Category Map (cached)
+            // Map univ_map_id -> top_category
+            const categoryMap = await this.getCategoryMap();
+
+            // Step 4: Aggregation
+            const scores = {}; // { 'Engineering': { core: 0, rec: 0, subjects: Set() } }
+
+            hits.forEach(hit => {
+                const category = categoryMap[hit.univ_map_id];
+                if (!category) return;
+
+                if (!scores[category]) {
+                    scores[category] = { core: 0, rec: 0, subjects: new Set(), totalScore: 0 };
                 }
+
+                // Identify Subject Name from Key
+                const subjectName = allSubjects.find(s => s.course_key === hit.course_key)?.course_name || hit.course_key;
+
+                // Add unique subject match marker check to avoid double counting same subject for same category?
+                // Actually, if multiple depts in same category require it, it SHOULD boost the score.
+                // So we just increment counts.
+                if (hit.bucket === 'core') scores[category].core++;
+                else scores[category].rec++;
+
+                scores[category].subjects.add(JSON.stringify({ name: subjectName, type: hit.bucket }));
             });
 
-            return {
-                category: rule.category,
-                coreMatches: coreCount,
-                recMatches: recCount,
-                totalScore: (coreCount * 2) + (recCount * 1), // Weight: Core=2, Rec=1
-                matchedSubjects: matchedItems
-            };
-        });
+            // Convert to Array and Normalize Scores
+            // Since there are many depts, raw counts will be huge. We need to normalize or rank.
+            // A simple ranking is sufficient for recommendation.
 
-        // Sort: Core Desc > Rec Desc > Name Asc
-        results.sort((a, b) => {
-            if (b.coreMatches !== a.coreMatches) return b.coreMatches - a.coreMatches;
-            if (b.recMatches !== a.recMatches) return b.recMatches - a.recMatches;
-            return a.category.localeCompare(b.category);
-        });
+            const results = Object.entries(scores).map(([cat, stat]) => {
+                // Parse subjects back
+                const uniqueSubjects = Array.from(stat.subjects).map(JSON.parse);
+                // Deduplicate by name/type preference? 
+                // Let's just list distinct subjects that contributed.
+                const subjectList = Array.from(new Set(uniqueSubjects.map(s => s.name))).map(name => {
+                    const types = uniqueSubjects.filter(u => u.name === name).map(u => u.type);
+                    return { name, type: types.includes('core') ? 'core' : 'recommended' };
+                });
 
-        // Return Top 10, filtered by Valid DB Categories
-        return results
-            .filter(r => validCategories.has(r.category))
-            .slice(0, 10);
+                // Fix: Match counts should reflect DISTINCT subjects, not total DB hits.
+                const distinctCoreCount = subjectList.filter(s => s.type === 'core').length;
+                const distinctRecCount = subjectList.filter(s => s.type === 'recommended').length;
+
+                return {
+                    category: cat,
+                    coreMatches: distinctCoreCount,
+                    recMatches: distinctRecCount,
+                    totalScore: (stat.core * 2) + (stat.rec * 1), // Keep ranking based on prevalence intensity
+                    matchedSubjects: subjectList
+                };
+            });
+
+            // Step 5: Sort & Filter
+            // Valid Categories (same as before)
+            const validCategories = new Set(['공학계열', '인문계열', '자연과학계열', '사회과학계열', '보건의료계열', '교육계열', '정보컴퓨팅계열', '예체능계열', '상경계열']);
+
+            return results
+                .filter(r => validCategories.has(r.category))
+                .sort((a, b) => b.totalScore - a.totalScore)
+                .slice(0, 10);
+
+        } catch (err) {
+            console.error('Field Recommendation Error:', err);
+            return [];
+        }
+    }
+
+    /**
+     * Helper: Fetch and Cache All Subjects
+     */
+    async getAllSubjects() {
+        if (this._cachedSubjects) return this._cachedSubjects;
+
+        const { data, error } = await this.client
+            .from('subjects')
+            .select('course_key, course_name');
+
+        if (error) {
+            console.error('Failed to cache subjects:', error);
+            return [];
+        }
+
+        this._cachedSubjects = data;
+        return data;
+    }
+
+    /**
+     * Helper: Fetch and Cache Univ-Category Map
+     */
+    async getCategoryMap() {
+        if (this._cachedCategoryMap) return this._cachedCategoryMap;
+
+        // Fetch just ID and Category
+        const { data, error } = await this.client
+            .from('v_univ_dept_subjects')
+            .select('univ_map_id, top_category');
+
+        if (error) {
+            console.error('Failed to cache category map:', error);
+            return {};
+        }
+
+        this._cachedCategoryMap = data.reduce((acc, row) => {
+            acc[row.univ_map_id] = row.top_category;
+            return acc;
+        }, {});
+
+        return this._cachedCategoryMap;
     }
     /**
      * Stage 1-2: 학부(소계열) 조회
@@ -456,7 +483,8 @@ class DBService {
                 status: 'completed',
                 completed_at: new Date().toISOString(),
                 // Copy other fields if needed, e.g. from profile
-                desired_category: univ.category || '미정',
+                // Copy other fields if needed, e.g. from profile
+                desired_category: univ.category || univ.canonical_major || '미정',
                 rec_date: new Date().toISOString().split('T')[0] // Required field (Date only is cleaner)
             };
 
@@ -702,6 +730,27 @@ class DBService {
         }
 
         return data ? data.contents : null;
+    }
+    async getUnivMajorRecommendation(univName, majorName) {
+        if (!this.client || !univName || !majorName) return null;
+
+        try {
+            const { data, error } = await this.client
+                .from('v_univ_major_with_recommend')
+                .select('*')
+                .eq('univ_name', univName)
+                .eq('raw_major_name', majorName)
+                .maybeSingle();
+
+            if (error) {
+                console.error('Recommended Subjects Fetch Error:', error);
+                return null;
+            }
+            return data;
+        } catch (err) {
+            console.error('getUnivMajorRecommendation Exception:', err);
+            return null;
+        }
     }
 }
 

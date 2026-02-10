@@ -125,7 +125,21 @@ async function renderUnivDetail(univId) {
     if (!univData) return;
 
     // Fetch related data
-    const subjects = await dbService.getMajorSubjects(univId);
+    // Fetch related data
+    // [MODIFIED] Use the View `v_univ_major_with_recommend` instead of raw join
+    const recData = await dbService.getUnivMajorRecommendation(univData.univ_name, univData.raw_major_name);
+    let subjects = [];
+    if (recData) {
+        // Adapt View format to existing UI format: { course_name, bucket }
+        const core = (recData.core_subjects || []).map(name => ({ course_name: name, bucket: 'core' }));
+        const rec = (recData.recommended_subjects || []).map(name => ({ course_name: name, bucket: 'recommended' }));
+        const suggested = (recData.extra_recommend_subjects || []).map(name => ({ course_name: name, bucket: 'suggested' }));
+        subjects = [...core, ...rec, ...suggested];
+    } else {
+        // Fallback for universities not in the view (should be rare if view covers all)
+        subjects = await dbService.getMajorSubjects(univId);
+    }
+
     const stats = await dbService.getAdmissionStats(univId);
     console.log('Full Admission Stats for ID', univId, ':', stats);
 
@@ -240,6 +254,7 @@ async function renderUnivDetail(univId) {
             <div class="subject-grid">
                 ${renderSubjectList(subjects, 'core')}
                 ${renderSubjectList(subjects, 'recommended')}
+                ${renderSubjectList(subjects, 'suggested')}
             </div>
         </div>
         
@@ -257,8 +272,24 @@ function renderSubjectList(subjects, type) {
     const studentSubjects = (profile && profile.subjects) ? profile.subjects : [];
 
     const filtered = subjects.filter(s => s.bucket === type);
-    const title = type === 'core' ? '핵심 과목 (필수)' : '권장 과목';
-    const colorClass = type === 'core' ? 'core-group' : 'rec-group';
+
+    let title = '';
+    let colorClass = '';
+
+    switch (type) {
+        case 'core':
+            title = '핵심 과목 (필수)';
+            colorClass = 'core-group';
+            break;
+        case 'recommended':
+            title = '권장 과목';
+            colorClass = 'rec-group';
+            break;
+        case 'suggested':
+            title = '추천 과목';
+            colorClass = 'suggested-group'; // New CSS class needed or inline style
+            break;
+    }
 
     if (filtered.length === 0) return '';
 

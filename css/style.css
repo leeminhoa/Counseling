@@ -313,9 +313,8 @@ body {
 
 .admin-grid {
     display: grid;
-    grid-template-columns: 1fr 360px;
-    /* 사이드바 비중 조정 */
-    gap: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
     align-items: start;
 }
 
@@ -345,6 +344,9 @@ body {
     outline: none;
     background: #F1F5F9;
     transition: all 0.2s;
+    font-size: 0.9rem;
+    color: #334155;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .prompt-editor:focus {
@@ -393,6 +395,7 @@ input[type="range"] {
     height: 6px;
     border-radius: 3px;
     accent-color: var(--primary-color);
+    cursor: pointer;
 }
 
 input[type="password"] {
@@ -495,7 +498,9 @@ input[type="password"] {
     background: #FFFFFF !important;
     border-radius: 1.25rem !important;
     width: 90% !important;
-    max-width: 550px !important;
+    max-width: 600px;
+    /* Default increased slightly */
+    max-height: 90vh !important;
     max-height: 85vh !important;
     overflow-y: auto !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
@@ -517,6 +522,14 @@ input[type="password"] {
     padding: 1.5rem;
     overflow-y: auto;
     flex: 1;
+}
+
+.modal-content.modal-lg {
+    max-width: 1000px !important;
+}
+
+#promptModal .modal-content {
+    max-width: 1000px !important;
 }
 
 .modal-footer {
@@ -725,7 +738,7 @@ input[type="password"] {
 
 .subject-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
@@ -777,6 +790,20 @@ input[type="password"] {
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
     color: #22C55E;
+}
+
+/* 추천 과목 (Suggested) 타이틀 강조 - Purple/Violet */
+.suggested-group .group-title {
+    color: #7C3AED;
+    border-bottom-color: #DDD6FE;
+}
+
+.suggested-group .group-title::before {
+    content: '\f0eb';
+    /* fa-lightbulb */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #8B5CF6;
 }
 
 
@@ -1282,5 +1309,49 @@ input[type="password"] {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+/* --- Report UI Styles (Stage 2 Refactor) --- */
+.report-wrapper {
+    width: 100%;
+    max-width: 900px; /* Limit width for readability */
+    margin: 0 auto;
+}
+
+.report-page {
+    position: relative;
+    overflow: hidden; /* Contain inner floats/margins */
+}
+
+/* Print Optimization */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+    .app-container, .sidebar, .top-bar, .report-actions, .no-pdf {
+        display: none !important;
+    }
+    .main-content, .content-view {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        display: block;
+    }
+    .report-wrapper {
+        max-width: 100%;
+        width: 100%;
+    }
+    .report-page {
+        box-shadow: none !important;
+        border: none !important;
+        page-break-after: always; /* Force page break */
+        margin-bottom: 0;
+        padding: 20px 0 !important; /* Reset padding for print */
+    }
+    /* Ensure colors are printed */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 }
