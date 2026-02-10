@@ -5,17 +5,12 @@
 
 async function renderStage2(container, autoStart = false) {
     const profile = dataManager.getProfile();
-    const selectedUnivId = stage1State.selectedUnivId;
+    // [FIX] Use persisted selection if global state is empty (e.g. after reload)
+    const selectedUnivId = stage1State.selectedUnivId || (profile.lastSelectedUniv ? profile.lastSelectedUniv.id : null);
 
-    if (!selectedUnivId) {
-        container.innerHTML = `
-            <div class="empty-placeholder">
-                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; margin-bottom: 1rem; color: #F59E0B;"></i>
-                <p>먼저 Stage 1에서 대학과 학과를 선택해야 가이드를 생성할 수 있습니다.</p>
-                <button class="btn-primary" style="margin-top:1rem;" onclick="handleTabChange('stage1')">1단계로 이동</button>
-            </div>
-        `;
-        return;
+    // Sync global state if restored from profile
+    if (!stage1State.selectedUnivId && selectedUnivId) {
+        stage1State.selectedUnivId = selectedUnivId;
     }
 
     // Check for existing result for this university from dataManager
@@ -117,6 +112,12 @@ async function startAIGeneration(container) {
 
         const result = await aiService.generateExplorationGuide(context);
 
+        // [NEW] Fetch Recommended Subjects
+        const recSubjectsData = await dbService.getUnivMajorRecommendation(univData.univ_name, univData.raw_major_name);
+        if (recSubjectsData) {
+            result.recommendedSubjects = recSubjectsData;
+        }
+
         clearInterval(stepInterval);
         displayAIResult(result, resultView);
         loadingView.style.display = 'none';
@@ -138,7 +139,21 @@ async function startAIGeneration(container) {
 }
 
 function displayAIResult(data, container) {
-    // --- Data Adapter (Schema A vs Schema B) ---
+    // [NEW] Schema Detection for Text-Block Mode
+    if (typeof data.page1 === 'string') {
+        renderTextModeReport(data, container);
+        return;
+    }
+
+    // [NEW] Schema D: Refactored Consulting Report (2025 Standard)
+    if (data.page1 && data.page2) {
+        renderNewReportLayout(data, container);
+        return;
+    }
+
+    // --- Legacy Adapters (Schema A, B, C) ---
+    console.warn('Rendering Legacy AI Result Format');
+
     let topic = data.topic;
     let rationale = data.rationale;
     let background = data.background;
@@ -253,6 +268,330 @@ function displayAIResult(data, container) {
                     `).join('')}
                 </div>
             </div>
+        </div>
+    `;
+}
+
+/**
+ * [NEW] Text Mode Report Renderer (for "Text-Block JSON" schema)
+ */
+function renderTextModeReport(data, container) {
+    // [Updated] schema keys: page2_creative_experience is now an object
+    const { page1, page2_sepec_table, page2_creative_experience, page2_question_script, triggers_2025 } = data;
+
+    // Helper for safe list access
+    const getList = (arr) => Array.isArray(arr) ? arr : [];
+
+    container.innerHTML = `
+        <div class="report-wrapper" id="pdf-area" style="grid-column: 1 / -1; font-family: 'Pretendard', sans-serif;">
+            
+            <!-- Floating Actions -->
+            <div class="report-actions no-pdf" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem;">
+                 <button class="btn-secondary btn-sm" onclick="downloadPDF()">
+                    <i class="fa-solid fa-file-pdf"></i> PDF 저장
+                </button>
+                <button class="btn-secondary btn-sm" onclick="resetAIResult()" style="color: #EF4444; border-color: #FEE2E2;">
+                    <i class="fa-solid fa-rotate-right"></i> 초기화
+                </button>
+            </div>
+
+            <!-- [PAGE 1] Summary (Text Block) -->
+            <div class="report-page page-1" style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2rem;">
+                <!-- Header -->
+                <div class="report-header" style="border-bottom: 2px solid #1E293B; padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                    <span style="background: #E0F2FE; color: #0284C7; font-weight:700; font-size: 0.85rem; padding: 4px 12px; border-radius: 20px;">생기부 디자인 컨설팅 리포트</span>
+                    <h1 style="font-size: 2.2rem; font-weight: 800; color: #0F172A; margin-top: 0.8rem; margin-bottom: 0.5rem;">
+                        탐구 컨설팅 요약
+                    </h1>
+                </div>
+
+                <div style="font-size: 1.05rem; line-height: 1.8; color: #334155; white-space: pre-wrap;">${page1 || ''}</div>
+            </div>
+
+            <!-- [PAGE 2] Execution Plan (Text Blocks + Structured Cards) -->
+            <div class="report-page page-2" style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2rem;">
+                
+                <h2 style="font-size: 1.5rem; font-weight: 800; color: #0F172A; margin-bottom: 1.5rem; border-left: 5px solid #8B5CF6; padding-left: 1rem;">
+                    세특 및 창체 실행 가이드
+                </h2>
+
+                <!-- Subject Table (Text) -->
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #1E293B; margin-top: 1.5rem; margin-bottom: 1rem;">과목별 세특 설계</h3>
+                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 12px; border: 1px solid #E2E8F0; font-family: monospace; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; overflow-x: auto;">${page2_sepec_table || ''}</div>
+
+                <!-- Changche Cards (Structured) -->
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #1E293B; margin-top: 2rem; margin-bottom: 1rem;">창의적 체험활동 추천</h3>
+                <div class="creative-list" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem;">
+                    ${['club', 'career', 'autonomous'].map((type) => {
+        const maps = { club: { title: '동아리', icon: 'users', color: '#3B82F6', bg: '#EFF6FF' }, career: { title: '진로', icon: 'compass', color: '#8B5CF6', bg: '#F3E8FF' }, autonomous: { title: '자율', icon: 'hand-sparkles', color: '#10B981', bg: '#ECFDF5' } };
+        const map = maps[type];
+        // Robustly check for the options array. It might be null if AI failed to parse well.
+        const options = (page2_creative_experience && page2_creative_experience[`${type}_options`])
+            ? getList(page2_creative_experience[`${type}_options`])
+            : [];
+
+        if (options.length === 0) return '';
+
+        // Render all options or just the first? Usually 1-2 per type.
+        return options.map(item => `
+                        <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #1E293B; font-size: 1.1rem;">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: ${map.bg}; color: ${map.color}; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-${map.icon}"></i>
+                                    </div>
+                                    ${map.title} 활동
+                                </div>
+                                <span style="background: #F1F5F9; color: #64748B; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">추천 주제</span>
+                            </div>
+                            
+                            <div>
+                                <div style="font-weight: 700; color: #0F172A; font-size: 1.15rem; margin-bottom: 0.5rem;">${item.topic}</div>
+                                <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 8px;">
+                                    <strong><i class="fa-solid fa-shoe-prints" style="color: #94A3B8; margin-right: 0.3rem;"></i> 실행 단계:</strong> ${item.steps}
+                                </div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+                                <span style="font-size: 0.85rem; font-weight: 600; color: #059669;">
+                                    <i class="fa-solid fa-file-circle-check"></i> 예상 결과물:
+                                </span>
+                                <span style="font-size: 0.9rem; color: #334155;">${item.evidence}</span>
+                            </div>
+                        </div>
+                        `).join('');
+    }).join('')}
+                </div>
+
+                <!-- Questions -->
+                 <h3 style="font-size: 1.2rem; font-weight: 700; color: #1E293B; margin-top: 2rem; margin-bottom: 1rem;">상담 질문 스크립트</h3>
+                <div style="background: #FFFBEB; padding: 1.5rem; border-radius: 12px; border: 1px dashed #F59E0B; line-height: 1.7; color: #92400E; white-space: pre-wrap;">${page2_question_script || ''}</div>
+
+            </div>
+
+             <!-- [Triggers 2025] -->
+            <div style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-radius: 16px; padding: 2.5rem; color: white; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 800; color: #F8FAFC; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-fire" style="color: #F59E0B;"></i> 동기 트리거 뱅크 (2025)
+                </h2>
+                <div style="font-size: 1rem; line-height: 1.8; color: #E2E8F0; white-space: pre-wrap;">${triggers_2025 || ''}</div>
+            </div>
+        </div>
+    `;
+}
+
+function renderNewReportLayout(data, container) {
+    const { page1, page2, trigger_bank, checklist } = data;
+    const summary = page1.summary;
+    const execution = page2.execution_plan;
+
+    // Robust access helpers
+    const getList = (arr) => Array.isArray(arr) ? arr : [];
+
+    container.innerHTML = `
+        <div class="report-wrapper" id="pdf-area" style="grid-column: 1 / -1; font-family: 'Pretendard', sans-serif;">
+            
+            <!-- Floating Actions -->
+            <div class="report-actions no-pdf" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem;">
+                 <button class="btn-secondary btn-sm" onclick="downloadPDF()">
+                    <i class="fa-solid fa-file-pdf"></i> PDF 저장
+                </button>
+                <button class="btn-secondary btn-sm" onclick="resetAIResult()" style="color: #EF4444; border-color: #FEE2E2;">
+                    <i class="fa-solid fa-rotate-right"></i> 초기화
+                </button>
+            </div>
+
+            <!-- [PAGE 1] Summary Card -->
+            <div class="report-page page-1" style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2rem;">
+                
+                <!-- Header -->
+                <!-- [Header: Anchor Theme & Sub Keywords] -->
+                <div class="report-header" style="border-bottom: 2px solid #1E293B; padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                    <span style="background: #E0F2FE; color: #0284C7; font-weight:700; font-size: 0.85rem; padding: 4px 12px; border-radius: 20px;">생기부 디자인 컨설팅 리포트</span>
+                    <h1 style="font-size: 2.2rem; font-weight: 800; color: #0F172A; margin-top: 0.8rem; margin-bottom: 0.5rem;">
+                        ${summary.anchor_theme}
+                    </h1>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        ${getList(summary.sub_keywords).map(k => `<span style="border: 1px solid #CBD5E1; padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; color: #475569;">#${k}</span>`).join('')}
+                    </div>
+                </div>
+
+                <!-- [Card] Profile Summary -->
+                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid #E2E8F0;">
+                     <h3 style="font-size: 1.1rem; font-weight: 700; color: #1E293B; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-user-graduate" style="color: #64748B;"></i> 학생 프로필 요약
+                     </h3>
+                    <p style="color: #334155; font-size: 1rem; line-height: 1.6; margin: 0;">${summary.profile_summary}</p>
+                </div>
+
+                <!-- Representative Outputs (Full Width) -->
+                <div class="report-section">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1E293B; margin-bottom: 1rem; display: flex; align-items: center;">
+                        <i class="fa-solid fa-star" style="color: #F59E0B; margin-right: 0.5rem;"></i> 대표 산출물 (Signature Outputs)
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        ${getList(summary.representative_outputs).map((item, idx) => `
+                        <div style="background: ${idx === 0 ? '#F0F9FF' : '#FDF4FF'}; border: 1px solid ${idx === 0 ? '#BAE6FD' : '#F5D0FE'}; border-radius: 12px; padding: 1.5rem;">
+                            <div style="font-size: 0.9rem; font-weight: 600; color: ${idx === 0 ? '#0284C7' : '#C026D3'}; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-${idx === 0 ? 'pen-nib' : 'lightbulb'}"></i>
+                                ${idx === 0 ? '세특 중심' : '창체 중심'}
+                            </div>
+                            <h4 style="font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.8rem;">${item.title}</h4>
+                            <p style="font-size: 0.95rem; color: #334155; line-height: 1.6;">${item.detail}</p>
+                        </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Teacher Record Guide -->
+                <div style="margin-top: 2rem; background: #FFFBEB; border: 1px dashed #F59E0B; padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem;">
+                    <span style="display: block; font-weight: 700; color: #B45309; font-size: 0.9rem; margin-bottom: 0.3rem;">[교사 기록용 가이드]</span>
+                    <p style="margin: 0; color: #78350F; font-weight: 500;">${summary.teacher_record_guide}</p>
+                </div>
+
+                <!-- Checklist (Moved Here) -->
+                ${(() => {
+            const checklistItems = getList(summary.checklist || checklist); // Support new location (summary.checklist) and fallback
+            if (!checklistItems || checklistItems.length === 0) return '';
+            return `
+                    <div style="background: #111827; border-radius: 12px; padding: 1.5rem; color: white;">
+                        <h4 style="font-weight: 700; color: #F3F4F6; margin-bottom: 1rem;">✅ Action Checklist</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            ${checklistItems.map(item => `
+                            <li style="margin-bottom: 1rem; display: flex; gap: 0.8rem;">
+                                <input type="checkbox" style="margin-top: 4px; accent-color: #3B82F6;">
+                                <span style="color: #D1D5DB; font-size: 0.9rem; line-height: 1.5;">${item}</span>
+                            </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    `;
+        })()}
+            </div>
+
+            <!-- [PAGE 2] Execution Card -->
+            <div class="report-page page-2" style="background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 2.5rem; margin-bottom: 2rem;">
+                
+                <h2 style="font-size: 1.5rem; font-weight: 800; color: #0F172A; margin-bottom: 1.5rem; border-left: 5px solid #3B82F6; padding-left: 1rem;">
+                    탐구 실행 계획 (Execution Plan)
+                </h2>
+
+                <!-- Subject Table -->
+                <div style="margin-bottom: 2.5rem; overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                        <thead>
+                            <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                                <th style="padding: 12px; text-align: left; color: #475569; font-weight: 600; font-size: 0.9rem; width: 15%;">과목</th>
+                                <th style="padding: 12px; text-align: left; color: #475569; font-weight: 600; font-size: 0.9rem; width: 15%;">연계 개념</th>
+                                <th style="padding: 12px; text-align: left; color: #475569; font-weight: 600; font-size: 0.9rem; width: 30%;">탐구 질문</th>
+                                <th style="padding: 12px; text-align: left; color: #475569; font-weight: 600; font-size: 0.9rem;">활동 및 증거물</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${getList(execution.subject_table).map(row => `
+                            <tr style="border-bottom: 1px solid #E2E8F0;">
+                                <td style="padding: 12px; color: #0F172A; font-weight: 600;">${row.subject}</td>
+                                <td style="padding: 12px; color: #334155;">${row.concept}</td>
+                                <td style="padding: 12px; color: #0F172A; line-height: 1.5;">Q. ${row.question}</td>
+                                <td style="padding: 12px; color: #334155;">
+                                    <div style="margin-bottom: 4px;">🎯 ${row.activity}</div>
+                                    <div style="font-size: 0.85rem; color: #64748B;">📂 ${row.evidence}</div>
+                                </td>
+                            </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Creative Experience (Full Width Cards) -->
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #1E293B; margin-bottom: 1rem;">창의적 체험활동 추천</h3>
+                <div class="creative-list" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem;">
+                    ${['club', 'career', 'autonomous'].map((type, idx) => {
+            const maps = { club: { title: '동아리', icon: 'users', color: '#3B82F6', bg: '#EFF6FF' }, career: { title: '진로', icon: 'compass', color: '#8B5CF6', bg: '#F3E8FF' }, autonomous: { title: '자율', icon: 'hand-sparkles', color: '#10B981', bg: '#ECFDF5' } };
+            const map = maps[type];
+            const options = getList(execution.creative_experience[`${type}_options`]);
+            if (options.length === 0) return '';
+            const item = options[0]; // Take top 1
+            return `
+                        <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: #1E293B; font-size: 1.1rem;">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: ${map.bg}; color: ${map.color}; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-${map.icon}"></i>
+                                    </div>
+                                    ${map.title} 활동
+                                </div>
+                                <span style="background: #F1F5F9; color: #64748B; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">추천 주제</span>
+                            </div>
+                            
+                            <div>
+                                <div style="font-weight: 700; color: #0F172A; font-size: 1.15rem; margin-bottom: 0.5rem;">${item.topic}</div>
+                                <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 8px;">
+                                    <strong><i class="fa-solid fa-shoe-prints" style="color: #94A3B8; margin-right: 0.3rem;"></i> 실행 단계:</strong> ${item.steps}
+                                </div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+                                <span style="font-size: 0.85rem; font-weight: 600; color: #059669;">
+                                    <i class="fa-solid fa-file-circle-check"></i> 예상 결과물:
+                                </span>
+                                <span style="font-size: 0.9rem; color: #334155;">${item.evidence}</span>
+                            </div>
+                        </div>
+                        `;
+        }).join('')}
+                </div>
+
+                <!-- Consulting Questions -->
+                <div style="background: #E0E7FF; border-radius: 12px; padding: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #3730A3; margin-bottom: 1rem;">
+                         <i class="fa-solid fa-comments"></i> 심화 컨설팅 질문 (Self-Check)
+                    </h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${getList(execution.consulting_questions).map(q => `
+                        <div style="background: white; color: #4338CA; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            ${q}
+                        </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <!-- [Part 3] Trigger Bank (Checklist moved to Page 1) -->
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                
+                <!-- Trigger Bank -->
+                <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0;">
+                    <h4 style="font-weight: 700; color: #1E293B; margin-bottom: 1rem;">🔥 Motivation Trigger Bank</h4>
+                    
+                    <div style="margin-bottom: 1.2rem;">
+                        <span style="font-size: 0.85rem; color: #64748B; display: block; margin-bottom: 0.5rem;">추천 도서</span>
+                        ${getList(trigger_bank.books).map(b => `
+                        <div style="display: flex; gap: 0.8rem; margin-bottom: 0.8rem; align-items: flex-start;">
+                            <div style="background: #F1F5F9; width: 40px; height: 50px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #94A3B8;">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: #0F172A; font-size: 0.95rem;">${b.title}</div>
+                                <div style="font-size: 0.85rem; color: #475569;">${b.connection}</div>
+                            </div>
+                        </div>
+                        `).join('')}
+                    </div>
+
+                    <div>
+                        <span style="font-size: 0.85rem; color: #64748B; display: block; margin-bottom: 0.5rem;">추천 키워드</span>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                            ${getList(trigger_bank.keywords).map(k => `
+                            <span style="border: 1px solid #CBD5E1; color: #334155; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;">
+                                ${k.keyword}
+                            </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     `;
 }

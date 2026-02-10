@@ -150,6 +150,39 @@ class AIService {
     }
 
     /**
+     * Helper: Fetch Prompt from DB
+     */
+    async getPrompt(groupTitle, type, fallback) {
+        if (!window.dbService) return fallback;
+        try {
+            // 1. Get Group ID
+            const { data: group } = await window.dbService.client
+                .from('prompt_group')
+                .select('id')
+                .eq('title', groupTitle)
+                .maybeSingle();
+
+            if (!group) return fallback;
+
+            // 2. Get Valid Prompt
+            const { data: prompt } = await window.dbService.client
+                .from('prompt')
+                .select('contents')
+                .eq('prompt_group_id', group.id)
+                .eq('type', type)
+                .eq('valid', true) // Only active
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            return prompt ? prompt.contents : fallback;
+        } catch (e) {
+            console.warn(`Prompt fetch failed for ${groupTitle}/${type}:`, e);
+            return fallback;
+        }
+    }
+
+    /**
      * 탐구 주제 및 가이드 생성 (Stage 2)
      */
     async generateExplorationGuide(context) {
@@ -160,38 +193,132 @@ class AIService {
 
         const { student, target } = context;
 
-        const defaultSystemPrompt = "당신은 대한민국 대학 입시 전문 컨설턴트입니다. 학생의 생활기록부 '세부능력 및 특기사항(세특)'에 기재할 수 있는 수준 높고 창의적인 심화 탐구 주제를 제안하는 것이 임무입니다.";
-        let systemPrompt = settings.systemPrompt || defaultSystemPrompt;
+        const defaultSystemPrompt = `
+# [시스템 역할]
+너는 대한민국 일반고 환경을 잘 이해하는 “고교 생활기록부(세특/창체) 전문 컨설턴트”야. 
+제공되는 [지망학과]와 [이번 학기 수강과목]을 바탕으로 학생과 학부모가 바로 실행할 수 있는 현실적인 1~2장짜리 컨설팅 자료(JSON)를 작성해.
+
+# [치명적 주의사항: 데이터 무결성 및 환각 방지]
+**이 지침을 어길 시 심각한 사업적 손실이 발생할 수 있으므로 절대 준수할 것.**
+1. **교과 개념 무결성**: 반드시 [2022 개정 교육과정] 교과서 목차에 명시된 개념만 사용하라. 존재하지 않는 교과 원리를 지어내는 것은 치명적인 오류다.
+2. **확신이 없는 경우**: 정보의 사실 여부가 1%라도 의심된다면, 임의로 생성하지 말고 범용적이고 안전한 대안을 제시하라.
+3. **할루시네이션 금지**: 존재하지 않는 책, 저자, ISBN을 창조하지 마라.
+4. **검증된 도서**: 출판된 지 오래되어 절판된 책보다는, 현재 서점에서 구할 수 있는 '스테디셀러'나 '베스트셀러', 혹은 분야의 '교과서적 개론서' 위주로 추천하라.
+5. **불확실 시 대체**: 특정 세부 주제의 책이 확실치 않다면, 해당 주제를 포괄하는 광범위한 명저를 추천하라.
+6. **ISBN 정확성**: ISBN은 틀리기 쉬운 정보이므로, 확실히 아는 경우에만 기재하고 조금이라도 헷갈리면 "ISBN 확인 필요"라고 적어라.
+
+[작성 대원칙: 현실성(Feasibility)]
+1. 난이도 조절: 전문적인 코딩(파이썬, C언어), 하드웨어 제작(아두이노, 3D프린터), 대학 수준의 논문 읽기는 제안하지 마. 대신 '개념 설계', '엑셀 데이터 분석', '제안서 작성', '기사 스크랩 및 비교', '유튜브 콘티 제작 혹은 촬영' 등 일반고 학생이 교실에서 할 수 있는 활동을 제안해.
+2. 동아리 환경: 특정 동아리명(예: 로봇제작반)을 단정 짓지 말고, “과학 관련 동아리라면”, “인문/토론 동아리라면” 처럼 성격을 가정해서 제안해.
+3. 선행 금지: 아직 배우지 않은 심화 개념보다는, 교과서 목차나 기초 개념을 실생활 문제와 연결하는 것에 집중해.
+
+[입력 데이터]
+지망학과: {{target_major}}
+이번 학기 수강과목: {{target_recommended}}
+
+[출력 구조 및 작성 가이드 (JSON 필드별 작성 지침)]
+
+[Page 1: Summary]
+- profile_summary: 지망학과와 수강과목을 바탕으로 학생의 강점을 한 줄로 요약.
+- anchor_theme: 이번 학기 컨셉. 어려운 주제어 대신 '구체적인 모습/강점'을 정의.
+- sub_keywords: anchor_theme과 관련된 쉬운 핵심 키워드 3개 (#해시태그).
+- representative_outputs:
+  1) 세특용: (계기→교과/활동→방법→결과물) 구조로 작성.
+  2) 창체용: (계기→활동→방법→결과물) 구조로 작성.
+- teacher_record_guide: 교사가 생기부에 참고할 수 있는 문장 (트리거→교과원리→탐구→성장).
+- checklist: 이번 주 바로 할 일 3가지 (유튜브, 도서관, 교과서 활용 등 진입장벽 낮게).
+
+[Page 2: Execution Plan]
+- subject_table: 과목별 세특 설계. (주력 3개 + 보조 2~3개)
+  * 컬럼: 과목 | 교과개념(22개정) | 전공연결질문 | 활동 | 결과물
+- creative_experience: 창체 활동 추천 (선택형 옵션 제공)
+  * club_options: 동아리 (주제/실행3단계/증거물)
+  * career_options: 진로 (주제/실행3단계/증거물)
+  * autonomous_options: 자율 (주제/실행3단계/증거물)
+- consulting_questions: 학생의 관심사와 상황을 파악하기 위한 질문 6~8개.
+
+[Trigger Bank]
+- books: 추천 도서 3권 (도서명/저자/출판사, 핵심내용, 활용방안). ISBN 필수(확실치 않으면 '확인필요').
+- keywords: 트렌드 키워드 3개 (키워드명, 정의, 활용방안).
+
+[필수 출력 형식]
+반드시 아래 JSON 포맷을 엄격히 준수하여 응답하세요. 마크다운이나 추가 설명 없이 JSON만 반환합니다.
+
+[IMPORTANT] Output strictly in JSON format as defined:
+{
+  "page1": {
+    "summary": {
+      "profile_summary": "학생 프로필 요약 (지망학과 / 수강과목 요약)",
+      "anchor_theme": "앵커 테마 (지망학과와 연결되면서 여러 과목 확장 가능한 주제)",
+      "sub_keywords": ["서브 키워드1", "서브 키워드2", "서브 키워드3"],
+      "representative_outputs": [
+        { "title": "세특 중심 대표 산출물 제목", "detail": "산출물 세부 내용 (실험 보고서, 소논문 등)" },
+        { "title": "창체 중심 대표 산출물 제목", "detail": "산출물 세부 내용 (동아리 발표, 캠페인 등)" }
+      ],
+      "teacher_record_guide": "교사 기록용 한 문장 뼈대 (트리거→교과개념→활동→결과/성과)",
+      "checklist": ["이번 주 할 일 1", "이번 주 할 일 2", "이번 주 할 일 3"]
+    }
+  },
+  "page2": {
+    "execution_plan": {
+      "subject_table": [
+        { "subject": "과목명", "concept": "연계 교과 개념", "question": "탐구 질문", "activity": "구체적 활동", "evidence": "증거물" },
+        { "subject": "과목명", "concept": "연계 교과 개념", "question": "탐구 질문", "activity": "구체적 활동", "evidence": "증거물" }
+      ],
+      "creative_experience": {
+        "club_options": [
+            { "topic": "동아리 활동 주제", "steps": "실행 3단계 요약", "evidence": "결과물 (무엇을 남길지)" }
+        ],
+        "career_options": [
+            { "topic": "진로 활동 주제", "steps": "실행 3단계 요약", "evidence": "결과물" }
+        ],
+        "autonomous_options": [
+            { "topic": "자율 활동 주제", "steps": "실행 3단계 요약", "evidence": "결과물" }
+        ]
+      },
+      "consulting_questions": [
+        "질문 1 (문제정의)", "질문 2 (데이터)", "질문 3 (대안)", 
+        "질문 4 (역할)", "질문 5 (확장)", "질문 6", "질문 7", "질문 8"
+      ]
+    }
+  },
+  "trigger_bank": {
+    "books": [
+      { "title": "도서명", "author": "저자", "desc": "한 줄 내용", "connection": "세특·창체 예시 (과목/활동 연결)" }
+    ],
+    "keywords": [
+      { "keyword": "키워드명", "desc": "한 줄 내용", "connection": "세특·창체 예시 (과목/활동 연결)" }
+    ]
+  }
+}`;
+
+        // [NEW] Try loading from DB first -> Settings -> Default
+        let systemPrompt = await this.getPrompt('탐구보고서 가이드', 'system', settings.systemPrompt || defaultSystemPrompt);
+        // let systemPrompt = defaultSystemPrompt;
 
         const defaultUserPromptTemplate = `
-[학생 정보]
-- 내신 성적: {{gpa}}등급
-- 이수한 과목: {{subjects}}
+[학생 프로필]
+- 내신 등급: {{gpa}}
+- 수강 과목: {{subjects}}
 
-[희망 대학 및 학과]
-- 목표 대학: {{target_univ}}
-- 목표 학과: {{target_major}}
-- 학과 권장 과목: {{target_recommended}}
+[목표]
+- 대학: {{target_univ}}
+- 학과: {{target_major}}
+- 권장 과목: {{target_recommended}}
 
-[요청 사항]
-1. 학생의 목표 학과와 연계된 [심화 탐구 주제]를 1가지 선정하세요. 창의적이고 학술적인 깊이가 있어야 합니다.
-2. [주제 선정 논리(Chain-of-Thought)]를 통해, 왜 이 주제가 학생의 이수 과목 및 목표 학과와 연결되는지 논리적으로 설명하세요.
-3. 주제와 관련된 [전문가 추천 도서]를 2권 이상 선정하고, 추천 이유를 간략히 덧붙이세요.
-4. 다음 JSON 형식을 엄격히 지켜 답변하세요. (마크다운 기호 없이 순수 JSON만 반환)
+위 학생이 "학업 역량"과 "전공 적합성"을 모두 입증할 수 있는 최적의 생기부 컨설팅 보고서를 작성해주세요.
+반드시 System Prompt에 정의된 JSON 형식을 따라야 합니다.`; // Removed {{json_format}} usage here as it is fixed in system prompt
 
-{{json_format}}`;
-
-        let userPrompt = settings.userPromptTemplate || defaultUserPromptTemplate;
+        // [NEW] Try loading from DB first -> Settings -> Default
+        let userPrompt = await this.getPrompt('탐구보고서 가이드', 'user', settings.userPromptTemplate || defaultUserPromptTemplate);
+        // let userPrompt = defaultUserPromptTemplate;
 
         // Dynamic Injection
-        // Fix: Use correct context paths (context.target.univ/major)
-        // Fix: Support both new {{target_major}} and legacy {{major}} placeholders
-        // Fix: Use split/join or replaceAll for global replacement
-
         console.log('AI Context for Prompt:', context);
 
         const safeReplace = (text, key, value) => {
             const val = value || '(정보 없음)';
+            // simple replaceAll equivalent
             return text.split(key).join(val);
         };
 
@@ -206,31 +333,18 @@ class AIService {
         userPrompt = safeReplace(userPrompt, '{{univ}}', target.univ);
         userPrompt = safeReplace(userPrompt, '{{major}}', target.major);
 
-        // --- Enforce JSON Schema in System Prompt (Critical Fix) ---
-        const requiredSchema = JSON.stringify({
-            topic: "주제 명칭 (문장형 제목)",
-            rationale: "주제 선정 논리 (왜 이 주제가 학생에게 적합한지)",
-            background: "탐구 배경 (학문적 배경 및 필요성)",
-            direction: "탐구 방향 (구체적인 탐구 내용 및 방법)",
-            books: [
-                { title: "도서명", author: "저자", desc: "추천 이유" }
-            ],
-            keywords: ["키워드1", "키워드2", "키워드3"]
-        }, null, 2);
-
-        const systemSchemaInstruction = `
-\n[IMPORTANT]
-You MUST answer in the following JSON format. Do NOT deviate from this structure.
-Response Format:
-${requiredSchema}
-`;
-
-        // Append to System Prompt
-        systemPrompt += systemSchemaInstruction;
-
-        // Legacy Support for {{json_format}} in User Prompt (if used)
-        if (userPrompt.includes('{{json_format}}')) {
-            userPrompt = userPrompt.replace('{{json_format}}', ''); // Remove it as it's now in System Prompt
+        // Force JSON structure in system prompt if not present
+        if (!systemPrompt.includes('[IMPORTANT]')) {
+            if (systemPrompt.includes('page1')) {
+                // User provided a custom schema (likely the Text-Block one), but needs the enforcement header
+                systemPrompt += `\n\n[IMPORTANT] Output strictly in JSON format as defined in the prompt above. Return ONLY the JSON object.`;
+            } else {
+                // No schema detected, append the default Full Schema
+                const schemaPart = defaultSystemPrompt.split('[필수 출력 형식]')[1];
+                if (schemaPart) {
+                    systemPrompt += `\n\n[IMPORTANT] Output strictly in JSON format as defined:\n` + schemaPart;
+                }
+            }
         }
 
         console.group('🤖 Gemini AI Request');
