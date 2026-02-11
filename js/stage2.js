@@ -614,30 +614,43 @@ function renderNewReportLayout(data, container) {
                 
                 <!-- Trigger Bank -->
                 <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0;">
-                    <h4 style="font-weight: 700; color: #1E293B; margin-bottom: 1rem;">🔥 Motivation Trigger Bank</h4>
+                    <h4 style="font-weight: 700; color: #1E293B; margin-bottom: 1rem;">🔥 Motivation Trigger Bank (2025)</h4>
                     
-                    <div style="margin-bottom: 1.2rem;">
-                        <span style="font-size: 0.85rem; color: #64748B; display: block; margin-bottom: 0.5rem;">추천 도서</span>
+                    <!-- Books -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.8rem; border-bottom: 2px solid #F1F5F9; padding-bottom: 0.5rem;">📚 추천 도서</span>
                         ${getList(trigger_bank.books).map(b => `
-                        <div style="display: flex; gap: 0.8rem; margin-bottom: 0.8rem; align-items: flex-start;">
-                            <div style="background: #F1F5F9; width: 40px; height: 50px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #94A3B8;">
-                                <i class="fa-solid fa-book"></i>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-start; background: #F8FAFC; padding: 1rem; border-radius: 8px;">
+                            <div style="background: white; width: 44px; height: 58px; border: 1px solid #E2E8F0; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #94A3B8; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                <i class="fa-solid fa-book" style="font-size: 1.2rem;"></i>
                             </div>
-                            <div>
-                                <div style="font-weight: 600; color: #0F172A; font-size: 0.95rem;">${b.title}</div>
-                                <div style="font-size: 0.85rem; color: #475569;">${b.connection}</div>
+                            <div style="flex-grow: 1;">
+                                <div style="font-weight: 700; color: #0F172A; font-size: 1rem; margin-bottom: 0.3rem;">${b.title}</div>
+                                <div style="font-size: 0.9rem; color: #334155; margin-bottom: 0.4rem; line-height: 1.5;">${b.desc || ''}</div>
+                                <div style="font-size: 0.85rem; color: #059669; background: #ECFDF5; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                                    <i class="fa-solid fa-link" style="margin-right: 4px;"></i>${b.connection}
+                                </div>
                             </div>
                         </div>
                         `).join('')}
                     </div>
 
+                    <!-- Keywords -->
                     <div>
-                        <span style="font-size: 0.85rem; color: #64748B; display: block; margin-bottom: 0.5rem;">추천 키워드</span>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.8rem; border-bottom: 2px solid #F1F5F9; padding-bottom: 0.5rem;">🔑 트렌드 키워드</span>
+                        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
                             ${getList(trigger_bank.keywords).map(k => `
-                            <span style="border: 1px solid #CBD5E1; color: #334155; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;">
-                                ${k.keyword}
-                            </span>
+                            <div style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem; background: white;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span style="font-weight: 700; color: #2563EB; font-size: 1rem;">#${k.keyword}</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: #334155; margin-bottom: 0.5rem; line-height: 1.5;">
+                                    ${k.desc || ''}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #64748B; background: #F1F5F9; padding: 6px 10px; border-radius: 6px;">
+                                    <i class="fa-solid fa-lightbulb" style="color: #F59E0B; margin-right: 5px;"></i> ${k.connection}
+                                </div>
+                            </div>
                             `).join('')}
                         </div>
                     </div>

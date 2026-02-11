@@ -3,6 +3,123 @@
  * Admin: 프롬프트 센터 및 API 설정 관리
  */
 
+const OFFICIAL_JSON_SCHEMA = `
+[출력 구조 및 작성 가이드 (JSON 필드별 작성 지침)]
+
+[Page 1: Summary]
+- profile_summary: 학생 프로필 요약 (지망학과와 수강과목을 한 줄로 요약).
+- anchor_theme: 이번 학기 컨셉. 어려운 주제어 대신, 학생이 보여줘야 할 '구체적인 모습/강점'을 한 문장으로 정의.
+- sub_keywords: anchor_theme과 관련된 쉬운 핵심 키워드 3개 (#해시태그).
+- representative_outputs:
+  1) 세특용: (계기→교과/활동→구체적 방법→결과물) 구조. 학생이 '할 수 있는' 수준으로 제안.
+  2) 창체용: (계기→활동→구체적 방법→결과물) 구조.
+- teacher_record_guide: 교사가 생기부에 그대로 참고할 수 있는 문장 (트리거 → 교과원리 적용 → 탐구활동 → 성장/변화).
+- checklist: 이번 주 바로 할 일 3가지 (진입장벽 낮게: 유튜브 영상 키워드, 도서관 목차 훑기, 교과서 펼쳐보기).
+
+[Page 2: Execution Plan]
+- subject_table: 과목별 세특 설계. (주력 3개 + 보조 2~3개)
+  * 주의: 22개정 교과서에 나온 실제 개념만 활용. 활동은 '제안서 작성'처럼 기획/탐구 단계로 설정.
+  * 컬럼: 과목 | 교과개념(교과서 수준) | 전공연결질문(호기심) | 활동(조사/발표/에세이/문제풀이) | 결과물(증거)
+- creative_experience: 창체 활동 추천 (선택형 옵션 제공)
+  * club_options: 동아리 ([OO 성격의 동아리라면] 가정). (주제/실행3단계/증거물).
+  * career_options: 진로 (뉴스 스크랩, 롤모델 탐구 등 혼자 할 수 있는 활동). (주제/실행3단계/증거물).
+  * autonomous_options: 자율 (학급 기여, 환경 개선 등). (주제/실행3단계/증거물).
+- consulting_questions: 학생의 관심사를 이끌어내고 활동 가능 여부를 체크하는 질문 리스트 6~8개.
+
+[Trigger Bank (2025)]
+- books: 추천 도서 3권. 컨셉과 세특 활동을 지원할 수 있는 자료.
+  * title: "도서명 (저자 / 출판사 / ISBN)" 형식으로 작성. ISBN 필수(불확실하면 '확인필요').
+  * desc: "핵심 내용 요약 (책의 줄거리 및 주요 논점)"
+  * connection: "활용: 과목/활동 연결 (구체적 적용 방안)"
+- keywords: 트렌드 키워드 3개. 공신력 있는 용어.
+  * keyword: "키워드명"
+  * desc: "정의 및 핵심 설명"
+  * connection: "활용: 탐구 주제 연결 (구체적 적용 방안)"
+
+[필수 출력 형식]
+반드시 아래 JSON 포맷을 엄격히 준수하여 응답하세요. 마크다운이나 추가 설명 없이 JSON만 반환합니다. Note: 'representative_outputs'는 배열이어야 합니다.
+
+[IMPORTANT] Output strictly in JSON format as defined:
+{
+  "page1": {
+    "summary": {
+      "profile_summary": "학생 프로필 요약 (지망학과 / 수강과목 요약)",
+      "anchor_theme": "이번 학기 컨셉 (구체적인 모습/강점)",
+      "sub_keywords": ["키워드1", "키워드2", "키워드3"],
+      "representative_outputs": [
+        { "title": "세특 중심 대표 산출물 제목", "detail": "(WHY 계기) ... → (WHAT 교과/활동) ... → (HOW 방법) ... → (RESULT 결과물) ..." },
+        { "title": "창체 중심 대표 산출물 제목", "detail": "(WHY 계기) ... → (WHAT 활동) ... → (HOW 방법) ... → (RESULT 결과물) ..." }
+      ],
+      "teacher_record_guide": "교사 기록용 한 문장 뼈대 (트리거→교과원리→탐구→성장)",
+      "checklist": ["이번 주 할 일 1", "이번 주 할 일 2", "이번 주 할 일 3"]
+    }
+  },
+  "page2": {
+    "execution_plan": {
+      "subject_table": [
+        { "subject": "과목명", "concept": "연계 교과 개념", "question": "탐구 질문", "activity": "구체적 활동", "evidence": "증거물" },
+        { "subject": "과목명", "concept": "연계 교과 개념", "question": "탐구 질문", "activity": "구체적 활동", "evidence": "증거물" }
+      ],
+      "creative_experience": {
+        "club_options": [
+            { "topic": "동아리 활동 주제", "steps": "실행 3단계 상세 기술 (구체적 활동 내용 포함)", "evidence": "결과물" }
+        ],
+        "career_options": [
+            { "topic": "진로 활동 주제", "steps": "실행 3단계 상세 기술 (구체적 활동 내용 포함)", "evidence": "결과물" }
+        ],
+        "autonomous_options": [
+            { "topic": "자율 활동 주제", "steps": "실행 3단계 상세 기술 (구체적 활동 내용 포함)", "evidence": "결과물" }
+        ]
+      },
+      "consulting_questions": [
+        "질문 1", "질문 2", "질문 3", "질문 4", "질문 5", "질문 6"
+      ]
+    }
+  },
+  "trigger_bank": {
+    "books": [
+      { "title": "도서명", "author": "저자", "desc": "핵심 내용 상세 서술 (줄거리 및 주요 논점 포함)", "connection": "활용: 과목/활동 연결" }
+    ],
+    "keywords": [
+      { "keyword": "키워드명", "desc": "정의 및 상세 설명", "connection": "활용: 탐구 주제 연결" }
+    ]
+  }
+}`;
+
+window.runSmartMerge = function () {
+    const inputEl = document.getElementById('sysPrompt');
+    if (!inputEl) return;
+
+    const input = inputEl.value;
+    if (!input.trim()) {
+        alert('프롬프트 내용이 비어있습니다.');
+        return;
+    }
+
+    // [Logic] Split Point Detection
+    const splitMarkers = ['[출력 구조', '[필수 출력 형식]', '=== (Page 1)'];
+    let splitIndex = -1;
+
+    for (const marker of splitMarkers) {
+        const idx = input.indexOf(marker);
+        if (idx !== -1) {
+            if (splitIndex === -1 || idx < splitIndex) splitIndex = idx;
+        }
+    }
+
+    let userInstructions = input;
+    if (splitIndex !== -1) {
+        userInstructions = input.substring(0, splitIndex).trim();
+    } else {
+        // If no marker found, assume entire text is instruction and append schema
+        userInstructions = input.trim();
+    }
+
+    const merged = userInstructions + "\n\n" + OFFICIAL_JSON_SCHEMA;
+    inputEl.value = merged;
+    alert('✅ 최신 JSON 포맷으로 자동 보정되었습니다.\n이제 [설정 저장] 버튼을 눌러주세요.');
+};
+
 function renderAdmin(container) {
     const profile = dataManager.getData();
     const settings = profile.appSettings || {};
@@ -34,9 +151,14 @@ function renderAdmin(container) {
                             <div class="form-group">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                     <label>System Prompt (Persona & Instructions)</label>
-                                    <select id="sysPresetSelect" onchange="applyPreset('system', this.value)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
-                                        <option value="">📂 프리셋 불러오기</option>
-                                    </select>
+                                    <div style="display:flex; gap:0.5rem;">
+                                        <button onclick="runSmartMerge()" class="btn-secondary btn-sm" style="font-size:0.8rem; padding: 2px 8px; border-color: #3B82F6; color: #3B82F6;">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i> 포맷 자동보정
+                                        </button>
+                                        <select id="sysPresetSelect" onchange="setTimeout(() => applyPreset('system', this.value), 50)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
+                                            <option value="">📂 프리셋 불러오기</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <textarea id="sysPrompt" class="prompt-editor">${settings.systemPrompt || `당신은 대한민국 대입 입시 컨설턴트입니다. 학생의 목표 학과와 교과 이수 현황을 바탕으로, 생활기록부에 기재할 수 있는 깊이 있는 탐구 주제와 활동 방향을 제시하는 것이 당신의 역할입니다. 
 
@@ -48,7 +170,7 @@ function renderAdmin(container) {
                             <div class="form-group">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                     <label>User Prompt Template (Data Injection)</label>
-                                    <select id="userPresetSelect" onchange="applyPreset('user', this.value)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
+                                    <select id="userPresetSelect" onchange="setTimeout(() => applyPreset('user', this.value), 50)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
                                         <option value="">📂 프리셋 불러오기</option>
                                     </select>
                                 </div>

@@ -275,6 +275,8 @@ function removeSubject(index, type) {
 }
 
 function closeProfileModal() {
+    console.log('Closing Profile Modal... (Trace)');
+    // console.trace(); // Optional for detailed debugging
     const modal = document.getElementById('profileModal');
     if (modal) modal.style.display = 'none';
 }

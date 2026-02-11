@@ -33,10 +33,20 @@ function initApp() {
     loadView('stage1_1');
 
     // 프로필 정보가 없으면 모달 띄우기 (지연 실행)
+    // [Fix] Prevent double firing or conflict with other modals
     const profile = dataManager.getProfile();
-    if (!profile || !profile.gpa) {
+    const hasProfile = profile && profile.name && profile.gpa;
+
+    if (!hasProfile) {
         setTimeout(() => {
-            if (typeof openProfileModal === 'function') openProfileModal();
+            // Check if modal is already open
+            const modal = document.getElementById('profileModal');
+            if (modal && modal.style.display === 'flex') return;
+
+            if (typeof openProfileModal === 'function') {
+                console.log('Auto-opening Profile Modal (No Data)');
+                openProfileModal();
+            }
         }, 800);
     }
 
