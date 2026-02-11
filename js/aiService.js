@@ -220,42 +220,42 @@ class AIService {
 
 [Page 1: Summary]
 - profile_summary: 지망학과와 수강과목을 바탕으로 학생의 강점을 한 줄로 요약.
-- anchor_theme: 이번 학기 컨셉. 어려운 주제어 대신 '구체적인 모습/강점'을 정의.
+- anchor_theme: 이번 학기 컨셉. 어려운 주제어 대신 학생이 보여줘야 할 '구체적인 모습/강점'을 정의.
 - sub_keywords: anchor_theme과 관련된 쉬운 핵심 키워드 3개 (#해시태그).
 - representative_outputs:
-  1) 세특용: (계기→교과/활동→방법→결과물) 구조로 작성.
-  2) 창체용: (계기→활동→방법→결과물) 구조로 작성.
-- teacher_record_guide: 교사가 생기부에 참고할 수 있는 문장 (트리거→교과원리→탐구→성장).
-- checklist: 이번 주 바로 할 일 3가지 (유튜브, 도서관, 교과서 활용 등 진입장벽 낮게).
+  1) 세특용: (계기→교과/활동→방법→결과물) 구조로 작성. '세특 중심 대표 산출물' 제목과 내용.
+  2) 창체용: (계기→활동→방법→결과물) 구조로 작성. '창체 중심 대표 산출물' 제목과 내용.
+- teacher_record_guide: 교사가 생기부에 그대로 참고할 수 있는 문장 (트리거→교과원리→탐구→성장).
+- checklist: 이번 주 바로 할 일 3가지 (유튜브, 도서관(목차), 교과서 활용 등 진입장벽 낮게).
 
 [Page 2: Execution Plan]
 - subject_table: 과목별 세특 설계. (주력 3개 + 보조 2~3개)
-  * 컬럼: 과목 | 교과개념(22개정) | 전공연결질문 | 활동 | 결과물
+  * 컬럼: 과목 | 교과개념(22개정) | 전공연결질문(호기심) | 활동(조사/발표/제안서) | 결과물(증거)
 - creative_experience: 창체 활동 추천 (선택형 옵션 제공)
-  * club_options: 동아리 (주제/실행3단계/증거물)
-  * career_options: 진로 (주제/실행3단계/증거물)
-  * autonomous_options: 자율 (주제/실행3단계/증거물)
+  * club_options: 동아리 ([OO 성격의 동아리라면] 가정). (주제/실행3단계/증거물)
+  * career_options: 진로 (뉴스 스크랩, 롤모델 탐구 등 혼자 할 수 있는 활동). (주제/실행3단계/증거물)
+  * autonomous_options: 자율 (학급 기여, 환경 개선 등). (주제/실행3단계/증거물)
 - consulting_questions: 학생의 관심사와 상황을 파악하기 위한 질문 6~8개.
 
-[Trigger Bank]
+[Trigger Bank (2025)]
 - books: 추천 도서 3권 (도서명/저자/출판사, 핵심내용, 활용방안). ISBN 필수(확실치 않으면 '확인필요').
 - keywords: 트렌드 키워드 3개 (키워드명, 정의, 활용방안).
 
 [필수 출력 형식]
-반드시 아래 JSON 포맷을 엄격히 준수하여 응답하세요. 마크다운이나 추가 설명 없이 JSON만 반환합니다.
+반드시 아래 JSON 포맷을 엄격히 준수하여 응답하세요. 마크다운이나 추가 설명 없이 JSON만 반환합니다. Note: 'representative_outputs'는 배열이어야 합니다.
 
 [IMPORTANT] Output strictly in JSON format as defined:
 {
   "page1": {
     "summary": {
       "profile_summary": "학생 프로필 요약 (지망학과 / 수강과목 요약)",
-      "anchor_theme": "앵커 테마 (지망학과와 연결되면서 여러 과목 확장 가능한 주제)",
-      "sub_keywords": ["서브 키워드1", "서브 키워드2", "서브 키워드3"],
+      "anchor_theme": "이번 학기 컨셉 (구체적인 모습/강점)",
+      "sub_keywords": ["키워드1", "키워드2", "키워드3"],
       "representative_outputs": [
-        { "title": "세특 중심 대표 산출물 제목", "detail": "산출물 세부 내용 (실험 보고서, 소논문 등)" },
-        { "title": "창체 중심 대표 산출물 제목", "detail": "산출물 세부 내용 (동아리 발표, 캠페인 등)" }
+        { "title": "세특 중심 대표 산출물 제목", "detail": "(WHY 계기) ... → (WHAT 교과/활동) ... → (HOW 방법) ... → (RESULT 결과물) ..." },
+        { "title": "창체 중심 대표 산출물 제목", "detail": "(WHY 계기) ... → (WHAT 활동) ... → (HOW 방법) ... → (RESULT 결과물) ..." }
       ],
-      "teacher_record_guide": "교사 기록용 한 문장 뼈대 (트리거→교과개념→활동→결과/성과)",
+      "teacher_record_guide": "교사 기록용 한 문장 뼈대 (트리거→교과원리→탐구→성장)",
       "checklist": ["이번 주 할 일 1", "이번 주 할 일 2", "이번 주 할 일 3"]
     }
   },
@@ -267,34 +267,54 @@ class AIService {
       ],
       "creative_experience": {
         "club_options": [
-            { "topic": "동아리 활동 주제", "steps": "실행 3단계 요약", "evidence": "결과물 (무엇을 남길지)" }
+            { "topic": "동아리 활동 주제", "steps": "실행 3단계 상세 기술 (구체적 활동 내용 포함)", "evidence": "결과물" }
         ],
         "career_options": [
-            { "topic": "진로 활동 주제", "steps": "실행 3단계 요약", "evidence": "결과물" }
+            { "topic": "진로 활동 주제", "steps": "실행 3단계 상세 기술 (구체적 활동 내용 포함)", "evidence": "결과물" }
         ],
         "autonomous_options": [
-            { "topic": "자율 활동 주제", "steps": "실행 3단계 요약", "evidence": "결과물" }
+            { "topic": "자율 활동 주제", "steps": "실행 3단계 상세 기술 (구체적 활동 내용 포함)", "evidence": "결과물" }
         ]
       },
       "consulting_questions": [
-        "질문 1 (문제정의)", "질문 2 (데이터)", "질문 3 (대안)", 
-        "질문 4 (역할)", "질문 5 (확장)", "질문 6", "질문 7", "질문 8"
+        "질문 1", "질문 2", "질문 3", "질문 4", "질문 5", "질문 6"
       ]
     }
   },
   "trigger_bank": {
     "books": [
-      { "title": "도서명", "author": "저자", "desc": "한 줄 내용", "connection": "세특·창체 예시 (과목/활동 연결)" }
+      { "title": "도서명", "author": "저자", "desc": "핵심 내용 상세 서술 (줄거리 및 주요 논점 포함)", "connection": "활용: 과목/활동 연결" }
     ],
     "keywords": [
-      { "keyword": "키워드명", "desc": "한 줄 내용", "connection": "세특·창체 예시 (과목/활동 연결)" }
+      { "keyword": "키워드명", "desc": "정의 및 상세 설명", "connection": "활용: 탐구 주제 연결" }
     ]
   }
 }`;
 
-        // [NEW] Try loading from DB first -> Settings -> Default
-        let systemPrompt = await this.getPrompt('탐구보고서 가이드', 'system', settings.systemPrompt || defaultSystemPrompt);
-        // let systemPrompt = defaultSystemPrompt;
+        // [Priority Logic] 1. Settings (User Override) -> 2. DB (Official) -> 3. Code (Hardcoded Default)
+
+        // 1. System Prompt
+        let systemPrompt = '';
+        let sysSource = '';
+
+        if (settings.systemPrompt && settings.systemPrompt.trim().length > 10) {
+            systemPrompt = settings.systemPrompt;
+            sysSource = 'SETTINGS (User Input)';
+        } else {
+            systemPrompt = await this.getPrompt('탐구보고서 가이드', 'system', defaultSystemPrompt);
+            sysSource = (systemPrompt === defaultSystemPrompt) ? 'HARDCODED DEFAULT (Code)' : 'DATABASE (Supabase)';
+        }
+
+        // [Smart Override] Detect Legacy Schema (String-based page1) and specific "Summary Card" headers
+        // The legacy prompt had "page1": "..." string definition OR outputted "=== (Page 1)" headers.
+        if (systemPrompt.includes('"page1": "') || systemPrompt.includes('=== (Page 1)')) {
+            console.warn('[System Prompt Override] Legacy Text-Mode Prompt detected. Forcing Rich-Mode Default.');
+            systemPrompt = defaultSystemPrompt;
+            sysSource = 'FORCED DEFAULT (Legacy Protection)';
+        }
+
+        // [Debug] Verify System Prompt Source
+        console.log(`%c 🔧 [System Prompt Source] Using ${sysSource}`, 'background: #222; color: #bada55; font-size: 12px; padding: 4px;');
 
         const defaultUserPromptTemplate = `
 [학생 프로필]
@@ -307,11 +327,15 @@ class AIService {
 - 권장 과목: {{target_recommended}}
 
 위 학생이 "학업 역량"과 "전공 적합성"을 모두 입증할 수 있는 최적의 생기부 컨설팅 보고서를 작성해주세요.
-반드시 System Prompt에 정의된 JSON 형식을 따라야 합니다.`; // Removed {{json_format}} usage here as it is fixed in system prompt
+반드시 System Prompt에 정의된 JSON 형식을 따라야 합니다.`;
 
-        // [NEW] Try loading from DB first -> Settings -> Default
-        let userPrompt = await this.getPrompt('탐구보고서 가이드', 'user', settings.userPromptTemplate || defaultUserPromptTemplate);
-        // let userPrompt = defaultUserPromptTemplate;
+        // 2. User Prompt
+        let userPrompt = '';
+        if (settings.userPromptTemplate && settings.userPromptTemplate.trim().length > 10) {
+            userPrompt = settings.userPromptTemplate;
+        } else {
+            userPrompt = await this.getPrompt('탐구보고서 가이드', 'user', defaultUserPromptTemplate);
+        }
 
         // Dynamic Injection
         console.log('AI Context for Prompt:', context);
@@ -426,3 +450,4 @@ class AIService {
 }
 
 const aiService = new AIService();
+window.aiService = aiService;

@@ -430,16 +430,53 @@ function renderNewReportLayout(data, container) {
                         <i class="fa-solid fa-star" style="color: #F59E0B; margin-right: 0.5rem;"></i> 대표 산출물 (Signature Outputs)
                     </h3>
                     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                        ${getList(summary.representative_outputs).map((item, idx) => `
-                        <div style="background: ${idx === 0 ? '#F0F9FF' : '#FDF4FF'}; border: 1px solid ${idx === 0 ? '#BAE6FD' : '#F5D0FE'}; border-radius: 12px; padding: 1.5rem;">
-                            <div style="font-size: 0.9rem; font-weight: 600; color: ${idx === 0 ? '#0284C7' : '#C026D3'}; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fa-solid fa-${idx === 0 ? 'pen-nib' : 'lightbulb'}"></i>
-                                ${idx === 0 ? '세특 중심' : '창체 중심'}
+                        ${getList(summary.representative_outputs).map((item, idx) => {
+        const isSetuk = idx === 0;
+        const themeColor = isSetuk ? '#0284C7' : '#C026D3';
+        const bgColor = isSetuk ? '#F0F9FF' : '#FDF4FF';
+        const borderColor = isSetuk ? '#BAE6FD' : '#F5D0FE';
+
+        // [Parser] Split by arrow (→ or ->)
+        // Expected: (WHY ...) → (WHAT ...) → (HOW ...) → (RESULT ...)
+        const rawParts = item.detail.split(/→|->/).map(s => s.trim()).filter(s => s.length > 0);
+
+        // Map parts to labels if they match the 4-step structure
+        let steps = [];
+        if (rawParts.length >= 4) {
+            steps = [
+                { label: 'WHY (계기)', icon: 'fa-regular fa-lightbulb', content: rawParts[0].replace(/^\(WHY.*?\)\s*/, '') },
+                { label: 'WHAT (활동)', icon: 'fa-solid fa-book-open', content: rawParts[1].replace(/^\(WHAT.*?\)\s*/, '') },
+                { label: 'HOW (방법)', icon: 'fa-solid fa-magnifying-glass-chart', content: rawParts[2].replace(/^\(HOW.*?\)\s*/, '') },
+                { label: 'RESULT (결과)', icon: 'fa-solid fa-file-lines', content: rawParts[3].replace(/^\(RESULT.*?\)\s*/, '') }
+            ];
+        } else {
+            // Fallback for unstructured text
+            steps = [{ label: '내용', icon: 'fa-solid fa-align-left', content: item.detail }];
+        }
+
+        return `
+                            <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 12px; padding: 1.5rem;">
+                                <div style="font-size: 0.9rem; font-weight: 600; color: ${themeColor}; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-${isSetuk ? 'pen-nib' : 'lightbulb'}"></i>
+                                    ${isSetuk ? '세특 중심' : '창체 중심'}
+                                </div>
+                                <h4 style="font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-bottom: 1.2rem; line-height: 1.4;">${item.title}</h4>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                                    ${steps.map(step => `
+                                    <div style="display: flex; gap: 0.8rem; align-items: flex-start; background: rgba(255,255,255,0.6); padding: 0.8rem; border-radius: 8px; border: 1px solid ${borderColor};">
+                                        <div style="flex-shrink: 0; width: 60px; font-size: 0.8rem; font-weight: 700; color: ${themeColor}; text-align: right; padding-top: 2px;">
+                                            ${step.label.split(' ')[0]}
+                                        </div>
+                                        <div style="font-size: 0.95rem; color: #334155; line-height: 1.6; flex-grow: 1;">
+                                            ${step.content}
+                                        </div>
+                                    </div>
+                                    `).join('')}
+                                </div>
                             </div>
-                            <h4 style="font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.8rem;">${item.title}</h4>
-                            <p style="font-size: 0.95rem; color: #334155; line-height: 1.6;">${item.detail}</p>
-                        </div>
-                        `).join('')}
+                            `;
+    }).join('')}
                     </div>
                 </div>
                 
@@ -512,6 +549,11 @@ function renderNewReportLayout(data, container) {
             const options = getList(execution.creative_experience[`${type}_options`]);
             if (options.length === 0) return '';
             const item = options[0]; // Take top 1
+
+            // [Parser] Split steps by number (1., 2., 3.)
+            // Regex: lookahead for digit followed by dot
+            const rawSteps = item.steps.split(/(?=\d\.\s)/).map(s => s.trim()).filter(s => s.length > 0);
+
             return `
                         <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -525,9 +567,19 @@ function renderNewReportLayout(data, container) {
                             </div>
                             
                             <div>
-                                <div style="font-weight: 700; color: #0F172A; font-size: 1.15rem; margin-bottom: 0.5rem;">${item.topic}</div>
+                                <div style="font-weight: 700; color: #0F172A; font-size: 1.15rem; margin-bottom: 0.8rem;">${item.topic}</div>
                                 <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 8px;">
-                                    <strong><i class="fa-solid fa-shoe-prints" style="color: #94A3B8; margin-right: 0.3rem;"></i> 실행 단계:</strong> ${item.steps}
+                                    <div style="font-weight: 600; color: #64748B; margin-bottom: 0.5rem; display:flex; align-items:center;">
+                                        <i class="fa-solid fa-shoe-prints" style="color: #94A3B8; margin-right: 0.3rem;"></i> 실행 단계
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                        ${rawSteps.length > 1 ? rawSteps.map(step => `
+                                            <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+                                                <span style="background: #E2E8F0; color: #475569; font-size: 0.75rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-top: 3px;">${step.charAt(0)}</span>
+                                                <span>${step.substring(2).trim()}</span>
+                                            </div>
+                                        `).join('') : `<div>${item.steps}</div>`}
+                                    </div>
                                 </div>
                             </div>
 
