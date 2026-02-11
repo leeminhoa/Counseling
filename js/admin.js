@@ -525,7 +525,7 @@ function saveAdminSettings() {
 
     const sbUrlInput = document.getElementById('sbUrlInput');
     const sbKeyInput = document.getElementById('sbKeyInput');
-    const apiKeyInput = document.getElementById('apiKeyInput');
+    // const apiKeyInput = document.getElementById('apiKeyInput'); // Removed
     const tempInput = document.getElementById('tempSlider');
     const topPInput = document.getElementById('topPInput');
     const topKInput = document.getElementById('topKInput');
@@ -538,7 +538,7 @@ function saveAdminSettings() {
         ...existingSettings,
         supabaseUrl: sbUrlInput ? sbUrlInput.value : existingSettings.supabaseUrl,
         supabaseKey: sbKeyInput ? sbKeyInput.value : existingSettings.supabaseKey,
-        geminiKey: apiKeyInput ? apiKeyInput.value : existingSettings.geminiKey,
+        // geminiKey: Removed for security (Server-side only)
         temperature: tempInput ? tempInput.value : existingSettings.temperature,
         topP: topPInput ? topPInput.value : existingSettings.topP,
         topK: topKInput ? topKInput.value : existingSettings.topK,

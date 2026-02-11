@@ -716,20 +716,8 @@ class DBService {
      * type: 'llm_api' 등
      */
     async getApiKey(type) {
-        if (!this.client) return null;
-
-        const { data, error } = await this.client
-            .from('common_info')
-            .select('contents')
-            .eq('type', type)
-            .maybeSingle();
-
-        if (error) {
-            console.error(`API Key fetch error (${type}):`, error);
-            return null;
-        }
-
-        return data ? data.contents : null;
+        console.warn(`[Deprecated] getApiKey(${type}) called. API Keys are no longer accessible from client.`);
+        return null;
     }
     async getUnivMajorRecommendation(univName, majorName) {
         if (!this.client || !univName || !majorName) return null;

@@ -9,89 +9,26 @@ class AIService {
     }
 
     async ensureApiKey() {
-        if (this.apiKey) return this.apiKey;
-
-        const settings = dataManager.getData().appSettings || {};
-
-        // 1. Try DB first (Primary)
-        try {
-            const dbKey = await dbService.getApiKey('llm_api');
-            if (dbKey) {
-                this.apiKey = dbKey;
-                console.log('✅ API Key fetched from DB');
-                return this.apiKey;
-            }
-        } catch (e) {
-            console.warn('Failed to fetch key from DB:', e);
-        }
-
-        // 2. Fallback to Local Settings (Secondary - Dev/Override)
-        if (settings.geminiKey) {
-            this.apiKey = settings.geminiKey;
-            console.log('⚠️ API Key used from Local Settings (Fallback)');
-            return this.apiKey;
-        }
-
-        throw new Error('Google Gemini API Key가 설정되지 않았습니다. (DB common_info[llm_api] 또는 설정 확인 필요)');
+        // [Deprecated] API Key is now handled securely on the server side (Vercel Functions).
+        // This method is kept as a no-op or placeholder if needed, but should not return keys.
+        return null;
     }
 
     /**
      * Get Available Gemini Models
      * Returns all models containing "gemini" in their name, sorted by version (descending).
      */
+    /**
+     * Get Available Gemini Models
+     * [Security Update] Returns static list to avoid exposing API Key via client-side fetch.
+     */
     async getAvailableModels() {
-        try {
-            const apiKey = await this.ensureApiKey();
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-
-            if (!response.ok) {
-                throw new Error(`Failed to fetch models: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            // Filter: Show Gemini 2.5/3.x and Gemma 3 models
-            // Exclude internal/noise models (Nano, Banana, TTS, Audio)
-            const models = data.models.filter(m => {
-                const name = m.name.toLowerCase();
-                const displayName = (m.displayName || '').toLowerCase();
-
-                const isFamilyMatch = name.includes('gemini') || name.includes('gemma');
-                const isVersionMatch = name.includes('2.5') || name.includes('3'); // Matches "3.0", "3", "3-pro"
-
-                // Strict Exclusion List
-                const isExcluded = name.includes('banana') || name.includes('nano') ||
-                    name.includes('tts') || name.includes('audio') ||
-                    displayName.includes('banana') || displayName.includes('nano') ||
-                    displayName.includes('tts') || displayName.includes('audio');
-
-                return isFamilyMatch && isVersionMatch && !isExcluded;
-            }).map(m => ({
-                name: m.name.replace('models/', ''),
-                displayName: m.displayName,
-                description: m.description,
-                version: m.version || ''
-            }));
-
-            // Sort: Newest versions first (Descending)
-            models.sort((a, b) => {
-                const getVer = (name) => {
-                    const match = name.match(/(\d+\.\d+)/);
-                    return match ? parseFloat(match[1]) : 0;
-                };
-                return getVer(b.name) - getVer(a.name);
-            });
-
-            return models;
-
-        } catch (error) {
-            console.error('Error fetching models:', error);
-            // Fallback
-            return [
-                { name: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
-                { name: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' }
-            ];
-        }
+        // Return a curated list of supported models
+        return [
+            { name: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash (Fast & Cost-effective)', description: 'Optimized for high-frequency tasks', version: '1.5.0' },
+            { name: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro (Complex Reasoning)', description: 'Best for complex context and reasoning', version: '1.5.0' },
+            { name: 'gemini-2.0-flash-exp', displayName: 'Gemini 2.0 Flash Experimental', description: 'Next-gen experimental model', version: '2.0.0' }
+        ];
     }
 
     /**
@@ -117,11 +54,14 @@ class AIService {
             console.log('Params:', { temperature, topP, topK, maxOutputTokens });
             console.groupEnd();
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            // [Security Update] Use Proxy API instead of Direct Call
+            const url = '/api/generate';
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    model: modelName, // Target Model for Proxy
                     contents: [
                         ...history,
                         { role: 'user', parts: [{ text: userMessage }] }
@@ -136,11 +76,13 @@ class AIService {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('Gemini Chat Error:', errorData);
+                console.error('Gemini Chat Error (Proxy):', errorData);
                 throw new Error(errorData.error?.message || 'Chat API 호출 실패');
             }
 
             const data = await response.json();
+            // Proxy returns the same structure from Google
+            if (data.error) throw new Error(data.error.message);
             return data.candidates[0].content.parts[0].text;
 
         } catch (error) {
@@ -385,12 +327,14 @@ class AIService {
         console.groupEnd();
 
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            // [Security Update] Use Proxy API
+            const url = '/api/generate';
 
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    model: modelName,
                     contents: [{ parts: [{ text: userPrompt }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
@@ -406,6 +350,8 @@ class AIService {
             }
 
             const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+
             const text = data.candidates[0].content.parts[0].text;
 
             // --- Robust JSON Extraction ---
