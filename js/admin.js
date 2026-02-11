@@ -86,38 +86,78 @@ const OFFICIAL_JSON_SCHEMA = `
   }
 }`;
 
-window.runSmartMerge = function () {
-    const inputEl = document.getElementById('sysPrompt');
-    if (!inputEl) return;
+// [New] Smart Merge Modal Logic
+window.openSmartMergeModal = function () {
+    const modal = document.getElementById('smartMergeModal');
+    if (modal) modal.style.display = 'block';
+
+    // Auto-fill from current System Prompt if empty
+    const currentSys = document.getElementById('sysPrompt').value;
+    const mergeInput = document.getElementById('mergeInputPrompt');
+    if (mergeInput && !mergeInput.value.trim() && currentSys) {
+        mergeInput.value = currentSys;
+    }
+};
+
+window.closeSmartMergeModal = function () {
+    const modal = document.getElementById('smartMergeModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.executeSmartMerge = function () {
+    const inputEl = document.getElementById('mergeInputPrompt');
+    const outputEl = document.getElementById('mergeOutputPrompt');
+    const statusEl = document.getElementById('mergeInputStatus');
 
     const input = inputEl.value;
     if (!input.trim()) {
-        alert('프롬프트 내용이 비어있습니다.');
+        outputEl.value = '';
+        statusEl.innerHTML = '입력 대기중';
+        statusEl.style.background = '#FFFBEB';
+        statusEl.style.color = '#D97706';
         return;
     }
 
-    // [Logic] Split Point Detection
-    const splitMarkers = ['[출력 구조', '[필수 출력 형식]', '=== (Page 1)'];
-    let splitIndex = -1;
+    // [Logic] Detection
+    const isLegacy = input.includes('"page1": "') || input.includes('=== (Page 1)');
 
-    for (const marker of splitMarkers) {
-        const idx = input.indexOf(marker);
-        if (idx !== -1) {
-            if (splitIndex === -1 || idx < splitIndex) splitIndex = idx;
+    if (isLegacy) {
+        // [Logic] Split & Merge
+        statusEl.innerHTML = '⚡ 구버전 감지됨 -> 자동 병합 실행';
+        statusEl.style.background = '#ECFDF5';
+        statusEl.style.color = '#059669';
+
+        const splitMarkers = ['[출력 구조', '[필수 출력 형식]', '=== (Page 1)'];
+        let splitIndex = -1;
+
+        for (const marker of splitMarkers) {
+            const idx = input.indexOf(marker);
+            if (idx !== -1) {
+                if (splitIndex === -1 || idx < splitIndex) splitIndex = idx;
+            }
         }
-    }
 
-    let userInstructions = input;
-    if (splitIndex !== -1) {
-        userInstructions = input.substring(0, splitIndex).trim();
+        if (splitIndex !== -1) {
+            const userInstructions = input.substring(0, splitIndex).trim();
+            const merged = userInstructions + "\n\n" + OFFICIAL_JSON_SCHEMA;
+            outputEl.value = merged;
+        } else {
+            outputEl.value = input + "\n\n" + OFFICIAL_JSON_SCHEMA;
+        }
+
     } else {
-        // If no marker found, assume entire text is instruction and append schema
-        userInstructions = input.trim();
+        statusEl.innerHTML = '✅ 정상/최신 형식';
+        statusEl.style.background = '#ECFDF5';
+        statusEl.style.color = '#059669';
+        outputEl.value = input;
     }
+};
 
-    const merged = userInstructions + "\n\n" + OFFICIAL_JSON_SCHEMA;
-    inputEl.value = merged;
-    alert('✅ 최신 JSON 포맷으로 자동 보정되었습니다.\n이제 [설정 저장] 버튼을 눌러주세요.');
+window.copyMergeResult = function () {
+    const outputEl = document.getElementById('mergeOutputPrompt');
+    outputEl.select();
+    document.execCommand('copy');
+    alert('복사되었습니다!');
 };
 
 function renderAdmin(container) {
@@ -152,7 +192,7 @@ function renderAdmin(container) {
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                     <label>System Prompt (Persona & Instructions)</label>
                                     <div style="display:flex; gap:0.5rem;">
-                                        <button onclick="runSmartMerge()" class="btn-secondary btn-sm" style="font-size:0.8rem; padding: 2px 8px; border-color: #3B82F6; color: #3B82F6;">
+                                        <button onclick="openSmartMergeModal()" class="btn-secondary btn-sm" style="font-size:0.8rem; padding: 2px 8px; border-color: #3B82F6; color: #3B82F6;">
                                             <i class="fa-solid fa-wand-magic-sparkles"></i> 포맷 자동보정
                                         </button>
                                         <select id="sysPresetSelect" onchange="setTimeout(() => applyPreset('system', this.value), 50)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
@@ -364,6 +404,41 @@ function renderAdmin(container) {
             </div>
 
         </div>
+
+        <!-- Smart Merge Modal -->
+        <div id="smartMergeModal" class="modal" style="z-index: 9999;">
+            <div class="modal-content modal-xl" style="width: 90%; max-width: 1200px; height: 90vh; display:flex; flex-direction:column;">
+                <div class="modal-header">
+                    <h2 style="margin:0;"><i class="fa-solid fa-wand-magic-sparkles" style="color: #3B82F6;"></i> 프롬프트 자동 병합 시뮬레이터</h2>
+                    <span class="close" onclick="closeSmartMergeModal()">&times;</span>
+                </div>
+                <div class="modal-body" style="flex:1; padding: 1rem; background: #F1F5F9; display:flex; gap:1rem; overflow:hidden;">
+                    <!-- Left Panel -->
+                    <div style="flex:1; display:flex; flex-direction:column; background:white; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); overflow:hidden;">
+                         <div style="background:#E2E8F0; padding:1rem; font-weight:700; color:#475569; display:flex; justify-content:space-between; align-items:center;">
+                            📝 사용자 입력 (Settings)
+                            <span class="status-badge" id="mergeInputStatus" style="padding:4px 12px; border-radius:20px; font-size:0.8rem; background:#FFFBEB; color:#D97706;">분석 대기중</span>
+                         </div>
+                         <textarea id="mergeInputPrompt" style="flex:1; padding:1rem; border:none; resize:none; outline:none; font-family:monospace;" placeholder="여기에 선생님의 프롬프트(텍스트 형식 포함)를 붙여넣으세요..."></textarea>
+                    </div>
+
+                    <!-- Arrow -->
+                    <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; width:60px;">
+                        <button onclick="executeSmartMerge()" style="background:#3B82F6; color:white; border:none; width:50px; height:50px; border-radius:50%; cursor:pointer; font-size:1.2rem; box-shadow:0 4px 10px rgba(59,130,246,0.3);"><i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+
+                    <!-- Right Panel -->
+                    <div style="flex:1; display:flex; flex-direction:column; background:white; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); overflow:hidden;">
+                         <div style="background:#E2E8F0; padding:1rem; font-weight:700; color:#475569; display:flex; justify-content:space-between; align-items:center;">
+                            ✨ 최종 병합 결과 (To AI)
+                            <button onclick="copyMergeResult()" style="background:white; border:1px solid #CBD5E1; padding:4px 8px; border-radius:4px; cursor:pointer;">복사</button>
+                         </div>
+                         <textarea id="mergeOutputPrompt" readonly style="flex:1; padding:1rem; border:none; resize:none; outline:none; background:#FAFAFA; font-family:monospace;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     `;
 
