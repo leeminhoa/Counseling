@@ -1,42 +1,45 @@
 
-export const config = {
-    runtime: 'edge',
-};
+export default async function handler(req, res) {
+    // Enable CORS just in case, though rewrites should handle same-origin
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
-export default async function handler(request) {
-    if (request.method !== 'POST') {
-        return new Response('Method Not Allowed', { status: 405 });
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
     try {
-        const body = await request.json();
-        const { model, ...payload } = body;
+        const { model, ...payload } = req.body;
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'Server Configuration Error: API Key missing' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            console.error('Server Configuration Error: GEMINI_API_KEY is missing');
+            return res.status(500).json({ error: 'Server Configuration Error: API Key missing' });
         }
 
         // Validate Model Name
-        // Allow only gemini/gemma models to prevent abuse of arbitrary endpoints
         const targetModel = model || 'gemini-1.5-flash';
         const allowedPatterns = [/^gemini-/, /^gemma-/];
 
         if (!allowedPatterns.some(p => p.test(targetModel))) {
-            return new Response(JSON.stringify({ error: 'Invalid or Disallowed Model Name' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            return res.status(400).json({ error: 'Invalid or Disallowed Model Name' });
         }
 
         // Construct Google API URL
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
 
         // Forward request to Google
-        const response = await fetch(apiUrl, {
+        const googleResponse = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -44,18 +47,24 @@ export default async function handler(request) {
             body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
+        // Handle non-JSON responses from Google (e.g. 404 HTML, 503, etc.)
+        if (!googleResponse.ok) {
+            const errorText = await googleResponse.text();
+            let errorJson;
+            try {
+                errorJson = JSON.parse(errorText);
+            } catch (e) {
+                // If not JSON, return text as error message
+                throw new Error(`Google API Error (${googleResponse.status}): ${errorText}`);
+            }
+            return res.status(googleResponse.status).json(errorJson);
+        }
 
-        // Pass through the status and response
-        return new Response(JSON.stringify(data), {
-            status: response.status,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        const data = await googleResponse.json();
+        return res.status(200).json(data);
 
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Proxy Error:', error);
+        return res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
 }
