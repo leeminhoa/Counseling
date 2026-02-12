@@ -406,8 +406,8 @@ function renderAdmin(container) {
         </div>
 
         <!-- Smart Merge Modal -->
-        <div id="smartMergeModal" class="modal" style="z-index: 9999;">
-            <div class="modal-content modal-xl" style="width: 90%; max-width: 1200px; height: 90vh; display:flex; flex-direction:column;">
+        <div id="smartMergeModal" class="modal" style="z-index: 9999; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;">
+            <div class="modal-content modal-xl" style="width: 95%; max-width: 95vw; height: 95vh; display:flex; flex-direction:column;">
                 <div class="modal-header">
                     <h2 style="margin:0;"><i class="fa-solid fa-wand-magic-sparkles" style="color: #3B82F6;"></i> 프롬프트 자동 병합 시뮬레이터</h2>
                     <span class="close" onclick="closeSmartMergeModal()">&times;</span>
