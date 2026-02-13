@@ -25,9 +25,9 @@ class AIService {
     async getAvailableModels() {
         // Return a curated list of supported models
         return [
-            { name: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash (Fast & Cost-effective)', description: 'Optimized for high-frequency tasks', version: '1.5.0' },
-            { name: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro (Complex Reasoning)', description: 'Best for complex context and reasoning', version: '1.5.0' },
-            { name: 'gemini-2.0-flash-exp', displayName: 'Gemini 2.0 Flash Experimental', description: 'Next-gen experimental model', version: '2.0.0' }
+            { name: 'gemini-3.0-pro-preview', displayName: 'Gemini 3.0 Pro (Preview)', description: 'Reasoning-focused experimental model', version: '3.0.0-rc' },
+            { name: 'gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', description: 'Enhanced performance model', version: '2.5.0' },
+            { name: 'gemini-3.0-flash', displayName: 'Gemini 3.0 Flash', description: 'Next-gen multimodal fast model', version: '3.0.0' }
         ];
     }
 
@@ -273,6 +273,7 @@ class AIService {
 [목표]
 - 대학: {{target_univ}}
 - 학과: {{target_major}}
+- 이번 학기 수강예정 과목: {{course}}
 - 권장 과목: {{target_recommended}}
 
 위 학생이 "학업 역량"과 "전공 적합성"을 모두 입증할 수 있는 최적의 생기부 컨설팅 보고서를 작성해주세요.
@@ -300,6 +301,7 @@ class AIService {
 
         userPrompt = safeReplace(userPrompt, '{{target_univ}}', target.univ);
         userPrompt = safeReplace(userPrompt, '{{target_major}}', target.major);
+        userPrompt = safeReplace(userPrompt, '{{course}}', (target.futureSubjects || []).join(', '));
         userPrompt = safeReplace(userPrompt, '{{target_recommended}}', target.recommendedSubjects.join(', '));
 
         // Legacy / User Template Support
@@ -351,6 +353,18 @@ class AIService {
 
             const data = await response.json();
             if (data.error) throw new Error(data.error.message);
+
+            // [DEV] Local Mock Server Support
+            // If the response is already the parsed data (has page1/page2), return it directly.
+            if (data.page1 || data.page2) {
+                console.log('Using Mock Data from Local Server');
+                return data;
+            }
+
+            if (!data.candidates || data.candidates.length === 0) {
+                console.error('Gemini API Error: No candidates returned', data);
+                throw new Error('AI 모델이 응답을 생성하지 못했습니다. (No candidates)');
+            }
 
             const text = data.candidates[0].content.parts[0].text;
 

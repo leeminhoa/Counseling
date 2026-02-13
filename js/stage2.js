@@ -106,7 +106,10 @@ async function startAIGeneration(container) {
             target: {
                 univ: univData.univ_name,
                 major: univData.raw_major_name,
-                recommendedSubjects: univSubjects.map(s => `${s.course_name}(${s.bucket === 'core' ? '핵심' : '권장'})`)
+                recommendedSubjects: univSubjects.map(s => `${s.course_name}(${s.bucket === 'core' ? '핵심' : '권장'})`),
+                futureSubjects: univSubjects
+                    .filter(s => !(profile.subjects || []).includes(s.course_name))
+                    .map(s => `${s.course_name}(${s.bucket === 'core' ? '핵심' : '권장'})`)
             }
         };
 
@@ -221,7 +224,7 @@ function displayAIResult(data, container) {
                     <button class="btn-secondary btn-sm" onclick="downloadPDF()" style="padding: 0.5rem 0.8rem;">
                         <i class="fa-solid fa-file-pdf"></i> PDF 다운로드
                     </button>
-                    <button class="btn-secondary btn-sm" onclick="resetAIResult()" style="padding: 0.5rem 0.8rem; color: #EF4444; border-color: #FEE2E2;">
+                    <button class="btn-secondary btn-sm" onclick="resetAIResult(event)" style="padding: 0.5rem 0.8rem; color: #EF4444; border-color: #FEE2E2;">
                         <i class="fa-solid fa-rotate-right"></i> 초기화
                     </button>
                 </div>
@@ -290,7 +293,7 @@ function renderTextModeReport(data, container) {
                  <button class="btn-secondary btn-sm" onclick="downloadPDF()">
                     <i class="fa-solid fa-file-pdf"></i> PDF 저장
                 </button>
-                <button class="btn-secondary btn-sm" onclick="resetAIResult()" style="color: #EF4444; border-color: #FEE2E2;">
+                <button class="btn-secondary btn-sm" onclick="resetAIResult(event)" style="color: #EF4444; border-color: #FEE2E2;">
                     <i class="fa-solid fa-rotate-right"></i> 초기화
                 </button>
             </div>
@@ -396,7 +399,7 @@ function renderNewReportLayout(data, container) {
                  <button class="btn-secondary btn-sm" onclick="downloadPDF()">
                     <i class="fa-solid fa-file-pdf"></i> PDF 저장
                 </button>
-                <button class="btn-secondary btn-sm" onclick="resetAIResult()" style="color: #EF4444; border-color: #FEE2E2;">
+                <button class="btn-secondary btn-sm" onclick="resetAIResult(event)" style="color: #EF4444; border-color: #FEE2E2;">
                     <i class="fa-solid fa-rotate-right"></i> 초기화
                 </button>
             </div>
@@ -661,19 +664,27 @@ function renderNewReportLayout(data, container) {
     `;
 }
 
-async function resetAIResult() {
-    if (!confirm('현재 생성된 가이드 데이터를 초기화하고 다시 생성하시겠습니까?')) return;
+async function resetAIResult(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
-    const selectedUnivId = stage1State.selectedUnivId;
-    const data = dataManager.getData();
+    showConfirmModal(
+        '현재 생성된 가이드 데이터를 초기화하고 다시 생성하시겠습니까?',
+        () => {
+            const selectedUnivId = stage1State.selectedUnivId;
+            const data = dataManager.getData();
 
-    // Filter out results for the current university
-    data.consultingResults = data.consultingResults.filter(r => r.univ && r.univ.id !== selectedUnivId);
-    dataManager.saveData(data);
+            // Filter out results for the current university
+            data.consultingResults = data.consultingResults.filter(r => r.univ && r.univ.id !== selectedUnivId);
+            dataManager.saveData(data);
 
-    // Refresh view
-    const content = document.getElementById('contentContainer');
-    renderStage2(content);
+            // Refresh view
+            const content = document.getElementById('contentContainer');
+            renderStage2(content);
+        }
+    );
 }
 
 function downloadPDF() {

@@ -65,12 +65,48 @@ function initApp() {
     }
 }
 
+// [NEW] Generic Confirm Modal Helper
+window.showConfirmModal = function (message, onConfirm) {
+    const modal = document.getElementById('confirmModal');
+    const msgEl = document.getElementById('confirmMessage');
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+
+    if (!modal || !msgEl || !okBtn || !cancelBtn) {
+        // Fallback if modal elements missing
+        if (confirm(message)) onConfirm();
+        return;
+    }
+
+    msgEl.innerHTML = message.replace(/\n/g, '<br>');
+    modal.style.display = 'flex';
+
+    // Clone to remove old listeners
+    const newOk = okBtn.cloneNode(true);
+    const newCancel = cancelBtn.cloneNode(true);
+
+    okBtn.parentNode.replaceChild(newOk, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    newOk.addEventListener('click', () => {
+        modal.style.display = 'none';
+        onConfirm();
+    });
+
+    newCancel.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+};
+
 // [NEW] Reset Counseling Session
 window.resetCounselingSession = () => {
-    if (confirm('현재 상담 내용을 모두 초기화하시겠습니까?\n입력된 학생 정보와 상담 내역이 초기화됩니다.')) {
-        dataManager.resetData();
-        window.location.reload();
-    }
+    showConfirmModal(
+        '현재 상담 내용을 모두 초기화하시겠습니까?\n입력된 학생 정보와 모든 상담 내역이 삭제됩니다.',
+        () => {
+            dataManager.resetData();
+            window.location.reload();
+        }
+    );
 };
 
 function handleTabChange(tabName) {

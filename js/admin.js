@@ -232,13 +232,12 @@ function renderAdmin(container) {
                                 <div class="form-group">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                                         <label style="font-weight: 600;"><i class="fa-solid fa-microchip"></i> AI Model</label>
-                                        <button id="fetchModelsBtn" class="btn-text" style="font-size: 0.8rem; color: var(--primary-color);">
-                                            <i class="fa-solid fa-rotate"></i> 갱신
-                                        </button>
                                     </div>
                                     <div style="position: relative;">
                                         <select id="modelSelect" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-app); appearance: none;">
-                                            <option value="${settings.geminiModel || 'gemini-3-pro-preview'}">${settings.geminiModel || 'Gemini 3 Pro Preview (Default)'}</option>
+                                            <option value="gemini-3.0-pro-preview" ${settings.geminiModel === 'gemini-3.0-pro-preview' ? 'selected' : ''}>Gemini 3.0 Pro (Preview)</option>
+                                            <option value="gemini-2.5-pro" ${settings.geminiModel === 'gemini-2.5-pro' ? 'selected' : ''}>Gemini 2.5 Pro</option>
+                                            <option value="gemini-3.0-flash" ${settings.geminiModel === 'gemini-3.0-flash' ? 'selected' : ''}>Gemini 3.0 Flash</option>
                                         </select>
                                         <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-sub);">
                                             <i class="fa-solid fa-chevron-down"></i>
@@ -564,31 +563,7 @@ function renderAdmin(container) {
     document.getElementById('saveAdminBtn').addEventListener('click', saveAdminSettings);
 
     // Model Fetch Logic
-    const fetchBtn = document.getElementById('fetchModelsBtn');
-    if (fetchBtn) {
-        fetchBtn.addEventListener('click', async () => {
-            const select = document.getElementById('modelSelect');
-            const originalText = fetchBtn.innerHTML;
-            fetchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            try {
-                const models = await aiService.getAvailableModels();
-                select.innerHTML = ''; // Clear
-                models.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.name;
-                    opt.textContent = m.displayName;
-                    opt.title = m.description;
-                    if (m.name === (settings.geminiModel || 'gemini-3-pro-preview')) opt.selected = true;
-                    select.appendChild(opt);
-                });
-                alert('모델 목록을 성공적으로 가져왔습니다.');
-            } catch (e) {
-                alert('모델 목록 가져오기 실패: ' + e.message);
-            } finally {
-                fetchBtn.innerHTML = originalText;
-            }
-        });
-    }
+    // Model Fetch Logic Removed as per user request
     // Initialize Presets
     loadPresets();
 }
