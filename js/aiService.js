@@ -46,7 +46,14 @@ class AIService {
             const maxOutputTokens = parseInt(settings.maxOutputTokens ?? 2048);
 
             // Select Model (Saved > Default)
-            const modelName = settings.geminiModel || this.MODEL;
+            let modelName = settings.geminiModel || this.MODEL;
+
+            // [Fix] Auto-correct invalid legacy model names stored in localStorage
+            if (modelName === 'gemini-3.0-pro-preview' || modelName.includes('3.0')) {
+                console.warn(`[Auto-Fix] Invalid Model '${modelName}' detected. Switching to 'gemini-2.5-pro'.`);
+                modelName = 'gemini-2.5-pro';
+            }
+
             const systemPrompt = settings.systemPrompt || "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요.";
 
             console.group('🤖 Gemini AI Chat Request');

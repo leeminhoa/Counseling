@@ -298,13 +298,16 @@ function renderSubjectList(subjects, type) {
             <h4 class="group-title">${title}</h4>
             <div class="subject-chips">
                 ${filtered.map(s => {
-        const isMatched = studentSubjects.includes(s.course_name);
+        // [Fix] Normalize strings (trim) to handle DB whitespace inconsistencies
+        const cleanCourseName = s.course_name.trim();
+        const isMatched = studentSubjects.some(sub => sub.trim() === cleanCourseName);
+
         return `
                         <button type="button" 
                                 class="subject-chip ${isMatched ? 'matched' : 'not-matched'}" 
-                                onclick="toggleMySubject('${s.course_name}')"
+                                onclick="toggleMySubject('${cleanCourseName}')"
                                 title="${isMatched ? '이수 취소하기' : '이수 완료로 표시하기'}">
-                            ${isMatched ? '<i class="fa-solid fa-check"></i> ' : ''}${s.course_name}
+                            ${isMatched ? '<i class="fa-solid fa-check"></i> ' : ''}${cleanCourseName}
                         </button>
                     `;
     }).join('')}

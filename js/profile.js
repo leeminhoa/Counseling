@@ -254,9 +254,10 @@ async function handleSubjectSearch(event, type) {
 
 function addSubject(subjectName, type) {
     const list = type === 'completed' ? modalState.completedSubjects : modalState.inprogressSubjects;
+    const cleanName = subjectName.trim(); // [Fix] Normalize input
 
-    if (!list.includes(subjectName)) {
-        list.push(subjectName);
+    if (!list.includes(cleanName)) {
+        list.push(cleanName);
         updateChipsUI(type);
     }
 
