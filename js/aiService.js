@@ -4,7 +4,7 @@
  */
 class AIService {
     constructor() {
-        this.MODEL = 'gemini-3-pro-preview'; // Default updated to 3 Pro
+        this.MODEL = 'gemini-2.5-pro'; // Default to Stable 2.5 Pro
         this.apiKey = null; // Cache key
     }
 
@@ -23,11 +23,11 @@ class AIService {
      * [Security Update] Returns static list to avoid exposing API Key via client-side fetch.
      */
     async getAvailableModels() {
-        // Return a curated list of supported models
+        // Return a curated list of supported models (2026 Compatible)
         return [
-            { name: 'gemini-3.0-pro-preview', displayName: 'Gemini 3.0 Pro (Preview)', description: 'Reasoning-focused experimental model', version: '3.0.0-rc' },
+            { name: 'gemini-3-pro-preview', displayName: 'Gemini 3 Pro (Preview)', description: 'Reasoning-focused experimental model', version: '3.0.0-prev' },
             { name: 'gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', description: 'Enhanced performance model', version: '2.5.0' },
-            { name: 'gemini-3.0-flash', displayName: 'Gemini 3.0 Flash', description: 'Next-gen multimodal fast model', version: '3.0.0' }
+            { name: 'gemini-2.5-flash', displayName: 'Gemini 2.5 Flash', description: 'High-speed, cost-effective model', version: '2.5.0' }
         ];
     }
 

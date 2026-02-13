@@ -235,15 +235,15 @@ function renderAdmin(container) {
                                     </div>
                                     <div style="position: relative;">
                                         <select id="modelSelect" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-app); appearance: none;">
-                                            <option value="gemini-3.0-pro-preview" ${settings.geminiModel === 'gemini-3.0-pro-preview' ? 'selected' : ''}>Gemini 3.0 Pro (Preview)</option>
+                                            <option value="gemini-3-pro-preview" ${settings.geminiModel === 'gemini-3-pro-preview' ? 'selected' : ''}>Gemini 3 Pro (Preview)</option>
                                             <option value="gemini-2.5-pro" ${settings.geminiModel === 'gemini-2.5-pro' ? 'selected' : ''}>Gemini 2.5 Pro</option>
-                                            <option value="gemini-3.0-flash" ${settings.geminiModel === 'gemini-3.0-flash' ? 'selected' : ''}>Gemini 3.0 Flash</option>
+                                            <option value="gemini-2.5-flash" ${settings.geminiModel === 'gemini-2.5-flash' ? 'selected' : ''}>Gemini 2.5 Flash</option>
                                         </select>
                                         <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-sub);">
                                             <i class="fa-solid fa-chevron-down"></i>
                                         </div>
                                     </div>
-                                    <p class="param-desc">사용할 생성형 AI 모델 엔진을 선택합니다. (Gemini 3.0 권장)</p>
+                                    <p class="param-desc">사용할 생성형 AI 모델 엔진을 선택합니다. (Gemini 2.5 Pro 권장)</p>
                                 </div>
 
                                 <!-- Temperature -->
