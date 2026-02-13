@@ -240,13 +240,30 @@ async function renderUnivDetail(univId) {
                         </div>
                     </div>
                 </div>
-            ` : `
-                <div class="analysis-placeholder" style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; padding: 1.5rem; text-align: center; color: #64748B; font-size: 0.9rem;">
-                    <i class="fa-solid fa-circle-info" style="margin-right:0.4rem;"></i> 프로필에서 나의 **백분위 합**을 입력하면 합격 안정성을 분석해 드립니다.
-                </div>
-            `}
+            <div class="analysis-comment">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>프로필에서 나의 **백분위 합**을 입력하면 합격 안정성을 분석해 드립니다.</span>
+            </div>
+        </div>
 
-            ` : '<div class="stats-placeholder" style="color: #94A3B8; font-size: 0.9rem; padding: 2rem; text-align: center; background: #F8FAFC; border-radius: 12px; border: 1px dashed #E2E8F0;">입시 결과 데이터 정보가 등록되지 않았습니다.</div>'}
+        <!-- [NEW] Basic Subjects Section (Hardcoded) -->
+        <div class="subject-category" style="margin-bottom: 2rem;">
+            <h4 style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-weight:800; font-size:1.1rem; color:#1E293B;">
+                <i class="fa-solid fa-list-check" style="color:var(--primary-color);"></i> 기본 과목
+            </h4>
+            <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; background: #fff;">
+                <h5 style="margin: 0 0 1rem 0; font-size: 0.95rem; font-weight: 700; color: #dc2626; display: flex; align-items: center; gap: 8px;">
+                    <span style="display:inline-block; width:8px; height:8px; background-color:#dc2626; border-radius:50%;"></span>
+                    수능 시험 과목
+                </h5>
+                <div style="border-top: 2px solid #fee2e2; padding-top: 1rem; display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${['영어 1', '영어 2', '대수', '미적분1', '독서와 작문', '문학', '화법과 언어'].map(sub => `
+                        <span class="subject-chip" style="background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; cursor: default; padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.9rem; font-weight: 500;">
+                            ${sub}
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
         </div>
 
         <div class="roadmap-section">
