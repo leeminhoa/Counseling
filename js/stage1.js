@@ -240,10 +240,13 @@ async function renderUnivDetail(univId) {
                         </div>
                     </div>
                 </div>
-            <div class="analysis-comment">
-                <i class="fa-solid fa-circle-info"></i>
-                <span>프로필에서 나의 **백분위 합**을 입력하면 합격 안정성을 분석해 드립니다.</span>
-            </div>
+            ` : `
+                <div class="analysis-placeholder" style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; padding: 1.5rem; text-align: center; color: #64748B; font-size: 0.9rem;">
+                    <i class="fa-solid fa-circle-info" style="margin-right:0.4rem;"></i> 프로필에서 나의 **백분위 합**을 입력하면 합격 안정성을 분석해 드립니다.
+                </div>
+            `}
+
+            ` : '<div class="stats-placeholder" style="color: #94A3B8; font-size: 0.9rem; padding: 2rem; text-align: center; background: #F8FAFC; border-radius: 12px; border: 1px dashed #E2E8F0;">입시 결과 데이터 정보가 등록되지 않았습니다.</div>'}
         </div>
 
         <!-- [NEW] Basic Subjects Section (Hardcoded) -->
