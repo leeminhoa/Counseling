@@ -66,11 +66,11 @@ function openProfileModal(initialTab = 'info') {
                     
                     <div style="display: flex; gap: 1rem;">
                         <div class="input-group" style="flex: 1;">
-                            <label>평균 내신</label>
+                            <label>영어 등급</label>
                             <input type="number" id="profileGpa" class="styled-input" value="${profile.gpa || ''}" step="0.01" placeholder="1.00">
                         </div>
                         <div class="input-group" style="flex: 1;">
-                            <label>수능 백분위 합</label>
+                            <label>백분위 합(국,수,탐)</label>
                             <input type="number" id="profileTp" class="styled-input" value="${profile.totalPercentile || ''}" step="1" placeholder="0">
                         </div>
                     </div>
