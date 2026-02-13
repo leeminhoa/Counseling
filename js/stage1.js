@@ -144,6 +144,59 @@ async function renderUnivDetail(univId) {
     console.log('Full Admission Stats for ID', univId, ':', stats);
 
     const profile = dataManager.getProfile() || { gpa: 0, subjects: [] };
+
+    // [NEW] Fetch comparison data
+    // Pass canonical_major (e.g., '수의과') to find similar depts even if raw name differs ('수의예과' vs '수의학과')
+    const similarUnivs = await dbService.getSimilarMajorUniversities(
+        univData.raw_major_name,
+        univData.univ_name,
+        univData.canonical_major
+    );
+
+    // [Feature Change] Ensure CURRENT university is ALWAYS in the list
+    let currentUnivObj = null;
+    if (stats) {
+        currentUnivObj = {
+            univName: univData.univ_name,
+            majorName: univData.raw_major_name,
+            category: univData.top_category,
+            cutoff: stats.kor_math_sci_pct,
+            engGrade: stats.eng_grade,
+            admissionType: stats.admission_type,
+            isCurrent: true
+        };
+    }
+
+    // Sort ONLY the similar universities first
+    if (similarUnivs.length > 0) {
+        if (profile.totalPercentile) {
+            similarUnivs.sort((a, b) => {
+                const diffA = Math.abs(profile.totalPercentile - (a.cutoff || 0));
+                const diffB = Math.abs(profile.totalPercentile - (b.cutoff || 0));
+                return diffA - diffB;
+            });
+        } else {
+            similarUnivs.sort((a, b) => (b.cutoff || 0) - (a.cutoff || 0));
+        }
+    }
+
+    // Take top 4 from similar univs
+    let top4Similar = similarUnivs.slice(0, 4);
+
+    // Combine: Current + Top 4
+    let finalComparisonList = [];
+    if (currentUnivObj) {
+        finalComparisonList.push(currentUnivObj);
+    }
+    finalComparisonList = finalComparisonList.concat(top4Similar);
+
+    // Optional: Re-sort the final 5 items for better readability (e.g. by cutoff descending or similarity)
+    // Let's sort by cutoff descending for a clean look, or keep the user's focus (current) at top?
+    // User requirement: "1개는 무조건 나와야 해". Doesn't specify order.
+    // Standard table behavior: Sort by cutoff desc usually looks best.
+    finalComparisonList.sort((a, b) => (b.cutoff || 0) - (a.cutoff || 0));
+
+    const top5Similar = finalComparisonList;
     const matchedCount = (subjects || []).filter(s => (profile.subjects || []).includes(s.course_name)).length;
 
     // Template
@@ -168,6 +221,67 @@ async function renderUnivDetail(univId) {
                 <i class="fa-solid fa-chevron-right"></i>
             </div>
         </div>
+
+        <!-- [NEW] University Comparison Table -->
+        ${top5Similar.length > 0 ? `
+        <div class="comparison-section" style="margin-top: 2rem; margin-bottom: 2rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: #1E293B; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.6rem;">
+                <i class="fa-solid fa-scale-balanced" style="color: var(--primary-color);"></i> 
+                동일 학과 대학 비교 (${univData.canonical_major} 계열)
+            </h3>
+            <div class="table-container" style="overflow-x: auto; border: 1px solid #E2E8F0; border-radius: 12px; background: #fff;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead style="background: #F8FAFC; color: #64748B; font-weight: 600;">
+                        <tr>
+                            <th style="padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #E2E8F0;">대학명</th>
+                            <th style="padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #E2E8F0;">학과명</th>
+                            <th style="padding: 0.75rem 1rem; text-align: center; border-bottom: 1px solid #E2E8F0;">전형</th>
+                            <th style="padding: 0.75rem 1rem; text-align: center; border-bottom: 1px solid #E2E8F0;">컷라인 (백분위/영어)</th>
+                            <th style="padding: 0.75rem 1rem; text-align: center; border-bottom: 1px solid #E2E8F0;">나의 위치</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${top5Similar.map(univ => {
+        const diff = profile.totalPercentile ? (profile.totalPercentile - univ.cutoff).toFixed(1) : null;
+        let badge = '-';
+        let badgeColor = '#94A3B8';
+        let badgeBg = '#F1F5F9';
+
+        if (diff !== null) {
+            if (diff >= 5) { badge = '안정'; badgeColor = '#166534'; badgeBg = '#DCFCE7'; }
+            else if (diff >= -2) { badge = '적정'; badgeColor = '#854d0e'; badgeBg = '#FEF9C3'; }
+            else { badge = '상향'; badgeColor = '#991b1b'; badgeBg = '#FEE2E2'; }
+        }
+
+        // Highlighting style
+        const rowStyle = univ.isCurrent ? "background-color: #F0F9FF; font-weight: bold;" : "";
+        const nameStyle = univ.isCurrent ? "color: var(--primary-color);" : "color: #334155;";
+
+        return `
+                            <tr style="border-bottom: 1px solid #F1F5F9; ${rowStyle}">
+                                <td style="padding: 0.75rem 1rem; font-weight: 600; ${nameStyle}">
+                                    ${univ.univName} ${univ.isCurrent ? '<i class="fa-solid fa-check" style="font-size:0.8em; margin-left:4px;"></i>' : ''}
+                                </td>
+                                <td style="padding: 0.75rem 1rem; color: #475569;">
+                                    ${univ.majorName}
+                                </td>
+                                <td style="padding: 0.75rem 1rem; text-align: center; color: #64748B;">${univ.admissionType || '-'}</td>
+                                <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 700; color: #0F172A;">
+                                    ${univ.cutoff || '-'} <span style="font-size: 0.8em; color: #64748B; font-weight: 400;">(영 ${univ.engGrade || '-'}등급)</span>
+                                </td>
+                                <td style="padding: 0.75rem 1rem; text-align: center;">
+                                    ${diff !== null ? `
+                                        <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700;">${badge}</span>
+                                    ` : '<span style="color: #94A3B8;">-</span>'}
+                                </td>
+                            </tr>
+                            `;
+    }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        ` : ''}
 
         <div class="stats-row" style="margin-top: 2rem;">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem;">

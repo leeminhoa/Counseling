@@ -719,6 +719,114 @@ class DBService {
         console.warn(`[Deprecated] getApiKey(${type}) called. API Keys are no longer accessible from client.`);
         return null;
     }
+    /**
+     * 특정 학과와 동일한 학과명을 가진 다른 대학들의 입시 결과 조회 (비교 분석용)
+     * majorName: 대상 학과명 (raw_major_name)
+     * excludeUnivName: 현재 보고 있는 대학명 (결과에서 제외)
+     */
+    async getSimilarMajorUniversities(majorName, excludeUnivName, canonicalMajor) {
+        if (!this.client) return [];
+
+        try {
+            // Step 1: Find all univ_map_ids with the same major name
+            let query = this.client
+                .from('v_univ_dept_subjects')
+                .select('univ_map_id, univ_name, raw_major_name, top_category, canonical_major');
+
+            if (canonicalMajor) {
+                query = query.eq('canonical_major', canonicalMajor);
+            } else {
+                query = query.eq('raw_major_name', majorName);
+            }
+
+            query = query.neq('univ_name', excludeUnivName) // Exclude current univ
+                .limit(20);
+
+            const { data: deptData, error: deptError } = await query;
+
+            if (deptError) {
+                console.warn('Similar Major Fetch Error (Step 1):', deptError);
+                return [];
+            }
+            if (!deptData || deptData.length === 0) return [];
+
+            const mapIds = deptData.map(d => d.univ_map_id);
+
+            // Step 2: Fetch stats for these IDs
+            const { data: statsData, error: statsError } = await this.client
+                .from('univ_dept_admission_stats')
+                .select('univ_map_id, kor_math_sci_pct, eng_grade, admission_type')
+                .in('univ_map_id', mapIds)
+                .order('year', { ascending: false });
+
+            if (statsError) {
+                console.warn('Similar Major Stats Error (Step 2):', statsError);
+                return [];
+            }
+
+            // [New] Name Similarity Helper (2-gram intersection)
+            // Ensures "Physical Astronomy" matches "Physics" but not "Chemistry" if canonical is broad
+            const checkNameSimilarity = (source, target) => {
+                if (!source || !target) return false;
+                const s = source.replace(/\s+/g, '');
+                const t = target.replace(/\s+/g, '');
+
+                // If one contains the other, it's a match
+                if (s.includes(t) || t.includes(s)) return true;
+
+                // 2-gram Check for Korean
+                for (let i = 0; i < s.length - 1; i++) {
+                    const gram = s.substring(i, i + 2);
+                    if (t.includes(gram)) return true;
+                }
+                return false;
+            };
+
+            // Step 3: Merge & Filter
+            const result = [];
+            const processedIds = new Set();
+
+            console.log(`[UnivComparison] Comparing '${majorName}' (Canonical: ${canonicalMajor || 'N/A'})`);
+
+            for (const stat of statsData) {
+                if (processedIds.has(stat.univ_map_id)) continue;
+
+                const deptInfo = deptData.find(d => d.univ_map_id === stat.univ_map_id);
+                if (deptInfo) {
+                    // Filter: Must accept if canonical match IS strict, OR if names are similar
+                    // If canonical is provided, we trust it mostly, but add a similarity check 
+                    // to prevent "Natural Science" bucket returning "Biology" for "Physics" query.
+                    // However, we must be careful not to filter out valid "Physics"(Source) vs "Applied Physics"(Target).
+
+                    const isSimilar = checkNameSimilarity(deptInfo.raw_major_name, majorName);
+
+                    // IF canonical_major is present, it *should* strongly imply similarity. 
+                    // But if user complains, we enforce name similarity strictly.
+                    // Let's enforce it: "Similar Major" implies name similarity usually.
+
+                    if (isSimilar) {
+                        result.push({
+                            univName: deptInfo.univ_name,
+                            majorName: deptInfo.raw_major_name,
+                            category: deptInfo.top_category,
+                            cutoff: stat.kor_math_sci_pct,
+                            engGrade: stat.eng_grade,
+                            admissionType: stat.admission_type
+                        });
+                        processedIds.add(stat.univ_map_id);
+                    } else {
+                        // console.log(`[Filter] Excluding ${deptInfo.raw_major_name} (Not similar to ${majorName})`);
+                    }
+                }
+            }
+
+            return result;
+        } catch (err) {
+            console.error('getSimilarMajorUniversities Exception:', err);
+            return [];
+        }
+    }
+
     async getUnivMajorRecommendation(univName, majorName) {
         if (!this.client || !univName || !majorName) return null;
 
