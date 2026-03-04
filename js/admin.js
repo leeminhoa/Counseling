@@ -215,8 +215,9 @@ function renderAdmin(container) {
                                     </select>
                                 </div>
                                 <textarea id="userPrompt" class="prompt-editor">${settings.userPromptTemplate || `[학생 데이터]
-- 목표 학과: {{major}}
+- 목표 학과: {{target_major}}
 - 관련 이수 과목: {{subjects}}
+- 이번 학기 수강과목: {{target_recommended}}
 - 내신 성적: {{gpa}}
 
 위 데이터를 바탕으로 탐구 가이드를 생성해 주세요.`}</textarea>

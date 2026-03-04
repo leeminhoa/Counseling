@@ -275,19 +275,13 @@ class AIService {
         // [Debug] Verify System Prompt Source
         console.log(`%c 🔧 [System Prompt Source] Using ${sysSource}`, 'background: #222; color: #bada55; font-size: 12px; padding: 4px;');
 
-        const defaultUserPromptTemplate = `
-[학생 프로필]
-- 내신 등급: {{gpa}}
-- 수강 과목: {{subjects}}
+        const defaultUserPromptTemplate = `[학생 데이터]
+- 목표 학과: {{target_major}}
+- 관련 이수 과목: {{subjects}}
+- 이번 학기 수강과목: {{target_recommended}}
+- 내신 성적: {{gpa}}
 
-[목표]
-- 대학: {{target_univ}}
-- 학과: {{target_major}}
-- 이번 학기 수강예정 과목: {{course}}
-- 권장 과목: {{target_recommended}}
-
-위 학생이 "학업 역량"과 "전공 적합성"을 모두 입증할 수 있는 최적의 생기부 컨설팅 보고서를 작성해주세요.
-반드시 System Prompt에 정의된 JSON 형식을 따라야 합니다.`;
+위 데이터를 바탕으로 탐구 가이드를 생성해 주세요.`;
 
         // 2. User Prompt
         let userPrompt = '';
