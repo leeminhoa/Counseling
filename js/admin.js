@@ -250,9 +250,9 @@ function renderAdmin(container) {
                                 <div class="form-group">
                                     <div style="display: flex; justify-content: space-between;">
                                         <label>Temperature</label>
-                                        <span id="tempVal" style="color: var(--primary-color); font-weight: 600;">${settings.temperature || 0.7}</span>
+                                        <span id="tempVal" style="color: var(--primary-color); font-weight: 600;">${settings.temperature ?? 0.5}</span>
                                     </div>
-                                    <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="${settings.temperature || 0.7}">
+                                    <input type="range" id="tempSlider" min="0" max="1" step="0.1" value="${settings.temperature ?? 0.5}">
                                     <p class="param-desc">
                                         답변의 <b>창의성(Creativity)</b>을 조절합니다.<br>
                                         <span style="font-size:0.8rem; color:#64748B;">
@@ -266,9 +266,9 @@ function renderAdmin(container) {
                                 <div class="form-group">
                                     <div style="display: flex; justify-content: space-between;">
                                         <label>Top P (Nucleus)</label>
-                                        <span id="topPValue" style="color: var(--primary-color); font-weight: 600;">${settings.topP || 0.95}</span>
+                                        <span id="topPValue" style="color: var(--primary-color); font-weight: 600;">${settings.topP ?? 1}</span>
                                     </div>
-                                    <input type="range" id="topPInput" min="0" max="1" step="0.05" value="${settings.topP || 0.95}">
+                                    <input type="range" id="topPInput" min="0" max="1" step="0.05" value="${settings.topP ?? 1}">
                                     <p class="param-desc">
                                         확률 분포의 상위 <b>P%</b> 토큰만 고려합니다.<br>
                                         <span style="font-size:0.8rem; color:#64748B;">
@@ -283,7 +283,7 @@ function renderAdmin(container) {
                                     <label style="display: flex; justify-content: space-between;">
                                         Top K <span style="font-size: 0.8rem; color: #999;">(1-100)</span>
                                     </label>
-                                    <input type="number" id="topKInput" class="form-input" style="width: 100%; padding: 0.5rem;" value="${settings.topK || 40}" min="1" max="100">
+                                    <input type="number" id="topKInput" class="form-input" style="width: 100%; padding: 0.5rem;" value="${settings.topK ?? 40}" min="1" max="100">
                                     <p class="param-desc">
                                         확률 상위 <b>K개</b>의 후보 단어 중에서 선택합니다.<br>
                                         낮을수록 일관성 있고 안정적인 답변이 나옵니다.
@@ -294,9 +294,9 @@ function renderAdmin(container) {
                                 <div class="form-group">
                                     <div style="display: flex; justify-content: space-between;">
                                         <label>Max Output Tokens</label>
-                                        <span id="maxTokensValue" style="color: var(--primary-color); font-weight: 600;">${settings.maxOutputTokens || 2048}</span>
+                                        <span id="maxTokensValue" style="color: var(--primary-color); font-weight: 600;">${settings.maxOutputTokens ?? 8100}</span>
                                     </div>
-                                    <input type="range" id="maxTokensInput" min="100" max="8192" step="100" value="${settings.maxOutputTokens || 2048}">
+                                    <input type="range" id="maxTokensInput" min="100" max="8192" step="100" value="${settings.maxOutputTokens ?? 8100}">
                                     <p class="param-desc">
                                         한 번의 응답에서 생성할 <b>최대 길이</b>를 제한합니다.<br>
                                         <span style="font-size:0.8rem; color:#64748B;">입시 컨설팅 리포트는 내용이 길 수 있으므로 <b>4096 이상</b>을 권장합니다.</span>
@@ -517,19 +517,19 @@ function renderAdmin(container) {
     // Initialize UI from Settings
     if (settings) {
         if (document.getElementById('tempSlider')) {
-            document.getElementById('tempSlider').value = settings.temperature || 0.7;
-            document.getElementById('tempVal').innerText = settings.temperature || 0.7;
+            document.getElementById('tempSlider').value = settings.temperature ?? 0.5;
+            document.getElementById('tempVal').innerText = settings.temperature ?? 0.5;
         }
         if (document.getElementById('topPInput')) {
-            document.getElementById('topPInput').value = settings.topP || 0.95;
-            document.getElementById('topPValue').innerText = settings.topP || 0.95;
+            document.getElementById('topPInput').value = settings.topP ?? 1;
+            document.getElementById('topPValue').innerText = settings.topP ?? 1;
         }
         if (document.getElementById('topKInput')) {
-            document.getElementById('topKInput').value = settings.topK || 40;
+            document.getElementById('topKInput').value = settings.topK ?? 40;
         }
         if (document.getElementById('maxTokensInput')) {
-            document.getElementById('maxTokensInput').value = settings.maxOutputTokens || 2048;
-            document.getElementById('maxTokensValue').innerText = settings.maxOutputTokens || 2048;
+            document.getElementById('maxTokensInput').value = settings.maxOutputTokens ?? 8100;
+            document.getElementById('maxTokensValue').innerText = settings.maxOutputTokens ?? 8100;
         }
         // ... (Other initializations if any)
     }

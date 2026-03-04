@@ -137,7 +137,10 @@ class AIService {
     async generateExplorationGuide(context) {
         const apiKey = await this.ensureApiKey();
         const settings = dataManager.getData().appSettings || {};
-        const temperature = parseFloat(settings.temperature) || 0.7;
+        const temperature = parseFloat(settings.temperature ?? 0.5);
+        const topP = parseFloat(settings.topP ?? 1);
+        const topK = parseInt(settings.topK ?? 40);
+        const maxOutputTokens = parseInt(settings.maxOutputTokens ?? 8100);
         const modelName = settings.geminiModel || this.MODEL;
 
         const { student, target } = context;
@@ -348,6 +351,9 @@ class AIService {
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
                         temperature: temperature,
+                        topP: topP,
+                        topK: topK,
+                        maxOutputTokens: maxOutputTokens,
                         responseMimeType: "application/json"
                     }
                 })

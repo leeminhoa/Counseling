@@ -132,3 +132,21 @@
 127.0.0.1 - - [04/Mar/2026 15:43:39] "GET /js/app.js?v=9 HTTP/1.1" 200 -
 127.0.0.1 - - [04/Mar/2026 15:43:39] code 404, message File not found
 127.0.0.1 - - [04/Mar/2026 15:43:39] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /css/style.css?v=8 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /css/modal_polish.css HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/dataManager.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/dbService.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/aiService.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/profile.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/stage1_1.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/stage1_2.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/stage1.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/stage2.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/chatbot.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/manager.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/admin_prompts.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/admin.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /js/app.js?v=10 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Mar/2026 15:52:02] code 404, message File not found
+127.0.0.1 - - [04/Mar/2026 15:52:02] "GET /favicon.ico HTTP/1.1" 404 -

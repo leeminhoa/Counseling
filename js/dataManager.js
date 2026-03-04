@@ -30,7 +30,11 @@ class DataManager {
                 appSettings: {
                     supabaseUrl: 'https://ytpycfenjtmvzjsvjwds.supabase.co',
                     geminiKey: '',
-                    temperature: 0.7,
+                    temperature: 0.5,
+                    topP: 1,
+                    topK: 40,
+                    maxOutputTokens: 8100,
+                    geminiModel: 'gemini-3-pro-preview',
                     theme: 'light',
                     lastActiveTab: 'stage1'
                 }
