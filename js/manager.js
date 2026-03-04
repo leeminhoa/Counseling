@@ -176,7 +176,7 @@ async function selectStudent(id, name, schoolName, grade, memo = '', consultingS
 
         // Navigate to Stage 1 (or wherever appropriate)
         // Highlight that we switched context
-        alert(`${name} 학생의 상담 모드로 전환되었습니다.`);
+        showCustomAlert(`${name} 학생의 상담 모드로 전환되었습니다.`);
 
         // Trigger Tab Change to Stage 1
         const stage1Tab = document.querySelector('.nav-item[data-tab="stage1_1"]');
@@ -184,6 +184,6 @@ async function selectStudent(id, name, schoolName, grade, memo = '', consultingS
 
     } catch (error) {
         console.error('Context Switch Failed:', error);
-        alert('학생 데이터를 불러오는 데 실패했습니다.');
+        showCustomAlert('학생 데이터를 불러오는 데 실패했습니다.');
     }
 }

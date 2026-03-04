@@ -157,7 +157,7 @@ window.copyMergeResult = function () {
     const outputEl = document.getElementById('mergeOutputPrompt');
     outputEl.select();
     document.execCommand('copy');
-    alert('복사되었습니다!');
+    showCustomAlert('복사되었습니다!');
 };
 
 function renderAdmin(container) {
@@ -479,7 +479,7 @@ function renderAdmin(container) {
             const tab = document.getElementById('adminTab_counselors');
             if (tab) tab.style.display = 'block';
         } else if (tabName === 'api') {
-            alert('API Key 관리는 준비 중입니다.');
+            showCustomAlert('API Key 관리는 준비 중입니다.');
         }
     };
 
@@ -489,30 +489,29 @@ function renderAdmin(container) {
         const password = document.getElementById('new_counselor_password').value;
 
         if (!name || !email || !password) {
-            alert('모든 필드를 입력해주세요.');
+            showCustomAlert('모든 필드를 입력해주세요.');
             return;
         }
+        showCustomConfirm(`${name} 상담사 계정을 생성하시겠습니까?`, async () => {
+            const btn = document.querySelector('button[onclick="handleCreateCounselor()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 생성 중...';
+            btn.disabled = true;
 
-        if (!confirm(`\${name} 상담사 계정을 생성하시겠습니까?`)) return;
+            const result = await dbService.createCounselor(email, password, name);
 
-        const btn = document.querySelector('button[onclick="handleCreateCounselor()"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 생성 중...';
-        btn.disabled = true;
+            btn.innerHTML = originalText;
+            btn.disabled = false;
 
-        const result = await dbService.createCounselor(email, password, name);
-
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-
-        if (result.success) {
-            alert(`계정이 성공적으로 생성되었습니다.\n이메일: ${email}`);
-            document.getElementById('new_counselor_name').value = '';
-            document.getElementById('new_counselor_email').value = '';
-            document.getElementById('new_counselor_password').value = '';
-        } else {
-            alert('계정 생성 실패: ' + result.message);
-        }
+            if (result.success) {
+                showCustomAlert(`계정이 성공적으로 생성되었습니다.\n이메일: ${email}`);
+                document.getElementById('new_counselor_name').value = '';
+                document.getElementById('new_counselor_email').value = '';
+                document.getElementById('new_counselor_password').value = '';
+            } else {
+                showCustomAlert('계정 생성 실패: ' + result.message);
+            }
+        });
     };
 
     // Initialize UI from Settings
@@ -604,7 +603,7 @@ function saveAdminSettings() {
     // Re-init DB Client if needed (though DB keys usually don't change here anymore)
     // dbService.initClient(); // [REMOVED] Causing multiple instance warnings. Credentials are fixed in dbService.
 
-    alert('설정이 성공적으로 저장되었습니다.');
+    showCustomAlert('설정이 성공적으로 저장되었습니다.');
 }
 
 // Prompt Preset Helpers
