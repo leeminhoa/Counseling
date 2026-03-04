@@ -105,7 +105,7 @@ function selectMajor(majorName) {
     // Pass a ephemeral 'autoSearch' flag via sessionStorage or logic? 
     // Or just let dataManager hold the state. Stage 1 should check `targetMajor` on load.
 
-    alert(`'${majorName}' 전공이 선택되었습니다.\n대학 분석 단계로 이동합니다.`);
+    showCustomAlert(`'${majorName}' 전공이 선택되었습니다.\n대학 분석 단계로 이동합니다.`);
 
     // Navigate to Stage 1
     const stage1_tab = document.querySelector('.nav-item[data-tab="stage1"]');

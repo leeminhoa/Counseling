@@ -290,7 +290,7 @@ function saveProfileData() {
     const tp = document.getElementById('profileTp').value;
 
     if (!name && !gpa) {
-        alert('최소한 이름과 내신 성적은 입력해주세요.');
+        showCustomAlert('최소한 이름과 내신 성적은 입력해주세요.');
         return;
     }
 
@@ -324,7 +324,7 @@ function saveProfileData() {
             }
         } catch (err) {
             console.error('❌ DB Sync Failed:', err);
-            // alert('프로필은 로컬에 저장되었으나, 서버 동기화에 실패했습니다.'); // Optional: suppress to avoid annoying user
+            // showCustomAlert('프로필은 로컬에 저장되었으나, 서버 동기화에 실패했습니다.'); // Optional: suppress to avoid annoying user
         }
     })();
 
@@ -367,18 +367,18 @@ function updateUserStatusUI() {
  */
 window.onHistoryClick = function (id) {
     if (!window._historyCache || !window._historyCache[id]) {
-        alert('이력 데이터를 찾을 수 없습니다.');
+        showCustomAlert('이력 데이터를 찾을 수 없습니다.');
         return;
     }
     const item = window._historyCache[id];
 
     // Only load if completed
     if (item.status !== 'completed') {
-        alert('아직 진행 중인 상담입니다. 이어서 진행하시겠습니까? (기능 준비중)');
+        showCustomAlert('아직 진행 중인 상담입니다. 이어서 진행하시겠습니까? (기능 준비중)');
         return;
     }
 
-    if (confirm('선택하신 과거 상담 결과를 불러오시겠습니까?')) {
+    showCustomConfirm('선택하신 과거 상담 결과를 불러오시겠습니까?', () => {
         closeProfileModal();
 
         // Wait for modal close transition
@@ -386,8 +386,8 @@ window.onHistoryClick = function (id) {
             if (window.loadHistoryToStage2) {
                 window.loadHistoryToStage2(item);
             } else {
-                alert('해당 기능을 실행할 수 없습니다. (Stage 2 모듈 로드 필요)');
+                showCustomAlert('해당 기능을 실행할 수 없습니다. (Stage 2 모듈 로드 필요)');
             }
         }, 300);
-    }
+    });
 };

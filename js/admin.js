@@ -649,17 +649,16 @@ window.applyPreset = function (type, id) {
     const prompt = window.loadedPresets ? window.loadedPresets.find(p => p.id == id) : null;
     if (!prompt) return;
 
-    if (!confirm(`[${prompt.title}] 내용을 불러오시겠습니까?\n현재 에디터의 내용은 덮어씌워집니다.`)) {
+    showCustomConfirm(`[${prompt.title}] 내용을 불러오시겠습니까?\n현재 에디터의 내용은 덮어씌워집니다.`, () => {
+        if (type === 'system') {
+            document.getElementById('sysPrompt').value = prompt.contents;
+        } else {
+            document.getElementById('userPrompt').value = prompt.contents;
+        }
+
+        // Reset selection to allow re-selection
         document.getElementById(type === 'system' ? 'sysPresetSelect' : 'userPresetSelect').value = "";
-        return;
-    }
-
-    if (type === 'system') {
-        document.getElementById('sysPrompt').value = prompt.contents;
-    } else {
-        document.getElementById('userPrompt').value = prompt.contents;
-    }
-
-    // Reset selection to allow re-selection
-    document.getElementById(type === 'system' ? 'sysPresetSelect' : 'userPresetSelect').value = "";
+    }, {
+        okText: '불러오기'
+    });
 };

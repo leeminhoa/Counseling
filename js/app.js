@@ -65,36 +65,77 @@ function initApp() {
     }
 }
 
-// [NEW] Generic Confirm Modal Helper
-window.showConfirmModal = function (message, onConfirm) {
-    const modal = document.getElementById('confirmModal');
-    const msgEl = document.getElementById('confirmMessage');
-    const okBtn = document.getElementById('confirmOkBtn');
-    const cancelBtn = document.getElementById('confirmCancelBtn');
+// [NEW] Custom Modal Helpers (Alert/Confirm Replacement)
+window.showCustomModal = function (options) {
+    const modal = document.getElementById('customModal');
+    const titleEl = document.getElementById('customModalTitle');
+    const msgEl = document.getElementById('customModalMessage');
+    const okBtn = document.getElementById('customModalOkBtn');
+    const cancelBtn = document.getElementById('customModalCancelBtn');
+    const iconEl = document.getElementById('customModalIcon');
 
     if (!modal || !msgEl || !okBtn || !cancelBtn) {
-        // Fallback if modal elements missing
-        if (confirm(message)) onConfirm();
+        console.warn('Custom Modal elements missing. Falling back to native.');
+        if (options.type === 'confirm') {
+            if (confirm(options.message)) if (options.onConfirm) options.onConfirm();
+        } else {
+            showCustomAlert(options.message);
+            if (options.onConfirm) options.onConfirm();
+        }
         return;
     }
 
-    msgEl.innerHTML = message.replace(/\n/g, '<br>');
+    titleEl.textContent = options.title || '알림';
+    msgEl.innerHTML = options.message.replace(/\n/g, '<br>');
+
+    // Icon Logic
+    iconEl.className = options.iconClass || 'fa-solid fa-circle-info';
+    iconEl.parentElement.style.color = options.type === 'confirm' ? '#F59E0B' : 'var(--primary-color)';
+
+    // Buttons Logic
+    if (options.type === 'alert') {
+        cancelBtn.style.display = 'none';
+        okBtn.textContent = '확인';
+        okBtn.style.background = 'var(--primary-color, #3B82F6)';
+        okBtn.style.boxShadow = '0 4px 6px -1px rgba(59, 130, 246, 0.3)';
+    } else {
+        cancelBtn.style.display = 'block';
+        okBtn.textContent = options.okText || '확인';
+        okBtn.style.background = options.danger ? '#EF4444' : 'var(--primary-color, #3B82F6)';
+        okBtn.style.boxShadow = options.danger ? '0 4px 6px -1px rgba(239, 68, 68, 0.3)' : '0 4px 6px -1px rgba(59, 130, 246, 0.3)';
+    }
+
     modal.style.display = 'flex';
 
-    // Clone to remove old listeners
-    const newOk = okBtn.cloneNode(true);
-    const newCancel = cancelBtn.cloneNode(true);
+    // Event Cleanup via Cloning
+    const newOkBtn = okBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
 
-    okBtn.parentNode.replaceChild(newOk, okBtn);
-    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-
-    newOk.addEventListener('click', () => {
+    newOkBtn.addEventListener('click', () => {
         modal.style.display = 'none';
-        onConfirm();
+        if (options.onConfirm) options.onConfirm();
     });
 
-    newCancel.addEventListener('click', () => {
+    newCancelBtn.addEventListener('click', () => {
         modal.style.display = 'none';
+    });
+};
+
+window.showCustomAlert = function (message, title = '알림') {
+    showCustomModal({ type: 'alert', message, title });
+};
+
+window.showCustomConfirm = function (message, onConfirm, options = {}) {
+    showCustomModal({
+        type: 'confirm',
+        message,
+        onConfirm,
+        title: options.title || '잠깐! 확인해주세요',
+        okText: options.okText || '확인',
+        danger: options.danger || false,
+        iconClass: options.iconClass || 'fa-solid fa-circle-exclamation'
     });
 };
 
@@ -113,7 +154,7 @@ window.resetCounselingSession = () => {
 window.openMemoModal = function () {
     const profile = dataManager.getProfile();
     if (!profile || !profile.name) {
-        alert('먼저 대상을 지정하기 위해 학생 정보를 입력하거나 불러와주세요.');
+        showCustomAlert('먼저 대상을 지정하기 위해 학생 정보를 입력하거나 불러와주세요.');
         return;
     }
 
@@ -156,7 +197,7 @@ window.saveMemoCommand = async function () {
     }
 
     closeMemoModal();
-    alert('메모가 저장되었습니다.');
+    showCustomAlert('메모가 저장되었습니다.');
 };
 
 function handleTabChange(tabName) {

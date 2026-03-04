@@ -135,7 +135,7 @@ async function startAIGeneration(container) {
     } catch (error) {
         clearInterval(stepInterval);
         console.error('AI Generation Failed:', error);
-        alert('AI 생성 실패: ' + (error.message || '알 수 없는 오류'));
+        showCustomAlert('AI 생성 실패: ' + (error.message || '알 수 없는 오류'));
         loadingView.style.display = 'none';
         initialView.style.display = 'block';
     }

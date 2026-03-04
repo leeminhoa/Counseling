@@ -74,7 +74,7 @@ const promptManager = {
             });
         } catch (err) {
             console.error('Failed to load prompt groups:', err);
-            alert('프롬프트 그룹을 불러오는데 실패했습니다.');
+            showCustomAlert('프롬프트 그룹을 불러오는데 실패했습니다.');
         }
     },
 
@@ -94,7 +94,7 @@ const promptManager = {
             this.renderPromptList(data);
         } catch (err) {
             console.error('Failed to load prompts:', err);
-            alert('프롬프트 목록을 불러오는데 실패했습니다.');
+            showCustomAlert('프롬프트 목록을 불러오는데 실패했습니다.');
         } finally {
             const loading = document.getElementById('promptLoading');
             if (loading) loading.style.display = 'none';
@@ -172,11 +172,11 @@ const promptManager = {
 
             // Reload list
             this.loadPromptsByGroup(this.currentGroup);
-            // alert(newStatus ? '프롬프트가 불러오기 목록에 노출됩니다.' : '프롬프트가 불러오기 목록에서 숨겨졌습니다.');
+            // showCustomAlert(newStatus ? '프롬프트가 불러오기 목록에 노출됩니다.' : '프롬프트가 불러오기 목록에서 숨겨졌습니다.');
 
         } catch (err) {
             console.error('Toggle failed:', err);
-            alert('설정 변경 실패: ' + err.message);
+            showCustomAlert('설정 변경 실패: ' + err.message);
         }
     },
 
@@ -215,7 +215,7 @@ const promptManager = {
 
     async savePromptVersion() {
         if (!this.currentGroup) {
-            alert('프롬프트 그룹이 선택되지 않았습니다.');
+            showCustomAlert('프롬프트 그룹이 선택되지 않았습니다.');
             return;
         }
 
@@ -225,7 +225,7 @@ const promptManager = {
         const description = document.getElementById('promptDesc').value;
 
         if (!title || !contents) {
-            alert('제목과 내용은 필수입니다.');
+            showCustomAlert('제목과 내용은 필수입니다.');
             return;
         }
 
@@ -244,11 +244,11 @@ const promptManager = {
 
             this.closePromptModal();
             this.loadPromptsByGroup(this.currentGroup);
-            alert('새 프롬프트 버전이 저장되었습니다.');
+            showCustomAlert('새 프롬프트 버전이 저장되었습니다.');
 
         } catch (err) {
             console.error('Save failed:', err);
-            alert('저장 실패: ' + err.message);
+            showCustomAlert('저장 실패: ' + err.message);
         }
     },
 

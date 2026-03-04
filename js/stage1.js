@@ -489,7 +489,7 @@ function proceedToStage2() {
 
     // Check if essential info is missing
     if (!profile || !profile.gpa || !profile.subjects || profile.subjects.length === 0) {
-        alert('AI 가이드를 생성하려면 먼저 나의 내신과 이수 과목을 입력해야 합니다.');
+        showCustomAlert('AI 가이드를 생성하려면 먼저 나의 내신과 이수 과목을 입력해야 합니다.');
         if (typeof openProfileModal === 'function') openProfileModal();
         return;
     }
@@ -498,6 +498,6 @@ function proceedToStage2() {
     if (typeof window.proceedToStage2Action === 'function') {
         window.proceedToStage2Action();
     } else {
-        alert('Stage 2 전환 기능 연결 중입니다.');
+        showCustomAlert('Stage 2 전환 기능 연결 중입니다.');
     }
 }

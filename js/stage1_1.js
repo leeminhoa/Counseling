@@ -138,7 +138,7 @@ function selectCategory(categoryName) {
         selectedCategory: categoryName
     });
 
-    alert(`'${categoryName}'이(가) 선택되었습니다.\n다음 단계(학부 선택)로 이동합니다.`);
+    showCustomAlert(`'${categoryName}'이(가) 선택되었습니다.\n다음 단계(학부 선택)로 이동합니다.`);
 
     // Auto Navigate to Stage 1-2 (To be implemented)
     // For now, if Stage 1-2 tab exists, click it. If not, just log.
