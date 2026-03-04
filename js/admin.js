@@ -182,7 +182,7 @@ function renderAdmin(container) {
                 <div class="admin-section">
                     <div class="section-header">
                         <h2><i class="fa-solid fa-robot"></i> AI Prompt Engine</h2>
-                        <button class="btn-primary" id="saveAdminBtn"><i class="fa-solid fa-save"></i> 설정 저장</button>
+                        <button type="button" class="btn-primary" id="saveAdminBtn"><i class="fa-solid fa-save"></i> 설정 저장</button>
                     </div>
 
                     <div class="admin-grid">
@@ -192,7 +192,7 @@ function renderAdmin(container) {
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                     <label>System Prompt (Persona & Instructions)</label>
                                     <div style="display:flex; gap:0.5rem;">
-                                        <button onclick="openSmartMergeModal()" class="btn-secondary btn-sm" style="font-size:0.8rem; padding: 2px 8px; border-color: #3B82F6; color: #3B82F6;">
+                                        <button type="button" onclick="openSmartMergeModal()" class="btn-secondary btn-sm" style="font-size:0.8rem; padding: 2px 8px; border-color: #3B82F6; color: #3B82F6;">
                                             <i class="fa-solid fa-wand-magic-sparkles"></i> 포맷 자동보정
                                         </button>
                                         <select id="sysPresetSelect" onchange="setTimeout(() => applyPreset('system', this.value), 50)" style="padding:0.3rem; border-radius:4px; border:1px solid #cbd5e1; font-size:0.8rem; width:180px; background-color: #f8fafc; cursor:pointer;">
@@ -313,7 +313,7 @@ function renderAdmin(container) {
                 <div class="admin-section">
                     <div class="section-header">
                         <h2><i class="fa-solid fa-robot"></i> LLM 프롬프트 관리</h2>
-                        <button class="btn-primary" id="btnAddPromptVersion"><i class="fa-solid fa-plus"></i> 새 버전 추가</button>
+                        <button type="button" class="btn-primary" id="btnAddPromptVersion"><i class="fa-solid fa-plus"></i> 새 버전 추가</button>
                     </div>
                     
                     <div class="card" style="margin-bottom:1.5rem;">
@@ -367,8 +367,8 @@ function renderAdmin(container) {
                         </div>
 
                         <div class="modal-footer">
-                            <button class="btn-secondary" onclick="promptManager.closePromptModal()">취소</button>
-                            <button class="btn-primary" id="btnSavePrompt">저장</button>
+                            <button type="button" class="btn-secondary" onclick="promptManager.closePromptModal()">취소</button>
+                            <button type="button" class="btn-primary" id="btnSavePrompt">저장</button>
                         </div>
                     </div>
                 </div>
@@ -395,7 +395,7 @@ function renderAdmin(container) {
                             <label>비밀번호</label>
                             <input type="password" id="new_counselor_password" class="styled-input" placeholder="비밀번호">
                         </div>
-                        <button class="btn-primary" onclick="handleCreateCounselor()" style="width: 100%;">
+                        <button type="button" class="btn-primary" onclick="handleCreateCounselor()" style="width: 100%;">
                             <i class="fa-solid fa-user-plus"></i> 계정 생성
                         </button>
                     </div>
