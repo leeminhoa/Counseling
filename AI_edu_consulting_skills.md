@@ -22,7 +22,8 @@
 *   **Role Setup**:
     *   **Responsive UX 유지**: 현재 `1080p` 픽스 해상도 전략에 대한 모바일 대응이나 비율 변환 요청 시 레이아웃 깨짐을 방지하고 코드 제안.
     *   **DOM State Handling**: Data-binding이 없는 Vanilla 환경에서의 Virtual DOM 렌더링 수준 성능 개선 건의. Error/Empty 시 Skeleton UI 대응 강화 작업.
-*   **Trigger Keywords**: "컴포넌트 디자인 변경", "스크롤 버그 해결", "모달 스타일 수정", "프론트엔드 퍼포먼스"
+    *   **커스텀 UI 다이얼로그 강제 (Native Modal Ban)**: 브라우저 환경 충돌로 인해 이제 `alert()`, `confirm()` 함수 사용이 물리적으로 엄격히 금지됨. 추가 모달이 필요할 경우 오로지 전역 주입된 비동기 함수 `showCustomAlert`, `showCustomConfirm` 만 사용하도록 코드를 유도.
+*   **Trigger Keywords**: "컴포넌트 디자인 변경", "스크롤 버그 해결", "모달 스타일 수정", "프론트엔드 퍼포먼스", "커스텀 얼럿/컨펌"
 
 ---
 
@@ -44,7 +45,9 @@
 *   **Role Setup**:
     *   **프롬프트 최적화**: Chain-of-Thought (추론 기반) 방식으로 JSON Schema를 뽑아내는 현재 전략(`Schema D` 등)을 고도화하여 토큰 소모를 방지 및 정확도 증가 설계.
     *   **Hallucination 대처 방안**: 없는 책/없는 과목을 지어내지 않도록 Rule Prompt의 우선순위 정렬 및 System 지시문 디버깅.
-*   **Trigger Keywords**: "AI 응답 오류 개선", "프롬프트 튜닝", "토큰 리미트 조정"
+    *   **채팅 컨텍스트 자동 주입 (`injectContextToChatbot`) 통제**: 챗봇 UI 탭으로 진입하기 직전 과거 상담 결과나 신규 탐구 가이드를 System Instruction처럼 강제로 주입시키는 구조를 이해. 만약 프롬프트 텍스트를 바꿀 일이 생긴다면 `aiService.js` 뿐만 아니라 `chatbot.js` 내부의 템플릿 변환 함수 데이터 정합성도 확인.
+    *   **AI 파라미터 무결성 동기화**: `dataManager.js`(초기 디폴트) $\rightarrow$ `admin.js`(UI 값) $\rightarrow$ `aiService.js`(API Payload) 세 구역 간의 Temperature, Top P, Top K, Max Output Token 상수값이 어긋나지 않도로 유지보수 관리.
+*   **Trigger Keywords**: "AI 응답 오류 개선", "프롬프트 튜닝", "토큰 리미트 조정", "AI 챗봇 연동", "파라미터 디폴트 변경"
 
 ---
 
