@@ -329,7 +329,9 @@ class DBService {
                     grade, 
                     mildang_id,
                     created_at,
-                    school_id
+                    school_id,
+                    memo,
+                    consulting_status
                 `)
                 .order('created_at', { ascending: false });
 
@@ -358,7 +360,7 @@ class DBService {
                 }
             }
 
-            // 3. Merge
+            // 3. Merge & include newly added Memo info
             return students.map(s => ({
                 ...s,
                 school: {
@@ -592,13 +594,7 @@ class DBService {
         if (schoolId) {
             query = query.eq('school_id', schoolId);
         } else {
-            // Cannot save without school_id due to NOT NULL constraint
-            // We must have a schoolId. If ensureSchool failed, we can't proceed or need a fallback "Unknown School"
             console.warn('School ID missing, attempting to use fallback school...');
-            // Try to use a fallback or create a placeholder? 
-            // For now, let's try to pass null and see if we can fix the constraint later, 
-            // but user said constraint violation. 
-            // Better strategy: Create a "기타 고등학교" if schoolName was empty?
             if (!profile.schoolName) {
                 schoolId = await this.ensureSchool('기타 고등학교');
             }
@@ -611,21 +607,36 @@ class DBService {
             throw searchError;
         }
 
+        const studentPayload = {
+            student_name: profile.name,
+            grade: grade,
+            school_id: schoolId,
+            memo: profile.memo || '', // [NEW] 상담 메모 동기화
+            consulting_status: profile.consultingStatus || '보통' // [NEW] 상담 상태 동기화
+        };
+
         if (existing) {
             console.log('Student found:', existing.id);
+            // [NEW] Update memo and status even if student exists
+            const { error: updateError } = await this.client
+                .from('students')
+                .update({
+                    memo: studentPayload.memo,
+                    consulting_status: studentPayload.consulting_status
+                })
+                .eq('id', existing.id);
+
+            if (updateError) console.error('Failed to update student memo:', updateError);
+
             return existing.id;
         }
 
         // 2. Create new student
         const newMildangId = crypto.randomUUID();
         const newStudent = {
-            student_name: profile.name,
-            grade: grade,
-            school_id: schoolId, // Now hopefully valid
+            ...studentPayload,
             mildang_id: newMildangId
         };
-
-        // If school_id is still null here, it will fail. ensureSchool handles creation.
 
         const { data: created, error: createError } = await this.client
             .from('students')

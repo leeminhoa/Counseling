@@ -22,7 +22,9 @@ class DataManager {
                     subjects: [], // Legacy: kept for backward compatibility
                     completedSubjects: [], // [NEW] 이수 완료 과목
                     inprogressSubjects: [], // [NEW] 이수 중 과목
-                    lastSelectedUniv: null // { id, univ_name, raw_major_name, ... }
+                    lastSelectedUniv: null, // { id, univ_name, raw_major_name, ... }
+                    memo: '', // [NEW] 상담 메모
+                    consultingStatus: '보통' // [NEW] 상담 상태 (좋음/보통/나쁨)
                 },
                 consultingResults: [], // History of AI generated reports
                 appSettings: {
@@ -50,7 +52,9 @@ class DataManager {
                 subjects: [],
                 completedSubjects: [],
                 inprogressSubjects: [],
-                lastSelectedUniv: null
+                lastSelectedUniv: null,
+                memo: '',
+                consultingStatus: '보통'
             },
             consultingResults: [], // Reset history for new student session
             appSettings: currentData.appSettings || {} // Keep settings
@@ -71,10 +75,14 @@ class DataManager {
                 data.appSettings.geminiKey = data.appSettings.apiKey;
             }
 
-            // Migrate studentProfile to have new subject arrays
+            // Migrate studentProfile to have new subject arrays and memo
             if (data.studentProfile) {
                 if (!data.studentProfile.completedSubjects) data.studentProfile.completedSubjects = [];
                 if (!data.studentProfile.inprogressSubjects) data.studentProfile.inprogressSubjects = [];
+
+                // [NEW] Memo Migration
+                if (data.studentProfile.memo === undefined) data.studentProfile.memo = '';
+                if (!data.studentProfile.consultingStatus) data.studentProfile.consultingStatus = '보통';
 
                 // If legacy subjects exist but new ones don't, migrate them to completed
                 if (data.studentProfile.subjects && data.studentProfile.subjects.length > 0 && data.studentProfile.completedSubjects.length === 0) {

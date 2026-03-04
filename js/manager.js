@@ -73,17 +73,35 @@ async function loadStudentList(query = '') {
             const gradeMap = { 'HIGH1': '1학년', 'HIGH2': '2학년', 'HIGH3': '3학년' };
             const gradeLabel = gradeMap[student.grade] || student.grade || '학년 미정';
 
+            // [NEW] Status Map & Memo Indicator
+            const hasMemo = student.memo && student.memo.trim().length > 0;
+            const statusMap = {
+                '좋음': { bg: '#ECFCCB', color: '#65A30D', icon: 'fa-face-smile-beam' },
+                '보통': { bg: '#F1F5F9', color: '#64748B', icon: 'fa-face-meh' },
+                '나쁨': { bg: '#FEE2E2', color: '#EF4444', icon: 'fa-face-frown' }
+            };
+            const sStyle = statusMap[student.consulting_status] || statusMap['보통'];
+            const statusBadge = `<span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:700; background:${sStyle.bg}; color:${sStyle.color};"><i class="fa-solid ${sStyle.icon}"></i> ${student.consulting_status || '상태 없음'}</span>`;
+            const memoIcon = hasMemo ? `<span style="color:#0EA5E9; margin-left:6px;" title="메모 작성됨"><i class="fa-solid fa-note-sticky"></i></span>` : '';
+
             return `
-                <div class="card student-card" onclick="selectStudent('${student.id}', '${student.student_name}', '${schoolName}', '${student.grade}')"
+                <div class="card student-card" onclick="selectStudent('${student.id}', '${student.student_name}', '${schoolName}', '${student.grade}', \`${student.memo || ''}\`, '${student.consulting_status || ''}')"
                     style="cursor: pointer; transition: all 0.2s; border: 1px solid #E2E8F0; hover: shadow-lg;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div class="student-avatar" style="width: 48px; height: 48px; background: #F1F5F9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #64748B;">
-                            <i class="fa-solid fa-user"></i>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="student-avatar" style="width: 48px; height: 48px; background: #F1F5F9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #64748B;">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                ${statusBadge}
+                            </div>
                         </div>
                         <span style="font-size: 0.8rem; color: #94A3B8;">${date} 등록</span>
                     </div>
                     
-                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #1E293B; margin-bottom: 0.3rem;">${student.student_name}</h3>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #1E293B; margin-bottom: 0.3rem;">
+                        ${student.student_name} ${memoIcon}
+                    </h3>
                     <p style="color: #64748B; font-size: 0.9rem; margin-bottom: 1rem;">${schoolName} · ${gradeLabel}</p>
                     
                     <div style="border-top: 1px solid #F1F5F9; padding-top: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
@@ -100,7 +118,7 @@ async function loadStudentList(query = '') {
     }
 }
 
-async function selectStudent(id, name, schoolName, grade) {
+async function selectStudent(id, name, schoolName, grade, memo = '', consultingStatus = '보통') {
     // 1. Update Global Profile (Mocking the 'Load' process)
     // In a real app, we might want to fetch the FULL profile from DB again to get GPA/Subjects
     // For now, we'll try to fetch the latest session or just set the basics we have
@@ -116,6 +134,8 @@ async function selectStudent(id, name, schoolName, grade) {
             schoolName: schoolName,
             grade: grade,
             studentId: id,
+            memo: memo,
+            consultingStatus: consultingStatus,
             // Defaults
             gpa: 0,
             totalPercentile: 0,

@@ -109,6 +109,56 @@ window.resetCounselingSession = () => {
     );
 };
 
+// --- [NEW] Memo Modal Controls ---
+window.openMemoModal = function () {
+    const profile = dataManager.getProfile();
+    if (!profile || !profile.name) {
+        alert('먼저 대상을 지정하기 위해 학생 정보를 입력하거나 불러와주세요.');
+        return;
+    }
+
+    document.getElementById('memoStudentName').value = profile.name;
+    document.getElementById('memoConsultingStatus').value = profile.consultingStatus || '보통';
+    document.getElementById('memoContentText').value = profile.memo || '';
+
+    document.getElementById('memoModal').style.display = 'flex';
+};
+
+window.closeMemoModal = function () {
+    document.getElementById('memoModal').style.display = 'none';
+};
+
+window.saveMemoCommand = async function () {
+    const status = document.getElementById('memoConsultingStatus').value;
+    const content = document.getElementById('memoContentText').value;
+
+    // 1. Local Storage 업데이트
+    dataManager.updateProfile({
+        memo: content,
+        consultingStatus: status
+    });
+
+    const profile = dataManager.getProfile();
+
+    // 2. Supabase DB Sync (if session exists and profile is loaded)
+    if (profile && profile.name && window.dbService) {
+        try {
+            await dbService.upsertStudent(profile);
+            console.log('Memo synced with Supabase DB.');
+
+            // 학생 관리 화면이 띄워져 있다면 Data Reload
+            if (document.querySelector('.nav-item[data-tab="manager"]').classList.contains('active')) {
+                if (typeof loadStudentList === 'function') loadStudentList();
+            }
+        } catch (e) {
+            console.warn('DB Sync failed during memo save, but saved locally.', e);
+        }
+    }
+
+    closeMemoModal();
+    alert('메모가 저장되었습니다.');
+};
+
 function handleTabChange(tabName) {
     // 1. Update Sidebar UI
     document.querySelectorAll('.nav-item').forEach(item => {

@@ -432,6 +432,52 @@ function renderNewReportLayout(data, container) {
                     <h3 style="font-size: 1.25rem; font-weight: 700; color: #1E293B; margin-bottom: 1rem; display: flex; align-items: center;">
                         <i class="fa-solid fa-star" style="color: #F59E0B; margin-right: 0.5rem;"></i> 대표 산출물 (Signature Outputs)
                     </h3>
+
+                    <!-- [NEW] Top Summary Grid (Image 1 style) -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                        ${getList(summary.representative_outputs).map((item, idx) => {
+        const isSetuk = idx === 0;
+        const themeColor = isSetuk ? '#0284C7' : '#C026D3';
+        const bgColor = isSetuk ? '#F0F9FF' : '#FDF4FF';
+        const borderColor = isSetuk ? '#BAE6FD' : '#F5D0FE';
+
+        const rawParts = item.detail.split(/→|->/).map(s => s.trim()).filter(s => s.length > 0);
+        let summaryDesc = item.detail;
+
+        const cleanContent = (str) => {
+            let s = str.trim();
+            const m = s.match(/(?:WHY|WHAT|HOW|RESULT|계기|활동|방법|결과|교과활동|교과|결과물)[^a-zA-Z0-9가-힣]*(.*)/i);
+            if (m && m[1]) {
+                s = m[1].trim();
+                if (s.endsWith(')')) s = s.substring(0, s.length - 1).trim();
+            } else {
+                if (s.startsWith('(') && s.endsWith(')')) s = s.substring(1, s.length - 1).trim();
+            }
+            return s;
+        };
+
+        if (rawParts.length >= 4) {
+            const what = cleanContent(rawParts[1]);
+            const how = cleanContent(rawParts[2]);
+            const result = cleanContent(rawParts[3]);
+            summaryDesc = what + " " + how + " " + result;
+        } else {
+            summaryDesc = cleanContent(item.detail);
+        }
+
+        return `
+                        <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                            <div style="font-size: 0.9rem; font-weight: 700; color: ${themeColor};">
+                                ${isSetuk ? '세특 중심' : '창체 중심'}
+                            </div>
+                            <h4 style="font-size: 1.15rem; font-weight: 800; color: #0F172A; margin: 0; line-height: 1.4;">${item.title.replace(/^\[.*?\]\s*/, '')}</h4>
+                            <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin: 0;">${summaryDesc}</p>
+                        </div>
+        `;
+    }).join('')}
+                    </div>
+
+                    <!-- [EXISTING] Detailed List (Image 2 style) -->
                     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                         ${getList(summary.representative_outputs).map((item, idx) => {
         const isSetuk = idx === 0;
@@ -443,18 +489,30 @@ function renderNewReportLayout(data, container) {
         // Expected: (WHY ...) → (WHAT ...) → (HOW ...) → (RESULT ...)
         const rawParts = item.detail.split(/→|->/).map(s => s.trim()).filter(s => s.length > 0);
 
+        const cleanContentDetailed = (str) => {
+            let s = str.trim();
+            const m = s.match(/(?:WHY|WHAT|HOW|RESULT|계기|활동|방법|결과|교과활동|교과|결과물)[^a-zA-Z0-9가-힣]*(.*)/i);
+            if (m && m[1]) {
+                s = m[1].trim();
+                if (s.endsWith(')')) s = s.substring(0, s.length - 1).trim();
+            } else {
+                if (s.startsWith('(') && s.endsWith(')')) s = s.substring(1, s.length - 1).trim();
+            }
+            return s;
+        };
+
         // Map parts to labels if they match the 4-step structure
         let steps = [];
         if (rawParts.length >= 4) {
             steps = [
-                { label: 'WHY (계기)', icon: 'fa-regular fa-lightbulb', content: rawParts[0].replace(/^\(WHY.*?\)\s*/, '') },
-                { label: 'WHAT (활동)', icon: 'fa-solid fa-book-open', content: rawParts[1].replace(/^\(WHAT.*?\)\s*/, '') },
-                { label: 'HOW (방법)', icon: 'fa-solid fa-magnifying-glass-chart', content: rawParts[2].replace(/^\(HOW.*?\)\s*/, '') },
-                { label: 'RESULT (결과)', icon: 'fa-solid fa-file-lines', content: rawParts[3].replace(/^\(RESULT.*?\)\s*/, '') }
+                { label: 'WHY (계기)', icon: 'fa-regular fa-lightbulb', content: cleanContentDetailed(rawParts[0]) },
+                { label: 'WHAT (활동)', icon: 'fa-solid fa-book-open', content: cleanContentDetailed(rawParts[1]) },
+                { label: 'HOW (방법)', icon: 'fa-solid fa-magnifying-glass-chart', content: cleanContentDetailed(rawParts[2]) },
+                { label: 'RESULT (결과)', icon: 'fa-solid fa-file-lines', content: cleanContentDetailed(rawParts[3]) }
             ];
         } else {
             // Fallback for unstructured text
-            steps = [{ label: '내용', icon: 'fa-solid fa-align-left', content: item.detail }];
+            steps = [{ label: '내용', icon: 'fa-solid fa-align-left', content: cleanContentDetailed(item.detail) }];
         }
 
         return `
