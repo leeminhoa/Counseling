@@ -142,6 +142,10 @@ async function startAIGeneration(container) {
 }
 
 function displayAIResult(data, container) {
+    // [NEW] Inject Context into Chatbot API
+    if (window.injectContextToChatbot) {
+        window.injectContextToChatbot(data);
+    }
     // [NEW] Schema Detection for Text-Block Mode
     if (typeof data.page1 === 'string') {
         renderTextModeReport(data, container);
