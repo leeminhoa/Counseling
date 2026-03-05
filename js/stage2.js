@@ -101,14 +101,23 @@ async function startAIGeneration(container) {
         const context = {
             student: {
                 gpa: profile.gpa,
-                completedSubjects: profile.subjects || []
+                completedSubjects: profile.subjects || [],
+                inprogressSubjects: profile.inprogressSubjects || [],
+                plannedSubjects: profile.plannedSubjects || []
             },
             target: {
                 univ: univData.univ_name,
                 major: univData.raw_major_name,
                 recommendedSubjects: univSubjects.map(s => `${s.course_name}(${s.bucket === 'core' ? '핵심' : '권장'})`),
                 futureSubjects: univSubjects
-                    .filter(s => !(profile.subjects || []).includes(s.course_name))
+                    .filter(s => {
+                        const allStudentSubjects = [
+                            ...(profile.subjects || []),
+                            ...(profile.inprogressSubjects || []),
+                            ...(profile.plannedSubjects || [])
+                        ];
+                        return !allStudentSubjects.includes(s.course_name);
+                    })
                     .map(s => `${s.course_name}(${s.bucket === 'core' ? '핵심' : '권장'})`)
             }
         };
