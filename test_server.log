@@ -167,3 +167,19 @@
 127.0.0.1 - - [05/Mar/2026 13:37:12] "GET /js/app.js?v=14 HTTP/1.1" 200 -
 127.0.0.1 - - [05/Mar/2026 13:37:12] code 404, message File not found
 127.0.0.1 - - [05/Mar/2026 13:37:12] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /index.html?v=14 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/dataManager.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/dbService.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/aiService.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/profile.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/stage1_1.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/stage1_2.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/stage1.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/stage2.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/chatbot.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/manager.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/admin_prompts.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/admin.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:38] "GET /js/app.js?v=15 HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 13:46:46] code 404, message File not found
+127.0.0.1 - - [05/Mar/2026 13:46:46] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 -

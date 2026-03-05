@@ -577,6 +577,8 @@ input[type="password"] {
     gap: 1.5rem !important;
     /* Match Stage 1-1 gap */
     width: 100%;
+    align-content: start;
+    align-items: start;
 }
 
 .major-card {
