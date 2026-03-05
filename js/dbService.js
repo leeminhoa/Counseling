@@ -340,7 +340,7 @@ class DBService {
             // 1. Fetch mapping table for the category
             const { data: majorMap, error } = await this.client
                 .from('v_univ_dept_subjects')
-                .select('canonical_major, core_subjects, recommended_subjects')
+                .select('canonical_major, core_subjects, recommended_subjects, raw_major_name')
                 .eq('top_category', category);
 
             if (error || !majorMap) throw error || new Error('No data');
@@ -367,12 +367,14 @@ class DBService {
                     uniqueMajors[major] = {
                         name: major,
                         core: new Set(m.core_subjects || []),
-                        rec: new Set(m.recommended_subjects || [])
+                        rec: new Set(m.recommended_subjects || []),
+                        examples: new Set()
                     };
                 } else {
                     (m.core_subjects || []).forEach(c => uniqueMajors[major].core.add(c));
                     (m.recommended_subjects || []).forEach(r => uniqueMajors[major].rec.add(r));
                 }
+                if (m.raw_major_name) uniqueMajors[major].examples.add(m.raw_major_name);
             });
 
             // 4. Calculate Match Score and Capped Percentage
@@ -384,11 +386,18 @@ class DBService {
                 m.rec.forEach(sub => { if (studentKeys.has(sub)) stuScore += 1; });
 
                 let percent = maxScore > 0 ? Math.floor((stuScore / maxScore) * 100) : 0;
+
+                // 가독성을 위해 가장 짧은 이름의 학과를 예시로 추출
+                let exampleList = Array.from(m.examples);
+                exampleList.sort((a, b) => a.length - b.length);
+                let bestExample = exampleList.length > 0 ? exampleList[0] : "";
+
                 return {
                     name: m.name,
                     percent: Math.min(100, percent),
                     score: stuScore,
-                    max: maxScore
+                    max: maxScore,
+                    example: bestExample
                 };
             });
 

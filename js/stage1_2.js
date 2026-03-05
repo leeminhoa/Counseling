@@ -84,6 +84,7 @@ function renderMajors(majors, gridElement) {
         // Fallback for older format if ever passed
         const name = typeof majorObj === 'string' ? majorObj : majorObj.name;
         const percent = typeof majorObj === 'string' ? 0 : (majorObj.percent || 0);
+        const example = typeof majorObj === 'string' ? '' : (majorObj.example || '');
         const safeMajor = name.replace(/'/g, "\\'");
 
         // Define badge color based on fitness percentage
@@ -100,6 +101,7 @@ function renderMajors(majors, gridElement) {
             <span style="font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; ${badgeStyle}">
                 적합도 ${percent}%
             </span>
+            ${example ? `<div style="font-size: 0.7rem; color: #94A3B8; margin-top: 0.2rem; text-align: center; word-break: keep-all;">예) ${example}</div>` : ''}
         </div>
         `;
     }).join('');
