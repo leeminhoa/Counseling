@@ -305,6 +305,7 @@ class AIService {
         // 합쳐서 하나로 넘기거나 구분해서 넘기는데, 현재 프롬프트 {{subjects}} 태그에 모두 포함시킴
         const allStudentSubjects = [
             ...(student.completedSubjects || []),
+            ...(student.inprogressSubjects || []), // [New] Include in-progress subjects
             ...(student.plannedSubjects || []) // Ensure planned subjects are also sent to AI
         ];
         userPrompt = safeReplace(userPrompt, '{{subjects}}', allStudentSubjects.join(', '));

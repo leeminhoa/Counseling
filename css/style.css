@@ -855,6 +855,14 @@ input[type="password"] {
     font-weight: 600;
 }
 
+.core-group .subject-chip.matched.inprogress {
+    background-color: #FEF3C7;
+    color: #B45309;
+    border: 2px solid #F59E0B;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);
+}
+
 .core-group .subject-chip.matched:hover {
     background-color: #BFDBFE;
 }
@@ -875,6 +883,14 @@ input[type="password"] {
     font-weight: 600;
 }
 
+.rec-group .subject-chip.matched.inprogress {
+    background-color: #FEF3C7;
+    color: #B45309;
+    border: 2px solid #F59E0B;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);
+}
+
 .rec-group .subject-chip.matched:hover {
     background-color: #BBF7D0;
 }
@@ -893,6 +909,14 @@ input[type="password"] {
     color: #9333EA;
     border: 2px dashed #C084FC;
     font-weight: 600;
+}
+
+.suggested-group .subject-chip.matched.inprogress {
+    background-color: #FEF3C7;
+    color: #B45309;
+    border: 2px solid #F59E0B;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);
 }
 
 .suggested-group .subject-chip.matched:hover {

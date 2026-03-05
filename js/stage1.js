@@ -404,6 +404,7 @@ async function renderUnivDetail(univId) {
 function renderSubjectList(subjects, type) {
     const profile = dataManager.getProfile();
     const studentSubjects = (profile && profile.subjects) ? profile.subjects : [];
+    const inprogressSubjects = (profile && profile.inprogressSubjects) ? profile.inprogressSubjects : [];
     const plannedSubjects = (profile && profile.plannedSubjects) ? profile.plannedSubjects : [];
 
     const filtered = subjects.filter(s => s.bucket === type);
@@ -436,6 +437,7 @@ function renderSubjectList(subjects, type) {
         // [Fix] Normalize strings (trim) to handle DB whitespace inconsistencies
         const cleanCourseName = s.course_name.trim();
         const isCompleted = studentSubjects.some(sub => sub.trim() === cleanCourseName);
+        const isInProgress = inprogressSubjects.some(sub => sub.trim() === cleanCourseName);
         const isPlanned = plannedSubjects.some(sub => sub.trim() === cleanCourseName);
 
         // Decide CSS class and Icon based on state
@@ -447,6 +449,10 @@ function renderSubjectList(subjects, type) {
             chipClass = 'matched completed';
             iconHtml = '<i class="fa-solid fa-check-double"></i> ';
             tooltip = '기수강 완료 과목 (프로필에서 관리)';
+        } else if (isInProgress) {
+            chipClass = 'matched inprogress';
+            iconHtml = '<i class="fa-solid fa-spinner fa-spin-pulse"></i> ';
+            tooltip = '현재 이수 중인 과목 (프로필에서 관리)';
         } else if (isPlanned) {
             chipClass = 'matched planned';
             iconHtml = '<i class="fa-solid fa-calendar-check"></i> ';
@@ -456,7 +462,7 @@ function renderSubjectList(subjects, type) {
         return `
                         <button type="button" 
                                 class="subject-chip ${chipClass}" 
-                                onclick="toggleMySubject('${cleanCourseName}', ${isCompleted})"
+                                onclick="toggleMySubject('${cleanCourseName}', ${isCompleted}, ${isInProgress})"
                                 title="${tooltip}">
                             ${iconHtml}${cleanCourseName}
                         </button>
@@ -467,10 +473,10 @@ function renderSubjectList(subjects, type) {
     `;
 }
 
-function toggleMySubject(courseName, isCompleted) {
-    // Prevent toggling of subjects already set as completed in profile modal
-    if (isCompleted) {
-        showCustomAlert('프로필에 설정된 기수강 과목입니다. 수정은 프로필 설정 메뉴를 이용해주세요.');
+function toggleMySubject(courseName, isCompleted, isInProgress) {
+    // Prevent toggling of subjects already set as completed or inprogress in profile modal
+    if (isCompleted || isInProgress) {
+        showCustomAlert('프로필에 설정된 기수강/이수중 과목입니다. 수정은 프로필 설정 메뉴를 이용해주세요.');
         return;
     }
 
