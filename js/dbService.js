@@ -244,7 +244,13 @@ class DBService {
 
             return results
                 .filter(r => validCategories.has(r.category))
-                .sort((a, b) => b.totalScore - a.totalScore)
+                .sort((a, b) => {
+                    // 1순위: 일치하는 과목 수 (matchedSubjects.length)
+                    const countDiff = b.matchedSubjects.length - a.matchedSubjects.length;
+                    if (countDiff !== 0) return countDiff;
+                    // 2순위: 기존 totalScore (가중치 기반 점수)
+                    return b.totalScore - a.totalScore;
+                })
                 .slice(0, 10);
 
         } catch (err) {
