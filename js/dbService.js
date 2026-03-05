@@ -233,7 +233,8 @@ class DBService {
                     coreMatches: distinctCoreCount,
                     recMatches: distinctRecCount,
                     totalScore: (stat.core * 2) + (stat.rec * 1), // Keep ranking based on prevalence intensity
-                    matchedSubjects: subjectList
+                    matchedSubjects: subjectList,
+                    allSubjectsCount: studentSubjects.length // [NEW] 전체 수강 과목 수량 파편화 UI용
                 };
             });
 
@@ -314,6 +315,86 @@ class DBService {
         // Return unique list
         const uniqueMajors = [...new Set(data.map(item => item.canonical_major))];
         return uniqueMajors.sort();
+    }
+
+    /**
+     * Stage 1-2 (완성형): [NEW] 학부(소계열) 조회 및 과목 이반 세부 적합도 연산
+     * category: Stage 1-1에서 선택한 대계열
+     * studentSubjects: 학생이 이수한 과목 리스트 
+     * Return: Array of { name: '컴퓨터공학과', percent: 85 } rank sorted
+     */
+    async getMajorsWithFitness(category, studentSubjects) {
+        if (!this.client || !studentSubjects || studentSubjects.length === 0) {
+            // 입력 과목이 없으면 기존처럼 이름만 반환 (percent = 0)
+            const fallback = await this.getMajorsByCategory(category);
+            return fallback.map(name => ({ name, percent: 0 }));
+        }
+
+        try {
+            // 1. Fetch mapping table for the category
+            const { data: majorMap, error } = await this.client
+                .from('v_univ_dept_subjects')
+                .select('canonical_major, core_subjects, recommended_subjects')
+                .eq('top_category', category);
+
+            if (error || !majorMap) throw error || new Error('No data');
+
+            // 2. Fetch & Resolve subject keys
+            const allSubjectsData = await this.getAllSubjects();
+            const normalize = (str) => str.replace(/\s+/g, '').replace(/I/g, '1').replace(/II/g, '2').toLowerCase();
+            const studentKeys = new Set();
+
+            studentSubjects.forEach(sName => {
+                const sNorm = normalize(sName);
+                const found = allSubjectsData.find(dbSub => {
+                    const dbNorm = normalize(dbSub.course_name);
+                    return dbNorm === sNorm || dbNorm.includes(sNorm) || sNorm.includes(dbNorm);
+                });
+                studentKeys.add(found ? found.course_key : sName);
+            });
+
+            // 3. Deduplicate Major Requirements
+            const uniqueMajors = {};
+            majorMap.forEach(m => {
+                const major = m.canonical_major;
+                if (!uniqueMajors[major]) {
+                    uniqueMajors[major] = {
+                        name: major,
+                        core: new Set(m.core_subjects || []),
+                        rec: new Set(m.recommended_subjects || [])
+                    };
+                } else {
+                    (m.core_subjects || []).forEach(c => uniqueMajors[major].core.add(c));
+                    (m.recommended_subjects || []).forEach(r => uniqueMajors[major].rec.add(r));
+                }
+            });
+
+            // 4. Calculate Match Score and Capped Percentage
+            let majorResults = Object.values(uniqueMajors).map(m => {
+                let maxScore = (m.core.size * 2) + (m.rec.size * 1);
+                let stuScore = 0;
+
+                m.core.forEach(sub => { if (studentKeys.has(sub)) stuScore += 2; });
+                m.rec.forEach(sub => { if (studentKeys.has(sub)) stuScore += 1; });
+
+                let percent = maxScore > 0 ? Math.floor((stuScore / maxScore) * 100) : 0;
+                return {
+                    name: m.name,
+                    percent: Math.min(100, percent),
+                    score: stuScore,
+                    max: maxScore
+                };
+            });
+
+            // 5. Sort by Percent(DESC) then by Raw Score(DESC)
+            return majorResults.sort((a, b) => b.percent - a.percent || b.score - a.score);
+
+        } catch (err) {
+            console.warn('DB getMajorsWithFitness Error:', err);
+            // Fallback
+            const fallback = await this.getMajorsByCategory(category);
+            return fallback.map(name => ({ name, percent: 0 }));
+        }
     }
 
     // --- Student Management (Counselor Mode) ---

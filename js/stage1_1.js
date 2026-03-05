@@ -81,7 +81,9 @@ function renderRecommendations(list) {
                 </div>
                 <div class="match-score" style="text-align: right;">
                     <div style="font-size: 0.75rem; color: #64748B; font-weight: 600;">적합도 분석</div>
-                    <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color);">${Math.min(100, item.totalScore * 10)}<span style="font-size: 0.9rem;">%</span></div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-color);">
+                        ${item.matchedSubjects.length}<span style="font-size: 0.9rem; color: #94A3B8;"> / ${item.allSubjectsCount} 개</span>
+                    </div>
                 </div>
             </div>
 

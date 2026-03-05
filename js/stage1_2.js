@@ -48,8 +48,13 @@ async function renderStage1_2(container) {
     const majorGridRef = container.querySelector('#majorGrid') || document.getElementById('majorGrid');
 
     try {
-        const majors = await dbService.getMajorsByCategory(selectedCategory);
-        renderMajors(majors, majorGridRef);
+        // [MODIFIED] Fetch majors with calculated fitness percentage
+        const allSubjects = [
+            ...(profile?.completedSubjects || []),
+            ...(profile?.inprogressSubjects || [])
+        ];
+        const majorsWithFitness = await dbService.getMajorsWithFitness(selectedCategory, allSubjects);
+        renderMajors(majorsWithFitness, majorGridRef);
     } catch (error) {
         console.error('Major Fetch Error:', error);
         if (majorGridRef) {
@@ -75,14 +80,26 @@ function renderMajors(majors, gridElement) {
         return;
     }
 
-    grid.innerHTML = majors.map(major => {
-        const safeMajor = major.replace(/'/g, "\\'");
+    grid.innerHTML = majors.map(majorObj => {
+        // Fallback for older format if ever passed
+        const name = typeof majorObj === 'string' ? majorObj : majorObj.name;
+        const percent = typeof majorObj === 'string' ? 0 : (majorObj.percent || 0);
+        const safeMajor = name.replace(/'/g, "\\'");
+
+        // Define badge color based on fitness percentage
+        let badgeStyle = "background: #F1F5F9; color: #64748B;";
+        if (percent >= 80) badgeStyle = "background: #DCFCE7; color: #15803D; font-weight: 700;";
+        else if (percent >= 50) badgeStyle = "background: #FEF3C7; color: #B45309; font-weight: 600;";
+
         return `
-        <div class="major-card" onclick="selectMajor('${safeMajor}')">
-            <div class="major-icon">
+        <div class="major-card" onclick="selectMajor('${safeMajor}')" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; position: relative;">
+            <div class="major-icon" style="margin-bottom: 0;">
                 <i class="fa-solid fa-book-open"></i>
             </div>
-            <span class="major-name">${major}</span>
+            <span class="major-name" style="text-align: center; line-height: 1.2;">${name}</span>
+            <span style="font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; ${badgeStyle}">
+                적합도 ${percent}%
+            </span>
         </div>
         `;
     }).join('');
