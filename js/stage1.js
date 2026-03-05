@@ -404,6 +404,7 @@ async function renderUnivDetail(univId) {
 function renderSubjectList(subjects, type) {
     const profile = dataManager.getProfile();
     const studentSubjects = (profile && profile.subjects) ? profile.subjects : [];
+    const plannedSubjects = (profile && profile.plannedSubjects) ? profile.plannedSubjects : [];
 
     const filtered = subjects.filter(s => s.bucket === type);
 
@@ -434,14 +435,30 @@ function renderSubjectList(subjects, type) {
                 ${filtered.map(s => {
         // [Fix] Normalize strings (trim) to handle DB whitespace inconsistencies
         const cleanCourseName = s.course_name.trim();
-        const isMatched = studentSubjects.some(sub => sub.trim() === cleanCourseName);
+        const isCompleted = studentSubjects.some(sub => sub.trim() === cleanCourseName);
+        const isPlanned = plannedSubjects.some(sub => sub.trim() === cleanCourseName);
+
+        // Decide CSS class and Icon based on state
+        let chipClass = 'not-matched';
+        let iconHtml = '';
+        let tooltip = '추가 이수(예정)로 표시하기';
+
+        if (isCompleted) {
+            chipClass = 'matched completed';
+            iconHtml = '<i class="fa-solid fa-check-double"></i> ';
+            tooltip = '기수강 완료 과목 (프로필에서 관리)';
+        } else if (isPlanned) {
+            chipClass = 'matched planned';
+            iconHtml = '<i class="fa-solid fa-calendar-check"></i> ';
+            tooltip = '이수 예정 취소하기';
+        }
 
         return `
                         <button type="button" 
-                                class="subject-chip ${isMatched ? 'matched' : 'not-matched'}" 
-                                onclick="toggleMySubject('${cleanCourseName}')"
-                                title="${isMatched ? '이수 취소하기' : '이수 완료로 표시하기'}">
-                            ${isMatched ? '<i class="fa-solid fa-check"></i> ' : ''}${cleanCourseName}
+                                class="subject-chip ${chipClass}" 
+                                onclick="toggleMySubject('${cleanCourseName}', ${isCompleted})"
+                                title="${tooltip}">
+                            ${iconHtml}${cleanCourseName}
                         </button>
                     `;
     }).join('')}
@@ -450,17 +467,24 @@ function renderSubjectList(subjects, type) {
     `;
 }
 
-function toggleMySubject(courseName) {
+function toggleMySubject(courseName, isCompleted) {
+    // Prevent toggling of subjects already set as completed in profile modal
+    if (isCompleted) {
+        showCustomAlert('프로필에 설정된 기수강 과목입니다. 수정은 프로필 설정 메뉴를 이용해주세요.');
+        return;
+    }
+
     const profile = dataManager.getProfile() || { subjects: [] };
     if (!profile.subjects) profile.subjects = [];
+    if (!profile.plannedSubjects) profile.plannedSubjects = [];
 
-    const index = profile.subjects.indexOf(courseName);
+    const index = profile.plannedSubjects.indexOf(courseName);
     if (index > -1) {
-        // 이미 있으면 제거 (토글)
-        profile.subjects.splice(index, 1);
+        // 이미 예정 리스트에 있으면 제거 (토글)
+        profile.plannedSubjects.splice(index, 1);
     } else {
-        // 없으면 추가
-        profile.subjects.push(courseName);
+        // 없으면 추가 (이수 예정으로)
+        profile.plannedSubjects.push(courseName);
     }
 
     dataManager.saveProfile(profile);

@@ -301,7 +301,13 @@ class AIService {
         };
 
         userPrompt = safeReplace(userPrompt, '{{gpa}}', student.gpa);
-        userPrompt = safeReplace(userPrompt, '{{subjects}}', student.completedSubjects.join(', '));
+
+        // 합쳐서 하나로 넘기거나 구분해서 넘기는데, 현재 프롬프트 {{subjects}} 태그에 모두 포함시킴
+        const allStudentSubjects = [
+            ...(student.completedSubjects || []),
+            ...(student.plannedSubjects || []) // Ensure planned subjects are also sent to AI
+        ];
+        userPrompt = safeReplace(userPrompt, '{{subjects}}', allStudentSubjects.join(', '));
 
         userPrompt = safeReplace(userPrompt, '{{target_univ}}', target.univ);
         userPrompt = safeReplace(userPrompt, '{{target_major}}', target.major);
