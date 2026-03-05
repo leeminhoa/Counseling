@@ -11,8 +11,22 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
             
-            # Mock Response Data (Schema D Compatible)
-            mock_response = {
+            try:
+                body = json.loads(post_data.decode('utf-8'))
+                sys_inst = body.get('systemInstruction', {}).get('parts', [{}])[0].get('text', '')
+                is_chatbot = "챗봇" in sys_inst
+            except:
+                is_chatbot = False
+
+            if is_chatbot:
+                mock_response = {
+                    "candidates": [
+                        { "content": { "parts": [ { "text": "안녕하세요! 로컬 테스트용 챗봇 응답입니다. (XT-01 Pass)" } ] } }
+                    ]
+                }
+            else:
+                # Mock Response Data (Schema D Compatible)
+                mock_response = {
                 "page1": {
                     "summary": {
                         "anchor_theme": "도시 데이터 기반의 스마트 에코 디자인",

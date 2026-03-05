@@ -29,12 +29,20 @@ function initApp() {
     // 초기 상태 로드 (from DataManager)
     loadUserStatus();
 
-    // 기본 탭 로드 (Stage 1-1: 계열 추천)
-    loadView('stage1_1');
+    // 기본 탭 로드시 마지막 분석 대학 캐시 복원 (NR-03 픽스)
+    const profile = dataManager.getProfile();
+    if (profile && profile.lastSelectedUniv) {
+        loadView('stage1');
+        setTimeout(() => {
+            if (window.stage1 && typeof window.stage1.loadUniversityDetails === 'function') {
+                window.stage1.loadUniversityDetails(profile.lastSelectedUniv);
+            }
+        }, 100);
+    } else {
+        loadView('stage1_1'); // 캐시 없을 때만 기본 추천 탭
+    }
 
     // 프로필 정보가 없으면 모달 띄우기 (지연 실행)
-    // [Fix] Prevent double firing or conflict with other modals
-    const profile = dataManager.getProfile();
     const hasProfile = profile && profile.name && profile.gpa;
 
     if (!hasProfile) {
@@ -142,9 +150,10 @@ window.showCustomConfirm = function (message, onConfirm, options = {}) {
 // [NEW] Reset Counseling Session
 window.resetCounselingSession = () => {
     showConfirmModal(
-        '현재 상담 내용을 모두 초기화하시겠습니까?\n입력된 학생 정보와 모든 상담 내역이 삭제됩니다.',
+        '현재 상담 내용을 모두 초기화하시겠습니까?\\n입력된 학생 정보와 모든 상담 내역이 삭제됩니다.',
         () => {
             dataManager.resetData();
+            loadUserStatus(); // [DH-04 Fix] 명시적 상단 UI 갱신 호출
             window.location.reload();
         }
     );

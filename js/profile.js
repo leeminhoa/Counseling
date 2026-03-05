@@ -304,7 +304,12 @@ function saveProfileData() {
         totalPercentile: tp ? parseFloat(tp) : 0,
         completedSubjects: modalState.completedSubjects,
         inprogressSubjects: modalState.inprogressSubjects,
-        subjects: [...modalState.completedSubjects, ...modalState.inprogressSubjects]
+        subjects: [...modalState.completedSubjects, ...modalState.inprogressSubjects],
+        // [Fix] 로컬에서 추가된 속성(이수예정 과목, 메모, 상태 등) 보존
+        plannedSubjects: currentProfile.plannedSubjects || [],
+        memo: currentProfile.memo || '',
+        consultingStatus: currentProfile.consultingStatus || '보통',
+        lastSelectedUniv: currentProfile.lastSelectedUniv || null
     };
 
     // 1. Save Locally
