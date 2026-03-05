@@ -834,26 +834,48 @@ input[type="password"] {
 
 .subject-chip:hover {
     border-color: #CBD5E1;
-    background-color: #E2E8F0;
+    background-color: #F8FAFC;
     transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* 핵심 과목 이수 완료 강조 (Sky Blue Theme) */
+/* 핵심 과목 이수 완료 강조 (Primary Blue Theme) */
 .core-group .subject-chip.matched {
-    background-color: #E0F2FE;
-    color: #0369A1;
-    border-color: #7DD3FC;
+    background-color: #DBEAFE;
+    color: #1E3A8A;
+    border: 2px solid #3B82F6;
     font-weight: 700;
-    box-shadow: 0 2px 4px rgba(12, 165, 233, 0.1);
+    box-shadow: 0 2px 5px rgba(59, 130, 246, 0.2);
+}
+
+.core-group .subject-chip.matched:hover {
+    background-color: #BFDBFE;
 }
 
 /* 권장 과목 이수 완료 강조 (Emerald Green Theme) */
 .rec-group .subject-chip.matched {
     background-color: #DCFCE7;
-    color: #15803D;
-    border-color: #86EFAC;
+    color: #14532D;
+    border: 2px solid #22C55E;
     font-weight: 700;
-    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+    box-shadow: 0 2px 5px rgba(34, 197, 94, 0.2);
+}
+
+.rec-group .subject-chip.matched:hover {
+    background-color: #BBF7D0;
+}
+
+/* 추천 과목 이수 완료 강조 (Purple Theme) */
+.suggested-group .subject-chip.matched {
+    background-color: #F3E8FF;
+    color: #581C87;
+    border: 2px solid #A855F7;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(168, 85, 247, 0.2);
+}
+
+.suggested-group .subject-chip.matched:hover {
+    background-color: #E9D5FF;
 }
 
 .subject-chip.matched i {
@@ -861,8 +883,9 @@ input[type="password"] {
 }
 
 .subject-chip.not-matched {
-    border-style: dashed;
-    opacity: 0.8;
+    border: 1px dashed #CBD5E1;
+    background-color: #F8FAFC;
+    color: #94A3B8;
 }
 
 
