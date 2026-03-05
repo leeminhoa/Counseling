@@ -166,7 +166,10 @@ class AIService {
 
 [입력 데이터]
 지망학과: {{target_major}}
-이번 학기 수강과목: {{target_recommended}}
+기수강 과목: {{completed_subjects}}
+현재 이수 중 과목: {{inprogress_subjects}}
+향후 이수 예정 과목: {{planned_subjects}}
+학과의 전체 권장 과목: {{target_recommended}}
 
 [출력 구조 및 작성 가이드 (JSON 필드별 작성 지침)]
 
@@ -277,11 +280,14 @@ class AIService {
 
         const defaultUserPromptTemplate = `[학생 데이터]
 - 목표 학과: {{target_major}}
-- 관련 이수 과목: {{subjects}}
-- 이번 학기 수강과목: {{target_recommended}}
+- 기수강 완료 과목: {{completed_subjects}}
+- 현재 이수 중 과목: {{inprogress_subjects}}
+- 향후 이수 예정 과목: {{planned_subjects}}
+- 대상 학과 전체 권장 과목 리스트: {{target_recommended}}
 - 내신 성적: {{gpa}}
 
-위 데이터를 바탕으로 탐구 가이드를 생성해 주세요.`;
+위 데이터를 바탕으로 탐구 가이드를 생성해 주세요.
+(참고: 기수강 과목은 이미 배운 심화연계, 이수 중 과목은 현재 진행할 수 있는 프로젝트, 이수 예정 과목은 앞으로의 학업계획(동기부여) 위주로 세특과 활동을 구성하면 더욱 좋습니다.)`;
 
         // 2. User Prompt
         let userPrompt = '';
@@ -302,7 +308,12 @@ class AIService {
 
         userPrompt = safeReplace(userPrompt, '{{gpa}}', student.gpa);
 
-        // 합쳐서 하나로 넘기거나 구분해서 넘기는데, 현재 프롬프트 {{subjects}} 태그에 모두 포함시킴
+        // [New] 세분화된 상태별 과목 주입
+        userPrompt = safeReplace(userPrompt, '{{completed_subjects}}', (student.completedSubjects || []).join(', '));
+        userPrompt = safeReplace(userPrompt, '{{inprogress_subjects}}', (student.inprogressSubjects || []).join(', '));
+        userPrompt = safeReplace(userPrompt, '{{planned_subjects}}', (student.plannedSubjects || []).join(', '));
+
+        // 기존 DB 프롬프트(이전 버전)와의 하위 호환성을 위해 통합 subjects 치환도 유지
         const allStudentSubjects = [
             ...(student.completedSubjects || []),
             ...(student.inprogressSubjects || []), // [New] Include in-progress subjects
