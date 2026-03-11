@@ -171,17 +171,20 @@ class DBService {
                 }
             });
 
-            if (subjectKeys.length === 0) return [];
+
 
             // Step 2: Fetch Mapping Hits
             // Find which departments use these subjects
-            const { data: hits, error: hitError } = await this.client
-                .from('univ_dept_subjects_map')
-                .select('univ_map_id, bucket, course_key')
-                .in('course_key', subjectKeys);
+            let hits = [];
+            if (subjectKeys.length > 0) {
+                const { data: dbHits, error: hitError } = await this.client
+                    .from('univ_dept_subjects_map')
+                    .select('univ_map_id, bucket, course_key')
+                    .in('course_key', subjectKeys);
 
-            if (hitError) throw hitError;
-            if (!hits || hits.length === 0) return [];
+                if (hitError) throw hitError;
+                hits = dbHits || [];
+            }
 
             // Step 3: Fetch Category Map (cached)
             // Map univ_map_id -> top_category
@@ -240,16 +243,33 @@ class DBService {
 
             // Step 5: Sort & Filter
             // Valid Categories (same as before)
-            const validCategories = new Set(['공학계열', '인문계열', '자연과학계열', '사회과학계열', '보건의료계열', '교육계열', '정보컴퓨팅계열', '예체능계열', '상경계열']);
+            const validCategories = ['공학계열', '인문계열', '자연과학계열', '사회과학계열', '보건의료계열', '교육계열', '정보컴퓨팅계열', '예체능계열', '상경계열'];
+
+            // Ensure all valid categories are present even if score is 0
+            validCategories.forEach(cat => {
+                if (!results.find(r => r.category === cat)) {
+                    results.push({
+                        category: cat,
+                        coreMatches: 0,
+                        recMatches: 0,
+                        totalScore: 0,
+                        matchedSubjects: [],
+                        allSubjectsCount: studentSubjects.length
+                    });
+                }
+            });
 
             return results
-                .filter(r => validCategories.has(r.category))
+                .filter(r => validCategories.includes(r.category))
                 .sort((a, b) => {
                     // 1순위: 일치하는 과목 수 (matchedSubjects.length)
                     const countDiff = b.matchedSubjects.length - a.matchedSubjects.length;
                     if (countDiff !== 0) return countDiff;
                     // 2순위: 기존 totalScore (가중치 기반 점수)
-                    return b.totalScore - a.totalScore;
+                    const scoreDiff = b.totalScore - a.totalScore;
+                    if (scoreDiff !== 0) return scoreDiff;
+                    // 3순위: 가나다 순 정렬 (점이 모두 0일 때)
+                    return a.category.localeCompare(b.category, 'ko');
                 })
                 .slice(0, 10);
 
@@ -847,7 +867,7 @@ class DBService {
             }
 
             query = query.neq('univ_name', excludeUnivName) // Exclude current univ
-                .limit(20);
+                .limit(40); // Increased limit as we will filter further
 
             const { data: deptData, error: deptError } = await query;
 
@@ -857,7 +877,24 @@ class DBService {
             }
             if (!deptData || deptData.length === 0) return [];
 
-            const mapIds = deptData.map(d => d.univ_map_id);
+            // Get target top_category from the current university to ensure strict faculty matching
+            const { data: currentUnivData } = await this.client
+                .from('v_univ_dept_subjects')
+                .select('top_category')
+                .eq('univ_name', excludeUnivName)
+                .eq('raw_major_name', majorName)
+                .maybeSingle();
+
+            const targetCategory = currentUnivData ? currentUnivData.top_category : null;
+
+            // Filter out departments that do not match the target category
+            const filteredDeptData = targetCategory 
+                ? deptData.filter(d => d.top_category === targetCategory)
+                : deptData;
+
+            if (filteredDeptData.length === 0) return [];
+
+            const mapIds = filteredDeptData.map(d => d.univ_map_id);
 
             // Step 2: Fetch stats for these IDs
             const { data: statsData, error: statsError } = await this.client
@@ -898,7 +935,7 @@ class DBService {
             for (const stat of statsData) {
                 if (processedIds.has(stat.univ_map_id)) continue;
 
-                const deptInfo = deptData.find(d => d.univ_map_id === stat.univ_map_id);
+                const deptInfo = filteredDeptData.find(d => d.univ_map_id === stat.univ_map_id);
                 if (deptInfo) {
                     // Filter: Must accept if canonical match IS strict, OR if names are similar
                     // If canonical is provided, we trust it mostly, but add a similarity check 
