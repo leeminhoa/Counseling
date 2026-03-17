@@ -54,7 +54,8 @@ class AIService {
                 modelName = 'gemini-2.5-pro';
             }
 
-            const systemPrompt = settings.systemPrompt || "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요.";
+            const defaultChatPrompt = "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요. 마크다운을 적절히 사용하여 읽기 쉽게 답변해주세요.";
+            const systemPrompt = await this.getPrompt('챗봇', 'system', defaultChatPrompt);
 
             console.group('🤖 Gemini AI Chat Request');
             console.log('Model:', modelName);
@@ -323,7 +324,11 @@ class AIService {
 
         userPrompt = safeReplace(userPrompt, '{{target_univ}}', target.univ);
         userPrompt = safeReplace(userPrompt, '{{target_major}}', target.major);
-        userPrompt = safeReplace(userPrompt, '{{course}}', (target.futureSubjects || []).join(', '));
+        // Legacy template might use {{course}} for planned subjects
+        const legacyCourseValue = student.plannedSubjects && student.plannedSubjects.length > 0 
+            ? student.plannedSubjects.join(', ') 
+            : (target.futureSubjects || []).join(', ');
+        userPrompt = safeReplace(userPrompt, '{{course}}', legacyCourseValue);
         userPrompt = safeReplace(userPrompt, '{{target_recommended}}', target.recommendedSubjects.join(', '));
 
         // Legacy / User Template Support

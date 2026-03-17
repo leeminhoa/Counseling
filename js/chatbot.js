@@ -89,7 +89,7 @@ function addChatBubble(text, sender) {
     div.className = `chat-bubble ${sender}`;
 
     // Markdown-like formatting (simple)
-    let formattedText = text.replace(/\n/g, '<br>');
+    let formattedText = text.trim().replace(/\n/g, '<br>');
     formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
 
     div.innerHTML = `
