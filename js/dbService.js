@@ -194,8 +194,13 @@ class DBService {
             const scores = {}; // { 'Engineering': { core: 0, rec: 0, subjects: Set() } }
 
             hits.forEach(hit => {
-                const category = categoryMap[hit.univ_map_id];
+                let category = categoryMap[hit.univ_map_id];
                 if (!category) return;
+
+                // [Fix] Handle DB updates where top_category comes as "인문계열(공공기획)"
+                if (category.includes('(')) {
+                    category = category.split('(')[0].trim();
+                }
 
                 if (!scores[category]) {
                     scores[category] = { core: 0, rec: 0, subjects: new Set(), totalScore: 0 };
@@ -331,7 +336,7 @@ class DBService {
         const { data, error } = await this.client
             .from('v_univ_dept_subjects') // Updated to use the correct view
             .select('canonical_major')
-            .eq('top_category', category); // Assuming top_category matches
+            .like('top_category', `${category}%`); // Match '인문계열(공공기획)' etc.
 
         if (error) {
             console.warn('DB Major Fetch Error:', error);
@@ -361,7 +366,7 @@ class DBService {
             const { data: majorMap, error } = await this.client
                 .from('v_univ_dept_subjects')
                 .select('canonical_major, core_subjects, recommended_subjects, raw_major_name')
-                .eq('top_category', category);
+                .like('top_category', `${category}%`);
 
             if (error || !majorMap) throw error || new Error('No data');
 
@@ -566,7 +571,45 @@ class DBService {
     }
 
     /**
-     * 상담 결과 DB 저장 (Counseling Result Sync)
+     * [NEW] 생기부 업로드 기능 (Supabase Storage)
+     * @param {File} file - 업로드할 PDF 파일 객체
+     * @param {string|number} studentId - 학생 고유 ID
+     * @returns {string|null} - 업로드된 파일의 Public URL (또는 File Path)
+     */
+    async uploadStudentRecordPDF(file, studentId) {
+        if (!this.client || !file || !studentId) return null;
+
+        try {
+            const timestamp = new Date().getTime();
+            // path format: {student_id}/{timestamp}_{filename}
+            const filePath = `${studentId}/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`;
+
+            const { data, error } = await this.client.storage
+                .from('student_records')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) {
+                console.warn('Storage Upload Error (Bucket may be missing or permissions denied):', error);
+                return null; // Don't crash the whole process just because history save failed
+            }
+
+            // Get Public URL
+            const { data: publicUrlData } = this.client.storage
+                .from('student_records')
+                .getPublicUrl(filePath);
+
+            return publicUrlData.publicUrl;
+        } catch (err) {
+            console.error('Failed to upload student record PDF:', err);
+            return null; // Return null gracefully so analysis can still proceed without history if storage fails
+        }
+    }
+
+    /**
+     * 상담 이력(리포트) 저장 - 기존 로직 유지, url 저장 지원
      */
     async saveCounselingResult(studentId, resultData) {
         try {
@@ -843,8 +886,19 @@ class DBService {
      * type: 'llm_api' 등
      */
     async getApiKey(type) {
-        console.warn(`[Deprecated] getApiKey(${type}) called. API Keys are no longer accessible from client.`);
-        return null;
+        if (!this.client) return null;
+        try {
+            const { data, error } = await this.client
+                .from('common_info')
+                .select('contents')
+                .eq('type', type)
+                .single();
+            if (error) throw error;
+            return data.contents;
+        } catch (error) {
+            console.error('Failed to fetch API key from common_info:', error);
+            return null;
+        }
     }
     /**
      * 특정 학과와 동일한 학과명을 가진 다른 대학들의 입시 결과 조회 (비교 분석용)

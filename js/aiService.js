@@ -4,7 +4,7 @@
  */
 class AIService {
     constructor() {
-        this.MODEL = 'gemini-2.5-pro'; // Default to Stable 2.5 Pro
+        this.MODEL = 'gemini-3.1-pro'; // Default to Stable 3.1 Pro
         this.apiKey = null; // Cache key
     }
 
@@ -25,7 +25,8 @@ class AIService {
     async getAvailableModels() {
         // Return a curated list of supported models (2026 Compatible)
         return [
-            { name: 'gemini-3-pro-preview', displayName: 'Gemini 3 Pro (Preview)', description: 'Reasoning-focused experimental model', version: '3.0.0-prev' },
+            { name: 'gemini-3.1-pro', displayName: 'Gemini 3.1 Pro', description: 'Flagship reasoning model', version: '3.1.0' },
+            { name: 'gemini-3.1-flash', displayName: 'Gemini 3.1 Flash', description: 'High-speed intelligence', version: '3.1.0' },
             { name: 'gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', description: 'Enhanced performance model', version: '2.5.0' },
             { name: 'gemini-2.5-flash', displayName: 'Gemini 2.5 Flash', description: 'High-speed, cost-effective model', version: '2.5.0' }
         ];
@@ -49,9 +50,12 @@ class AIService {
             let modelName = settings.geminiModel || this.MODEL;
 
             // [Fix] Auto-correct invalid legacy model names stored in localStorage
-            if (modelName === 'gemini-3.0-pro-preview' || modelName.includes('3.0')) {
-                console.warn(`[Auto-Fix] Invalid Model '${modelName}' detected. Switching to 'gemini-2.5-pro'.`);
-                modelName = 'gemini-2.5-pro';
+            if (modelName === 'gemini-3.0-pro-preview' || modelName === 'gemini-3-pro-preview') {
+                console.warn(`[Auto-Fix] Legacy Preview Model '${modelName}' detected. Switching to 'gemini-3.1-pro'.`);
+                modelName = 'gemini-3.1-pro';
+            } else if (modelName.includes('3.0')) {
+                // If any other 3.0 model, bump to 3.1 Pro 
+                modelName = 'gemini-3.1-pro';
             }
 
             const defaultChatPrompt = "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요. 마크다운을 적절히 사용하여 읽기 쉽게 답변해주세요.";
@@ -441,6 +445,257 @@ class AIService {
 
         } catch (error) {
             console.error('AI Service Error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * [NEW] Gemini 서버로 파일 업로드 및 OCR/파싱 준비 상태 대기 (스캔된 PDF 대응)
+     */
+    async uploadAndWaitGeminiFile(file, progressCallback) {
+        const settings = dataManager.getData().appSettings || {};
+        let apiKey = settings.geminiApiKey;
+        if (!apiKey && window.dbService) {
+            apiKey = await dbService.getApiKey('llm_api');
+        }
+        if (!apiKey) throw new Error('API 키가 설정되지 않았습니다. 관리자 설정이나 데이터베이스를 확인하세요.');
+        if (progressCallback) progressCallback('AI 파싱 서버로 파일을 전송 중입니다...');
+        
+        const uploadUrl = `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`;
+        const uploadRes = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {
+                'X-Goog-Upload-Protocol': 'raw',
+                'X-Goog-Upload-Command': 'start, upload, finalize',
+                'X-Goog-Upload-Header-Content-Length': file.size.toString(),
+                'X-Goog-Upload-Header-Content-Type': file.type,
+                'Content-Type': file.type
+            },
+            body: file
+        });
+        
+        if (!uploadRes.ok) {
+            const err = await uploadRes.json();
+            throw new Error(err.error?.message || 'Gemini 서버로 문서를 업로드하는데 실패했습니다.');
+        }
+        
+        const uploadData = await uploadRes.json();
+        const geminiFile = uploadData.file;
+        
+        // Polling loop for PDF processing
+        if (progressCallback) progressCallback('안전한 보안 환경에서 문서 처리 및 OCR을 진행 중입니다. (파일 크기에 따라 수십 초 소요될 수 있습니다)');
+        
+        let state = geminiFile.state;
+        while (state === 'PROCESSING') {
+            await new Promise(r => setTimeout(r, 5000)); // wait 5 seconds
+            
+            // Extract the simple name from the file (e.g. "files/xyz")
+            const checkUrl = `https://generativelanguage.googleapis.com/v1beta/${geminiFile.name}?key=${apiKey}`;
+            const checkRes = await fetch(checkUrl);
+            if (!checkRes.ok) {
+                 const err = await checkRes.json();
+                 throw new Error(err.error?.message || '파일 상태 확인 실패');
+            }
+            const checkData = await checkRes.json();
+            state = checkData.state;
+            
+            if (state === 'FAILED') {
+                throw new Error('Gemini API에서 문서 처리를 실패했습니다.');
+            }
+        }
+        
+        return geminiFile;
+    }
+
+    /**
+     * [NEW] 생기부 첨삭 컨설팅 전용 AI 분석
+     */
+    async analyzeStudentRecord(context, recordText, geminiFile = null) {
+        const settings = dataManager.getData().appSettings || {};
+        let apiKey = settings.geminiApiKey;
+        if (!apiKey && window.dbService) {
+            apiKey = await dbService.getApiKey('llm_api');
+        }
+        
+        if (!apiKey) {
+            throw new Error('API 키가 설정되지 않았습니다. 관리자 설정이나 데이터베이스를 확인하세요.');
+        }
+
+        const modelName = settings.geminiModel || this.MODEL;
+        const { student, target } = context;
+
+        const systemPrompt = `
+# [시스템 역할]
+너는 대한민국 일반고 생기부 분석 및 입시 전문 컨설턴트야. 
+제공된 [학생 생기부 텍스트 또는 문서]를 꼼꼼히 읽고, 학생이 설정한 [목표 전공]과의 적합도를 냉철하게 분석해.
+
+# [입력 데이터]
+- 목표 대학: ${target.univ}
+- 목표 학과: ${target.major}
+- 기수강 과목: ${(student.completedSubjects || []).join(', ')}
+
+# [출력 구조 및 작성 가이드]
+1. diagnosis (진단)
+  - match_score: 전공 적합도 점수 (1~100 사이의 정수. 100이 가장 완벽한 적합도).
+  - overall_evaluation: 전체적인 평가 코멘트 (3~4문장). 잘된 점과 부족한 점을 총평해줘.
+2. analysis (강점 및 약점 분석)
+  - strengths: 기재된 생기부 내용 중 전공과 잘 맞는 활동이나 과목 세특 (2개).
+  - weaknesses: 전공 대비 부족하거나 아쉬운 부분, 혹은 내용이 부실한 활동 (2개).
+3. improvement_guide (보강 가이드)
+  - 다음 학기에 전공 적합성을 높이기 위해 반드시 수행해야 할 활동이나 심화 탐구 주제 제안 (3개).
+  - subject_or_activity: "어떤 과목" 혹은 "어떤 동아리/진로활동" 인지 명시.
+  - suggested_action: 학생이 며칠 내로 당장 시작해볼 수 있는 구체적인 가이드.
+
+[필수 출력 형식]
+JSON 형식으로만 반환해. 포맷은 아래와 같아야 해.
+
+{
+  "diagnosis": {
+    "match_score": 85,
+    "overall_evaluation": "종합 평가..."
+  },
+  "analysis": {
+    "strengths": [
+      { "point": "강점 요약", "detail": "상세 분석 내용" }
+    ],
+    "weaknesses": [
+      { "point": "약점 요약", "detail": "상세 분석 내용" }
+    ]
+  },
+  "improvement_guide": [
+    { "subject_or_activity": "과목명 또는 창체명", "suggested_action": "구체적인 심화 탐구 제안 내용" }
+  ]
+}
+`;
+
+        let finalRecordText = recordText;
+
+        if (geminiFile) {
+            console.log('Executing Two-Track LLM: Step 1 - Smart Extraction (gemini-3.1-flash)...');
+            const ocrPrompt = `[스마트 추출 지시 지침]
+이 첨부된 생기부 문서(PDF/스캔본)에서 입시 컨설팅에 필요한 핵심 정보만 텍스트로 요약 추출하라.
+1. 일반적인 학교 인사말, 단순 출결, 단순 점수, 봉사 시간표, 행정적 서론 등 컨설팅에 불필요한 부분은 과감히 버릴 것.
+2. '교과학습발달상황(세특)', '자율/진로/동아리활동', '행동특성 및 종합의견' 등에서 학생의 [구체적인 탐구 내용, 지적 호기심, 교사의 긍정적 평가] 위주로 철저히 발췌할 것.
+3. 방대한 스캔본이더라도 출력 결과가 너무 길어지지 않게 구조적으로 압축 요약할 것.
+4. 요약된 핵심 텍스트 내용만 출력하라.`;
+
+            const ocrBody = {
+                contents: [{
+                    role: 'user',
+                    parts: [
+                        { text: ocrPrompt },
+                        { fileData: { fileUri: geminiFile.uri, mimeType: geminiFile.mimeType } }
+                    ]
+                }],
+                generationConfig: { maxOutputTokens: 8192, temperature: 0.2 }
+            };
+
+            const ocrResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ocrBody)
+            });
+
+            if (!ocrResponse.ok) {
+                const errData = await ocrResponse.json();
+                throw new Error(errData.error?.message || '스마트 텍스트 추출 중 OCR API 호출에 실패했습니다.');
+            }
+
+            const ocrData = await ocrResponse.json();
+            
+            const ocrCandidate = ocrData.candidates?.[0];
+            if (!ocrCandidate || !ocrCandidate.content || !ocrCandidate.content.parts) {
+                let reason = 'AI 모델(추출)의 응답 형식이 올바르지 않습니다.';
+                if (ocrCandidate?.finishReason === 'MAX_TOKENS') reason = '생기부가 너무 방대하여 스마트 파싱 한도를 초과했습니다. 일부 페이지만 시도해주세요.';
+                else if (ocrCandidate?.finishReason === 'SAFETY') reason = '안전성 필터로 인해 문서 파싱이 차단되었습니다.';
+                throw new Error(reason);
+            }
+
+            finalRecordText = ocrCandidate.content.parts[0].text;
+            console.log('Step 1 (Smart Extraction) 완료. 추출된 텍스트 변환:', finalRecordText.substring(0, 100) + '...');
+        }
+
+        const userPrompt = `[학생의 요약/추출된 생활기록부 문서 텍스트]\n\n${finalRecordText}\n\n위 생기부의 핵심 요약본을 바탕으로 진단 및 컨설팅 세부 JSON을 생성해줘.`;
+        const contentParts = [
+            { text: systemPrompt + '\n\n' + userPrompt }
+        ];
+        
+        console.log(`Executing Two-Track LLM: Step 2 - Main JSON Analysis (${modelName})...`);
+
+        try {
+            const requestBody = {
+                contents: [
+                    {
+                        role: 'user',
+                        parts: contentParts
+                    }
+                ],
+                generationConfig: {
+                    temperature: 0.7, // Increased slightly for better multi-page reasoning
+                    maxOutputTokens: 8192, // Increased significantly from 2048 to prevent cutoff
+                }
+            };
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Gemini API Error details:", JSON.stringify(errorData, null, 2));
+                throw new Error(errorData.error?.message || 'Gemini API 호출에 실패했습니다.');
+            }
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+
+            if (!data.candidates || data.candidates.length === 0) {
+                console.error("Gemini Response Missing Candidates:", data);
+                throw new Error('AI 모델이 응답을 생성하지 못했습니다.');
+            }
+
+            const candidate = data.candidates[0];
+            if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+                console.error("Gemini Response Missing Content Parts:", data);
+                let reasonMsg = 'AI 모델의 응답 형식이 올바르지 않습니다.';
+                if (candidate.finishReason === 'MAX_TOKENS') {
+                    reasonMsg = '생기부 문서가 너무 길어 AI 분석 토큰 한도를 초과했습니다. 문서를 요약하거나 일부만 올려주세요.';
+                } else if (candidate.finishReason === 'SAFETY') {
+                    reasonMsg = 'AI 모델 안전성 필터에 의해 분석이 차단되었습니다. 문서 내용이 검증 정책에 위배될 수 있습니다.';
+                } else if (candidate.finishReason === 'RECITATION') {
+                    reasonMsg = 'AI 모델이 다른 저작물을 너무 많이 인용하여 분석이 차단되었습니다.';
+                }
+                throw new Error(reasonMsg);
+            }
+
+            const text = candidate.content.parts[0].text;
+            let parsedData = null;
+            const tryParse = (str) => { try { return JSON.parse(str); } catch (e) { return null; } };
+
+            const mdMatch = text.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/);
+            if (mdMatch) parsedData = tryParse(mdMatch[1]);
+
+            if (!parsedData) {
+                const firstOpen = text.indexOf('{');
+                let lastClose = text.lastIndexOf('}');
+                if (firstOpen !== -1 && lastClose !== -1) {
+                    let candidate = text.substring(firstOpen, lastClose + 1);
+                    parsedData = tryParse(candidate);
+                }
+            }
+
+            if (!parsedData || !parsedData.diagnosis) {
+                console.error('Failed to parse JSON. Raw Text:', text);
+                throw new Error('AI 응답에서 유효한 JSON 데이터를 추출할 수 없습니다.');
+            }
+
+            console.log('AI Record Review Response:', parsedData);
+            return parsedData;
+
+        } catch (error) {
+            console.error('Record Review AI Service Error:', error);
             throw error;
         }
     }

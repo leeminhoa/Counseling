@@ -253,6 +253,12 @@ function loadView(viewName) {
         } else {
             console.error('renderStage2 function is missing!');
         }
+    } else if (viewName === 'stage3') {
+        if (typeof renderRecordReview === 'function') {
+            renderRecordReview(container);
+        } else {
+            console.error('renderRecordReview function is missing!');
+        }
     } else if (viewName === 'chatbot') {
         if (typeof renderChatbot === 'function') {
             renderChatbot(container);

@@ -11,8 +11,14 @@
     <link rel="stylesheet" href="css/modal_polish.css">
     <!-- Google Fonts (Pretendard or similar) can be added here -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- PDF Library -->
+    <!-- PDF Library for Download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- PDF.js for Parsing Uploaded Student Records -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 </head>
 
 <body>
@@ -47,6 +53,10 @@
                 <li class="nav-item" data-tab="stage2">
                     <i class="fa-solid fa-lightbulb"></i>
                     <span>탐구 가이드</span>
+                </li>
+                <li class="nav-item" data-tab="stage3">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <span>생기부 첨삭</span>
                 </li>
                 <li class="nav-item" data-tab="chatbot">
                     <i class="fa-solid fa-robot"></i>
@@ -175,6 +185,7 @@
     <script src="js/stage1_2.js?v=22"></script>
     <script src="js/stage1.js?v=22"></script>
     <script src="js/stage2.js?v=22"></script>
+    <script src="js/recordReview.js?v=22"></script>
     <script src="js/chatbot.js?v=22"></script>
     <script src="js/manager.js?v=22"></script>
     <script src="js/admin_prompts.js?v=22"></script>
