@@ -197,11 +197,6 @@ class DBService {
                 let category = categoryMap[hit.univ_map_id];
                 if (!category) return;
 
-                // [Fix] Handle DB updates where top_category comes as "인문계열(공공기획)"
-                if (category.includes('(')) {
-                    category = category.split('(')[0].trim();
-                }
-
                 if (!scores[category]) {
                     scores[category] = { core: 0, rec: 0, subjects: new Set(), totalScore: 0 };
                 }
@@ -247,8 +242,8 @@ class DBService {
             });
 
             // Step 5: Sort & Filter
-            // Valid Categories (same as before)
-            const validCategories = ['공학계열', '인문계열', '자연과학계열', '사회과학계열', '보건의료계열', '교육계열', '정보컴퓨팅계열', '예체능계열', '상경계열'];
+            // [NEW] Dynamic Categories to support new DB additions automatically
+            const validCategories = Array.from(new Set(Object.values(categoryMap))).filter(Boolean);
 
             // Ensure all valid categories are present even if score is 0
             validCategories.forEach(cat => {
@@ -276,7 +271,7 @@ class DBService {
                     // 3순위: 가나다 순 정렬 (점이 모두 0일 때)
                     return a.category.localeCompare(b.category, 'ko');
                 })
-                .slice(0, 10);
+                .slice(0, 15); // Increased from 10 to 15 to accommodate new sub-categories
 
         } catch (err) {
             console.error('Field Recommendation Error:', err);
