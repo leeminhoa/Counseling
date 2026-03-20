@@ -331,7 +331,7 @@ class DBService {
         const { data, error } = await this.client
             .from('v_univ_dept_subjects') // Updated to use the correct view
             .select('canonical_major')
-            .like('top_category', `${category}%`); // Match '인문계열(공공기획)' etc.
+            .eq('top_category', category); // Reverted back to strict eq because categories are exact match now
 
         if (error) {
             console.warn('DB Major Fetch Error:', error);
@@ -361,7 +361,7 @@ class DBService {
             const { data: majorMap, error } = await this.client
                 .from('v_univ_dept_subjects')
                 .select('canonical_major, core_subjects, recommended_subjects, raw_major_name')
-                .like('top_category', `${category}%`);
+                .eq('top_category', category);
 
             if (error || !majorMap) throw error || new Error('No data');
 
