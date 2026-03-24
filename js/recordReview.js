@@ -455,44 +455,93 @@ function displayReviewResult(data, container) {
                 
                 <p style="color: #64748B; margin-bottom: 1.5rem;">아쉬운 점을 메우고 전공 적합성을 끌어올리기 위해 아래 활동들을 다가오는 학기에 반드시 포함시켜보세요.</p>
 
-                <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem;">
-                    ${(improvement_guide || []).map((guide, idx) => `
-                        <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0; display: flex; gap: 1.5rem; align-items: flex-start;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #EFF6FF; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; flex-shrink: 0;">
-                                ${idx + 1}
+                ${(() => {
+                    const isLegacy = Array.isArray(improvement_guide);
+                    const activities = isLegacy ? (improvement_guide || []) : (improvement_guide?.activities || []);
+                    const books = isLegacy ? [] : (improvement_guide?.recommended_books || []);
+                    const concepts = isLegacy ? [] : (improvement_guide?.key_concepts || []);
+                    
+                    if (!activities.length && !books.length && !concepts.length) return '';
+                    
+                    let html = '<div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem;">';
+                    
+                    // 1. Activities
+                    if (activities.length > 0) {
+                        html += activities.map((guide, idx) => `
+                            <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0; display: flex; gap: 1.5rem; align-items: flex-start;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #EFF6FF; color: #3B82F6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; flex-shrink: 0;">
+                                    ${idx + 1}
+                                </div>
+                                <div style="flex-grow: 1;">
+                                    <div style="font-weight: 700; color: #1E293B; font-size: 1.1rem; margin-bottom: 0.5rem;">
+                                        <span style="color: #3B82F6;">[${guide.subject_or_activity}]</span> 연계 활동
+                                    </div>
+                                    <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1.2rem; border-radius: 8px;">
+                                        ${guide.action_details ? `
+                                            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                                                <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                    <span style="background:#DBEAFE; color:#1E3A8A; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">탐구 목표</span>
+                                                    <span>${guide.action_details.goal}</span>
+                                                </div>
+                                                <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                    <span style="background:#FCE7F3; color:#9D174D; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">활용 매체</span>
+                                                    <span>${guide.action_details.media}</span>
+                                                </div>
+                                                <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                    <span style="background:#FEF3C7; color:#92400E; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">방법론</span>
+                                                    <span style="word-break: keep-all;">${guide.action_details.method}</span>
+                                                </div>
+                                                <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                    <span style="background:#D1FAE5; color:#065F46; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">기대 결과</span>
+                                                    <span>${guide.action_details.result}</span>
+                                                </div>
+                                            </div>
+                                        ` : `
+                                            <div>${guide.suggested_action}</div>
+                                        `}
+                                    </div>
+                                </div>
                             </div>
-                            <div style="flex-grow: 1;">
-                                <div style="font-weight: 700; color: #1E293B; font-size: 1.1rem; margin-bottom: 0.5rem;">
-                                    <span style="color: #3B82F6;">[${guide.subject_or_activity}]</span> 연계 활동
-                                </div>
-                                <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1.2rem; border-radius: 8px;">
-                                    ${guide.action_details ? `
-                                        <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
-                                                <span style="background:#DBEAFE; color:#1E3A8A; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">탐구 목표</span>
-                                                <span>${guide.action_details.goal}</span>
-                                            </div>
-                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
-                                                <span style="background:#FCE7F3; color:#9D174D; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">활용 매체</span>
-                                                <span>${guide.action_details.media}</span>
-                                            </div>
-                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
-                                                <span style="background:#FEF3C7; color:#92400E; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">방법론</span>
-                                                <span style="word-break: keep-all;">${guide.action_details.method}</span>
-                                            </div>
-                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
-                                                <span style="background:#D1FAE5; color:#065F46; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">기대 결과</span>
-                                                <span>${guide.action_details.result}</span>
-                                            </div>
-                                        </div>
-                                    ` : `
-                                        <div>${guide.suggested_action}</div>
-                                    `}
-                                </div>
+                        `).join('');
+                    }
+                    html += '</div>';
+
+                    // 2. Recommended Books
+                    if (books.length > 0) {
+                        html += `
+                        <div style="margin-bottom: 2.5rem;">
+                            <h4 style="font-size: 1.15rem; font-weight: 800; color: #1E293B; margin-bottom: 1rem; display: flex; align-items: center;"><i class="fa-solid fa-book" style="color: #8B5CF6; margin-right: 0.5rem;"></i> 전공 심화 탐구 추천 도서</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                                ${books.map(b => `
+                                    <div style="background: white; border: 1px solid #E2E8F0; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 0.8rem;">
+                                        <div style="font-weight: 800; color: #4C1D95; font-size: 1.1rem; line-height: 1.4;"><i class="fa-solid fa-bookmark" style="color:#C4B5FD; margin-right:6px;"></i>${b.title}</div>
+                                        <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 8px; flex-grow: 1;">${b.reason}</div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-                    `).join('')}
-                </div>
+                        `;
+                    }
+
+                    // 3. Key Concepts
+                    if (concepts.length > 0) {
+                        html += `
+                        <div style="margin-bottom: 1rem;">
+                            <h4 style="font-size: 1.15rem; font-weight: 800; color: #1E293B; margin-bottom: 1rem; display: flex; align-items: center;"><i class="fa-solid fa-lightbulb" style="color: #F59E0B; margin-right: 0.5rem;"></i> 역전의 무기 - 전공 심화 키워드</h4>
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                ${concepts.map(c => `
+                                    <div style="background: white; border: 1px solid #E2E8F0; padding: 1.2rem 1.5rem; border-radius: 12px; display: flex; gap: 1.5rem; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                        <span style="background: #FEF3C7; color: #B45309; font-weight: 800; padding: 6px 14px; border-radius: 8px; font-size: 1.05rem; white-space: nowrap;">${c.concept}</span>
+                                        <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; flex-grow: 1; border-left: 3px solid #FDE68A; padding-left: 1rem;">${c.explanation}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        `;
+                    }
+                    
+                    return html;
+                })()}
 
                 <div style="background: #FFFBEB; border: 1px dashed #F59E0B; padding: 1.5rem; border-radius: 12px; text-align: center;">
                     <h4 style="font-weight: 800; color: #92400E; margin-bottom: 0.5rem;">위 보강 플랜을 바탕으로 더 구체적인 탐구 가이드가 필요하신가요?</h4>
