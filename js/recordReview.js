@@ -358,11 +358,49 @@ function displayReviewResult(data, container) {
                             <h3 style="font-size: 1.4rem; font-weight: 800; color: #0F172A; margin: 0;">종합 전공 적합도</h3>
                             <span style="background: ${scoreColor}20; color: ${scoreColor}; font-weight: 700; font-size: 0.85rem; padding: 4px 10px; border-radius: 20px;">${scoreText}</span>
                         </div>
-                        <p style="color: #334155; font-size: 1rem; line-height: 1.6; margin: 0;">
+                        <p style="color: #334155; font-size: 1rem; line-height: 1.6; margin: 0; margin-bottom: 1rem;">
                             ${diagnosis.overall_evaluation}
                         </p>
+                        ${diagnosis.academic_feasibility ? `
+                        <div style="background: #EEF2FF; border-left: 4px solid #6366F1; padding: 1rem; border-radius: 0 8px 8px 0;">
+                            <h4 style="font-size: 0.95rem; font-weight: 700; color: #4338CA; margin-bottom: 0.3rem;"><i class="fa-solid fa-chart-line"></i> 교과 성적 기반 정량적 진단</h4>
+                            <p style="color: #3730A3; font-size: 0.95rem; margin: 0; line-height: 1.5;">${diagnosis.academic_feasibility}</p>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
+
+                <!-- [NEW] Academic Performance Analysis -->
+                ${(analysis.grade_trend || analysis.elective_subject_evaluation || analysis.weak_subject_strategy) ? `
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #0F172A; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-book-open-reader" style="color: #3B82F6;"></i> 교과 학업 성취 및 선택 과목 평가
+                    </h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        ${analysis.grade_trend ? `
+                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem;">
+                            <div style="font-weight: 700; color: #1E293B; font-size: 0.95rem; margin-bottom: 0.4rem;"><i class="fa-solid fa-arrow-trend-up" style="color: #10B981; margin-right:4px;"></i> 성적 추이 분석 및 스토리텔링</div>
+                            <div style="color: #475569; font-size: 0.95rem; line-height: 1.6;">${analysis.grade_trend}</div>
+                        </div>
+                        ` : ''}
+
+                        ${analysis.elective_subject_evaluation ? `
+                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem;">
+                            <div style="font-weight: 700; color: #1E293B; font-size: 0.95rem; margin-bottom: 0.4rem;"><i class="fa-solid fa-list-check" style="color: #8B5CF6; margin-right:4px;"></i> 진로/심화 선택 과목 이수 평가</div>
+                            <div style="color: #475569; font-size: 0.95rem; line-height: 1.6;">${analysis.elective_subject_evaluation}</div>
+                        </div>
+                        ` : ''}
+
+                        ${analysis.weak_subject_strategy ? `
+                        <div style="background: white; border: 1px solid #FECACA; border-radius: 8px; padding: 1rem; border-left: 4px solid #EF4444;">
+                            <div style="font-weight: 700; color: #B91C1C; font-size: 0.95rem; margin-bottom: 0.4rem;"><i class="fa-solid fa-shield-halved" style="margin-right:4px;"></i> 취약 과목 세특 방어 전략</div>
+                            <div style="color: #991B1B; font-size: 0.95rem; line-height: 1.6;">${analysis.weak_subject_strategy}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                ` : ''}
 
                 <!-- Strengths & Weaknesses -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 0.5rem;">
