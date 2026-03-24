@@ -13,7 +13,7 @@
   - 대학교/학과 정보 밎 과목 데이터 (`univ_major_map`, `subjects`, `univ_dept_subject_map` 등).
 
 ### 2.2 외부 연동 (AI Engine)
-- **Google Gemini 2.5 Pro / Flash API (Proxy 경유)**
+- **Google Gemini 3.1 Pro Preview API (Proxy 경유)**
   - Client에서 API Key 노출을 막기 위해 `/api/generate` (Node.js/Python Vercel Serverless 등) 프록시를 경유.
   - `aiService.js`를 통해 프롬프트를 전송하며 현재 기본 모델은 `gemini-3.1-pro-preview` 등을 선택 가능.
   - JSON Schema 형태의 포맷 규격을 강제하여 UI에서 파싱할 수 있도록 구성 (Chain-of-Thought Pattern 적용).
@@ -23,7 +23,7 @@
 - **Frontend Core**: HTML5, Vanilla JavaScript (ES6+), CSS3
 - **Design System & Layout**: Atomic Design 컴포넌트 (`.btn-primary`, `.badge`, `.card`), Grid Layout 구조 (`grid-template-columns`). FontAwesome 아이콘, 구글 폰트 적용.
 - **DB & Backend**: Supabase (BaaS, PostgreSQL 기반)
-- **AI Agent**: Google Gemini 2.5 (Pro/Flash 기본 연동)
+- **AI Agent**: Google Gemini 3.1 Pro Preview (기본 연동)
 - **Export Tooling**: html2pdf.js (리포트 PDF 저장)
 
 ## 4. 상세 기능 명세 (Feature Details)

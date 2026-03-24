@@ -28,7 +28,7 @@ graph TD
     end
     
     subgraph "AI Engine"
-        Gemini[Gemini 3.0 Flash]
+        Gemini[Gemini 3.1 Pro Preview]
         Vector[Vector DB (Faiss/Pinecone)]
     end
 
@@ -54,7 +54,7 @@ graph TD
 - **F-05 (탐구 주제 생성)**: **[Chain-of-Thought Pattern]** 적용
     1. **Context Loading**: 학생의 미개설 과목 + 희망 전공 인재상 로딩
     2. **Strategy Step**: "이 학생은 OO역량이 부족하므로 XX주제로 보완해야 함" 중간 추론 생성
-    3. **Final Output**: 최종 주제 및 가이드 도출 (Gemini 3.0 Flash 활용)
+    3. **Final Output**: 최종 주제 및 가이드 도출 (Gemini 3.1 Pro Preview 활용)
 - **F-06 (Hallucination 방지)**: RAG(증강 검색)를 통해 실제 존재하는 도서 리스트만 추천하도록 제약
 
 ### 3.3 [Admin] 프롬프트 센터 (Control Plane)
@@ -105,5 +105,5 @@ graph TD
 ## 6. 기술 스택 및 배포 (Full Stack)
 - **Frontend**: Vanilla JS (ES6+)
 - **Storage**: Local Storage (User Data) + Supabase (Reference Data)
-- **AI**: Google Gemini 3.0 Flash API (High Performance, Low Latency)
+- **AI**: Google Gemini 3.1 Pro Preview API (High Performance, Low Latency)
 - **Deployment**: Vercel or Netlify (Static Hosting)
