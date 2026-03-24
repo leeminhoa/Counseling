@@ -741,14 +741,15 @@ async function resetAIResult(event) {
         event.stopPropagation();
     }
 
-    showConfirmModal(
+    showCustomConfirm(
         '현재 생성된 가이드 데이터를 초기화하고 다시 생성하시겠습니까?',
         () => {
-            const selectedUnivId = stage1State.selectedUnivId;
+            const profile = dataManager.getProfile();
+            const selectedUnivId = (typeof stage1State !== 'undefined' ? stage1State.selectedUnivId : null) || (profile.lastSelectedUniv ? profile.lastSelectedUniv.id : null);
             const data = dataManager.getData();
 
             // Filter out results for the current university
-            data.consultingResults = data.consultingResults.filter(r => r.univ && r.univ.id !== selectedUnivId);
+            data.consultingResults = data.consultingResults.filter(r => r.univ && String(r.univ.id) !== String(selectedUnivId));
             dataManager.saveData(data);
 
             // Refresh view

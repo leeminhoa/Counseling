@@ -439,10 +439,11 @@ async function resetRecordReview() {
     showCustomConfirm(
         '새로운 생기부를 업로드하여 다시 분석하시겠습니까?\n이전 분석 결과는 덮어씌워집니다.',
         () => {
-            const selectedUnivId = stage1State.selectedUnivId;
+            const profile = dataManager.getProfile();
+            const selectedUnivId = (typeof stage1State !== 'undefined' ? stage1State.selectedUnivId : null) || (profile.lastSelectedUniv ? profile.lastSelectedUniv.id : null);
             const data = dataManager.getData();
 
-            data.consultingResults = data.consultingResults.filter(r => !(r.type === 'recordReview' && r.univ && r.univ.id === selectedUnivId));
+            data.consultingResults = data.consultingResults.filter(r => !(r.type === 'recordReview' && r.univ && String(r.univ.id) === String(selectedUnivId)));
             dataManager.saveData(data);
 
             const content = document.getElementById('contentContainer');

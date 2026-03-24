@@ -149,7 +149,7 @@ window.showCustomConfirm = function (message, onConfirm, options = {}) {
 
 // [NEW] Reset Counseling Session
 window.resetCounselingSession = () => {
-    showConfirmModal(
+    showCustomConfirm(
         '현재 상담 내용을 모두 초기화하시겠습니까?\\n입력된 학생 정보와 모든 상담 내역이 삭제됩니다.',
         () => {
             dataManager.resetData();
