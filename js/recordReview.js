@@ -380,8 +380,19 @@ function displayReviewResult(data, container) {
                     <div style="display: flex; flex-direction: column; gap: 1rem;">
                         ${analysis.grade_trend ? `
                         <div style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem;">
-                            <div style="font-weight: 700; color: #1E293B; font-size: 0.95rem; margin-bottom: 0.4rem;"><i class="fa-solid fa-arrow-trend-up" style="color: #10B981; margin-right:4px;"></i> 성적 추이 분석 및 스토리텔링</div>
-                            <div style="color: #475569; font-size: 0.95rem; line-height: 1.6;">${analysis.grade_trend}</div>
+                            <div style="font-weight: 700; color: #1E293B; font-size: 0.95rem; margin-bottom: 0.6rem;"><i class="fa-solid fa-arrow-trend-up" style="color: #10B981; margin-right:4px;"></i> 성적 추이 분석 및 스토리텔링</div>
+                            
+                            ${typeof analysis.grade_trend === 'object' ? `
+                                <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; padding: 0.8rem 1rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.8rem;">
+                                    <div style="font-weight: 700; color: #475569; margin-bottom: 0.3rem;"><i class="fa-regular fa-folder-open" style="margin-right:2px;"></i> 학년별 주요 성적 요약</div>
+                                    <div style="color: #334155; line-height: 1.5;">${analysis.grade_trend.semester_grades}</div>
+                                </div>
+                                <div style="color: #475569; font-size: 0.95rem; line-height: 1.6; padding-left: 2px;">
+                                    ${analysis.grade_trend.storytelling}
+                                </div>
+                            ` : `
+                                <div style="color: #475569; font-size: 0.95rem; line-height: 1.6;">${analysis.grade_trend}</div>
+                            `}
                         </div>
                         ` : ''}
 
@@ -454,8 +465,29 @@ function displayReviewResult(data, container) {
                                 <div style="font-weight: 700; color: #1E293B; font-size: 1.1rem; margin-bottom: 0.5rem;">
                                     <span style="color: #3B82F6;">[${guide.subject_or_activity}]</span> 연계 활동
                                 </div>
-                                <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 8px;">
-                                    ${guide.suggested_action}
+                                <div style="font-size: 0.95rem; color: #475569; line-height: 1.6; background: #F8FAFC; padding: 1.2rem; border-radius: 8px;">
+                                    ${guide.action_details ? `
+                                        <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                <span style="background:#DBEAFE; color:#1E3A8A; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">탐구 목표</span>
+                                                <span>${guide.action_details.goal}</span>
+                                            </div>
+                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                <span style="background:#FCE7F3; color:#9D174D; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">활용 매체</span>
+                                                <span>${guide.action_details.media}</span>
+                                            </div>
+                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                <span style="background:#FEF3C7; color:#92400E; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">방법론</span>
+                                                <span style="word-break: keep-all;">${guide.action_details.method}</span>
+                                            </div>
+                                            <div style="display:flex; gap:0.6rem; align-items: flex-start;">
+                                                <span style="background:#D1FAE5; color:#065F46; font-weight:700; padding:3px 8px; border-radius:4px; font-size:0.8rem; white-space:nowrap; margin-top: 2px;">기대 결과</span>
+                                                <span>${guide.action_details.result}</span>
+                                            </div>
+                                        </div>
+                                    ` : `
+                                        <div>${guide.suggested_action}</div>
+                                    `}
                                 </div>
                             </div>
                         </div>
