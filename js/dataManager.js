@@ -34,7 +34,7 @@ class DataManager {
                     topP: 0.95,
                     topK: 40,
                     maxOutputTokens: 8192,
-                    geminiModel: 'gemini-3.1-pro',
+                    geminiModel: 'gemini-3.1-pro-preview',
                     theme: 'light',
                     lastActiveTab: 'stage1'
                 }

@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         }
 
         // Validate Model Name
-        const targetModel = model || 'gemini-3.1-pro';
+        const targetModel = model || 'gemini-3.1-pro-preview';
         const allowedPatterns = [/^gemini-/, /^gemma-/];
 
         if (!allowedPatterns.some(p => p.test(targetModel))) {

@@ -4,7 +4,7 @@
  */
 class AIService {
     constructor() {
-        this.MODEL = 'gemini-3.1-pro'; // Default to Stable 3.1 Pro
+        this.MODEL = 'gemini-3.1-pro-preview';
         this.apiKey = null; // Cache key
     }
 
@@ -25,10 +25,7 @@ class AIService {
     async getAvailableModels() {
         // Return a curated list of supported models (2026 Compatible)
         return [
-            { name: 'gemini-3.1-pro', displayName: 'Gemini 3.1 Pro', description: 'Flagship reasoning model', version: '3.1.0' },
-            { name: 'gemini-3.1-flash', displayName: 'Gemini 3.1 Flash', description: 'High-speed intelligence', version: '3.1.0' },
-            { name: 'gemini-2.5-pro', displayName: 'Gemini 2.5 Pro', description: 'Enhanced performance model', version: '2.5.0' },
-            { name: 'gemini-2.5-flash', displayName: 'Gemini 2.5 Flash', description: 'High-speed, cost-effective model', version: '2.5.0' }
+            { name: 'gemini-3.1-pro-preview', displayName: 'Gemini 3.1 Pro Preview', description: 'Preview reasoning model', version: '3.1.0' }
         ];
     }
 
@@ -50,12 +47,9 @@ class AIService {
             let modelName = settings.geminiModel || this.MODEL;
 
             // [Fix] Auto-correct invalid legacy model names stored in localStorage
-            if (modelName === 'gemini-3.0-pro-preview' || modelName === 'gemini-3-pro-preview') {
-                console.warn(`[Auto-Fix] Legacy Preview Model '${modelName}' detected. Switching to 'gemini-3.1-pro'.`);
-                modelName = 'gemini-3.1-pro';
-            } else if (modelName.includes('3.0')) {
-                // If any other 3.0 model, bump to 3.1 Pro 
-                modelName = 'gemini-3.1-pro';
+            if (modelName !== 'gemini-3.1-pro-preview') {
+                console.warn(`[Auto-Fix] Invalid or Legacy Model '${modelName}' detected. Switching to 'gemini-3.1-pro-preview'.`);
+                modelName = 'gemini-3.1-pro-preview';
             }
 
             const defaultChatPrompt = "당신은 입시 컨설팅 AI 챗봇입니다. 학생의 질문에 친절하고 전문적으로 답변하세요. 마크다운을 적절히 사용하여 읽기 쉽게 답변해주세요.";
@@ -571,7 +565,7 @@ JSON 형식으로만 반환해. 포맷은 아래와 같아야 해.
         let finalRecordText = recordText;
 
         if (geminiFile) {
-            console.log('Executing Two-Track LLM: Step 1 - Smart Extraction (gemini-3.1-flash)...');
+            console.log('Executing Two-Track LLM: Step 1 - Smart Extraction (gemini-3.1-pro-preview)...');
             const ocrPrompt = `[스마트 추출 지시 지침]
 이 첨부된 생기부 문서(PDF/스캔본)에서 입시 컨설팅에 필요한 핵심 정보만 텍스트로 요약 추출하라.
 1. 일반적인 학교 인사말, 단순 출결, 단순 점수, 봉사 시간표, 행정적 서론 등 컨설팅에 불필요한 부분은 과감히 버릴 것.
@@ -590,7 +584,7 @@ JSON 형식으로만 반환해. 포맷은 아래와 같아야 해.
                 generationConfig: { maxOutputTokens: 8192, temperature: 0.2 }
             };
 
-            const ocrResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash:generateContent?key=${apiKey}`, {
+            const ocrResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(ocrBody)

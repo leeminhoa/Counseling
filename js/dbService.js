@@ -31,14 +31,19 @@ class DBService {
      * 대학/학과 목록 검색
      * Table: univ_major_map (실제 테이블명에 맞춰 조정 가능)
      */
-    async searchUniversities(query) {
+    async searchUniversities(query, category = null) {
         if (!this.client) return [];
 
-        const { data, error } = await this.client
+        let dbQuery = this.client
             .from('v_univ_dept_subjects')
             .select('*')
-            .or(`univ_name.ilike.%${query}%,raw_major_name.ilike.%${query}%,canonical_major.ilike.%${query}%`)
-            .limit(20);
+            .or(`univ_name.ilike.%${query}%,raw_major_name.ilike.%${query}%,canonical_major.ilike.%${query}%`);
+
+        if (category) {
+            dbQuery = dbQuery.eq('top_category', category);
+        }
+
+        const { data, error } = await dbQuery.limit(20);
 
         if (error) {
             console.warn('DB Search Error:', error);

@@ -235,10 +235,7 @@ function renderAdmin(container) {
                                         <label style="font-weight: 600;"><i class="fa-solid fa-microchip"></i> AI Model</label>
                                     </div>
                                         <select id="modelSelect" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-app); appearance: none;">
-                                            <option value="gemini-3.1-pro" ${settings.geminiModel === 'gemini-3.1-pro' ? 'selected' : ''}>Gemini 3.1 Pro</option>
-                                            <option value="gemini-3.1-flash" ${settings.geminiModel === 'gemini-3.1-flash' ? 'selected' : ''}>Gemini 3.1 Flash</option>
-                                            <option value="gemini-2.5-pro" ${settings.geminiModel === 'gemini-2.5-pro' ? 'selected' : ''}>Gemini 2.5 Pro</option>
-                                            <option value="gemini-2.5-flash" ${settings.geminiModel === 'gemini-2.5-flash' ? 'selected' : ''}>Gemini 2.5 Flash</option>
+                                            <option value="gemini-3.1-pro-preview" ${settings.geminiModel === 'gemini-3.1-pro-preview' ? 'selected' : ''}>Gemini 3.1 Pro Preview</option>
                                         </select>
                                         <div style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-sub);">
                                             <i class="fa-solid fa-chevron-down"></i>

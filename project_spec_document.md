@@ -15,7 +15,7 @@
 ### 2.2 외부 연동 (AI Engine)
 - **Google Gemini 2.5 Pro / Flash API (Proxy 경유)**
   - Client에서 API Key 노출을 막기 위해 `/api/generate` (Node.js/Python Vercel Serverless 등) 프록시를 경유.
-  - `aiService.js`를 통해 프롬프트를 전송하며 현재 기본 모델은 `gemini-3-pro-preview` / `gemini-2.5-pro` 등을 선택 가능.
+  - `aiService.js`를 통해 프롬프트를 전송하며 현재 기본 모델은 `gemini-3.1-pro-preview` 등을 선택 가능.
   - JSON Schema 형태의 포맷 규격을 강제하여 UI에서 파싱할 수 있도록 구성 (Chain-of-Thought Pattern 적용).
   - **AI 파라미터 제어 (Hyperparameters)**: 일관되고 안정화된 컨설팅 응답을 위해 `Temperature 0.5`, `Top P 1.0`, `Top K 40`, `Max Tokens 8100`을 시스템 기본값(Default)으로 하드코딩 운용 중.
 

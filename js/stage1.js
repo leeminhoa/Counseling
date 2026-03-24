@@ -74,7 +74,12 @@ async function handleSearch(e) {
     }
 
     // Call DB Service
-    const results = await dbService.searchUniversities(query);
+    const profile = dataManager.getProfile();
+    let categoryFilter = null;
+    if (profile && profile.targetMajor === query) {
+        categoryFilter = profile.selectedCategory;
+    }
+    const results = await dbService.searchUniversities(query, categoryFilter);
     stage1State.searchResults = results;
 
     renderUnivList(results, listContainer);
