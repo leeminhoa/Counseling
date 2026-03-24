@@ -328,8 +328,8 @@ function displayReviewResult(data, container) {
                 <button class="btn-secondary btn-sm" onclick="resetRecordReview(event)" style="color: #64748B;">
                     <i class="fa-solid fa-upload"></i> 다른 파일 등록
                 </button>
-                 <button class="btn-secondary btn-sm" onclick="downloadReviewPDF()">
-                    <i class="fa-solid fa-file-pdf"></i> PDF 저장
+                 <button class="btn-secondary btn-sm" onclick="downloadReviewImage()">
+                    <i class="fa-solid fa-image"></i> 이미지 저장
                 </button>
             </div>
 
@@ -523,23 +523,26 @@ async function resetRecordReview() {
     );
 }
 
-function downloadReviewPDF() {
+function downloadReviewImage() {
     const element = document.getElementById('pdf-area-review');
     const profile = dataManager.getProfile();
-    const fileName = `${profile.name || '학생'}_생기부진단.pdf`;
+    const fileName = `${profile.name || '학생'}_생기부진단.png`;
 
-    const actions = element.querySelector('.no-pdf');
-    if (actions) actions.style.display = 'none';
+    const actions = element.querySelectorAll('.no-pdf');
+    actions.forEach(el => el.style.display = 'none');
 
-    const opt = {
-        margin: [15, 15, 15, 15],
-        filename: fileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save().then(() => {
-        if (actions) actions.style.display = 'flex';
-    });
+    // Wait a brief moment to ensure UI updates before capture
+    setTimeout(() => {
+        html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            actions.forEach(el => el.style.display = '');
+        }).catch(err => {
+            console.error('Save failed:', err);
+            actions.forEach(el => el.style.display = '');
+            alert('이미지 생성 중 오류가 발생했습니다.');
+        });
+    }, 100);
 }

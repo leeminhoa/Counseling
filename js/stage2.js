@@ -234,8 +234,8 @@ function displayAIResult(data, container) {
                      <h2 class="res-topic" style="font-size: 1.8rem; margin: 0;">${topic}</h2>
                 </div>
                 <div class="result-actions no-pdf" style="display: flex; gap: 0.5rem;">
-                    <button class="btn-secondary btn-sm" onclick="downloadPDF()" style="padding: 0.5rem 0.8rem;">
-                        <i class="fa-solid fa-file-pdf"></i> PDF 다운로드
+                    <button class="btn-secondary btn-sm" onclick="downloadImage()" style="padding: 0.5rem 0.8rem;">
+                        <i class="fa-solid fa-image"></i> 이미지 저장
                     </button>
                     <button class="btn-secondary btn-sm" onclick="resetAIResult(event)" style="padding: 0.5rem 0.8rem; color: #EF4444; border-color: #FEE2E2;">
                         <i class="fa-solid fa-rotate-right"></i> 초기화
@@ -303,8 +303,8 @@ function renderTextModeReport(data, container) {
             
             <!-- Floating Actions -->
             <div class="report-actions no-pdf" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem;">
-                 <button class="btn-secondary btn-sm" onclick="downloadPDF()">
-                    <i class="fa-solid fa-file-pdf"></i> PDF 저장
+                 <button class="btn-secondary btn-sm" onclick="downloadImage()">
+                    <i class="fa-solid fa-image"></i> 이미지 저장
                 </button>
                 <button class="btn-secondary btn-sm" onclick="resetAIResult(event)" style="color: #EF4444; border-color: #FEE2E2;">
                     <i class="fa-solid fa-rotate-right"></i> 초기화
@@ -409,8 +409,8 @@ function renderNewReportLayout(data, container) {
             
             <!-- Floating Actions -->
             <div class="report-actions no-pdf" style="display:flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 1rem;">
-                 <button class="btn-secondary btn-sm" onclick="downloadPDF()">
-                    <i class="fa-solid fa-file-pdf"></i> PDF 저장
+                 <button class="btn-secondary btn-sm" onclick="downloadImage()">
+                    <i class="fa-solid fa-image"></i> 이미지 저장
                 </button>
                 <button class="btn-secondary btn-sm" onclick="resetAIResult(event)" style="color: #EF4444; border-color: #FEE2E2;">
                     <i class="fa-solid fa-rotate-right"></i> 초기화
@@ -759,27 +759,28 @@ async function resetAIResult(event) {
     );
 }
 
-function downloadPDF() {
+function downloadImage() {
     const element = document.getElementById('pdf-area');
     const profile = dataManager.getProfile();
-    const fileName = `${profile.name || '학생'}_AI_탐구가이드.pdf`;
+    const fileName = `${profile.name || '학생'}_AI_탐구가이드.png`;
 
-    // Temporarily hide buttons for PDF
-    const actions = element.querySelector('.no-pdf');
-    if (actions) actions.style.display = 'none';
+    // Temporarily hide buttons for image capture
+    const actions = element.querySelectorAll('.no-pdf');
+    actions.forEach(el => el.style.display = 'none');
 
-    const opt = {
-        margin: [15, 15, 15, 15],
-        filename: fileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save().then(() => {
-        // Restore buttons
-        if (actions) actions.style.display = 'flex';
-    });
+    setTimeout(() => {
+        html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            actions.forEach(el => el.style.display = '');
+        }).catch(err => {
+            console.error('Save failed:', err);
+            actions.forEach(el => el.style.display = '');
+            alert('이미지 생성 중 오류가 발생했습니다.');
+        });
+    }, 100);
 }
 
 /**
