@@ -206,6 +206,11 @@ async function renderUnivDetail(univId) {
 
     // Template
     detailPanel.innerHTML = `
+        <div class="detail-actions no-pdf" style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+            <button onclick="downloadUnivDetailImage()" style="padding: 0.5rem 0.8rem; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 0.85rem; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <i class="fa-solid fa-image" style="color: #3B82F6;"></i> 분석 결과 이미지 저장
+            </button>
+        </div>
         <div class="detail-header">
             <div class="detail-header-left">
                 <h2 class="detail-title">${univData.univ_name} ${univData.raw_major_name}</h2>
@@ -536,3 +541,30 @@ function proceedToStage2() {
         showCustomAlert('Stage 2 전환 기능 연결 중입니다.');
     }
 }
+
+// [NEW] 대학 상세 분석 영역만 캡처하여 이미지 다운로드
+window.downloadUnivDetailImage = function() {
+    const element = document.getElementById('univDetailPanel');
+    const profile = dataManager.getProfile();
+    const fileName = `${profile.name || '학생'}_대학분석.png`;
+
+    // 일시적으로 pdf 캡처에서 숨겨야 할 요소들 가리기
+    const actions = element.querySelectorAll('.no-pdf');
+    actions.forEach(el => el.style.display = 'none');
+
+    setTimeout(() => {
+        html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            // 다시 보이기
+            actions.forEach(el => el.style.display = '');
+        }).catch(err => {
+            console.error('Image capture failed:', err);
+            actions.forEach(el => el.style.display = '');
+            showCustomAlert('이미지 생성 중 오류가 발생했습니다.');
+        });
+    }, 100);
+};
