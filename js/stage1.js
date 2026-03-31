@@ -552,19 +552,39 @@ window.downloadUnivDetailImage = function() {
     const actions = element.querySelectorAll('.no-pdf');
     actions.forEach(el => el.style.display = 'none');
 
-    setTimeout(() => {
-        html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = fileName;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            
-            // 다시 보이기
-            actions.forEach(el => el.style.display = '');
-        }).catch(err => {
-            console.error('Image capture failed:', err);
-            actions.forEach(el => el.style.display = '');
-            showCustomAlert('이미지 생성 중 오류가 발생했습니다.');
-        });
-    }, 100);
+    // 캡처용 푸터 이미지 동적 추가
+    const footer = document.createElement('img');
+    footer.src = 'assets/footer_logo.png';
+    footer.style.width = '100%';
+    footer.style.display = 'block';
+    footer.style.marginTop = '2rem';
+    footer.style.borderRadius = '0 0 12px 12px';
+    element.appendChild(footer);
+
+    footer.onload = () => {
+        setTimeout(() => {
+            html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // 다시 보이기 빛 뒷정리
+                actions.forEach(el => el.style.display = '');
+                if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
+            }).catch(err => {
+                console.error('Image capture failed:', err);
+                actions.forEach(el => el.style.display = '');
+                if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
+                showCustomAlert('이미지 생성 중 오류가 발생했습니다.');
+            });
+        }, 100);
+    };
+    
+    // 혹시라도 이미지가 즉시 로드 안되거나 에러날 경우 대비
+    footer.onerror = () => {
+        if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
+        actions.forEach(el => el.style.display = '');
+        showCustomAlert('푸터 이미지를 불러오지 못했습니다. 다시 시도해주세요.');
+    }
 };
