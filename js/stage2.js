@@ -13,9 +13,9 @@ async function renderStage2(container, autoStart = false) {
         stage1State.selectedUnivId = selectedUnivId;
     }
 
-    // Check for existing result for this university from dataManager
+    // Check for existing result for this university from dataManager (exclude 'recordReview' to prevent conflict)
     const savedResults = dataManager.getData().consultingResults || [];
-    const existingResult = savedResults.reverse().find(r => r.univ && r.univ.id === selectedUnivId);
+    const existingResult = savedResults.reverse().find(r => r.univ && r.univ.id === selectedUnivId && r.type !== 'recordReview');
 
     container.innerHTML = `
         <div class="stage2-wrapper">
@@ -137,6 +137,7 @@ async function startAIGeneration(container) {
 
         // Save to dataManager
         dataManager.saveConsultingResult({
+            type: 'explorationGuide', // [FIX] Add explicit type to prevent conflicts
             univ: univData,
             aiResult: result
         });
@@ -748,8 +749,10 @@ async function resetAIResult(event) {
             const selectedUnivId = (typeof stage1State !== 'undefined' ? stage1State.selectedUnivId : null) || (profile.lastSelectedUniv ? profile.lastSelectedUniv.id : null);
             const data = dataManager.getData();
 
-            // Filter out results for the current university
-            data.consultingResults = data.consultingResults.filter(r => r.univ && String(r.univ.id) !== String(selectedUnivId));
+            // [FIX] Filter out ONLY exploration guide results for the current university, keep recordReview
+            data.consultingResults = data.consultingResults.filter(r => 
+                !(r.univ && String(r.univ.id) === String(selectedUnivId) && r.type !== 'recordReview')
+            );
             dataManager.saveData(data);
 
             // Refresh view
