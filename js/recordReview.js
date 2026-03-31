@@ -543,11 +543,7 @@ function displayReviewResult(data, container) {
                     return html;
                 })()}
 
-                <div style="background: #FFFBEB; border: 1px dashed #F59E0B; padding: 1.5rem; border-radius: 12px; text-align: center;">
-                    <h4 style="font-weight: 800; color: #92400E; margin-bottom: 0.5rem;">위 보강 플랜을 바탕으로 더 구체적인 탐구 가이드가 필요하신가요?</h4>
-                    <p style="color: #B45309; font-size: 0.9rem; margin-bottom: 1rem;">'미래 설계 (탐구 가이드)' 메뉴에서 다음 학기의 심화 탐구 보고서를 설계해보세요.</p>
-                    <button class="btn-primary" onclick="handleTabChange('stage2')">미래 탐구 가이드 생성하기</button>
-                </div>
+
             </div>
 
         </div>
