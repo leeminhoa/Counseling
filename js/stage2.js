@@ -15,7 +15,7 @@ async function renderStage2(container, autoStart = false) {
 
     // Check for existing result for this university from dataManager (exclude 'recordReview' to prevent conflict)
     const savedResults = dataManager.getData().consultingResults || [];
-    const existingResult = savedResults.reverse().find(r => r.univ && r.univ.id === selectedUnivId && r.type !== 'recordReview');
+    const existingResult = savedResults.reverse().find(r => r.univ && String(r.univ.id) === String(selectedUnivId) && r.type !== 'recordReview');
 
     container.innerHTML = `
         <div class="stage2-wrapper">

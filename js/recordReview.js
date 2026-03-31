@@ -13,7 +13,7 @@ async function renderRecordReview(container) {
     
     // 이전에 분석된 데이터가 있으면 바로 보여줌 (현재 세션)
     const savedResults = dataManager.getData().consultingResults || [];
-    const existingResult = savedResults.reverse().find(r => r.type === 'recordReview' && r.univ && r.univ.id === selectedUnivId);
+    const existingResult = savedResults.reverse().find(r => r.type === 'recordReview' && r.univ && String(r.univ.id) === String(selectedUnivId));
 
     container.innerHTML = `
         <div class="stage3-wrapper" style="max-width: 900px; margin: 0 auto; padding: 2rem 0;">
