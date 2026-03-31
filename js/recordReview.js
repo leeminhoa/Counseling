@@ -576,6 +576,37 @@ function downloadReviewImage() {
     const actions = element.querySelectorAll('.no-pdf');
     actions.forEach(el => el.style.display = 'none');
 
+    // [NEW] 캡처용 헤더 (표지) 동적 추가 - 옵션 A안 시안
+    const coverHeader = document.createElement('div');
+    const todayStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    coverHeader.innerHTML = `
+        <div style="background: white; border-radius: 12px 12px 0 0; overflow: hidden; margin-bottom: 2rem; border-bottom: 2px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <!-- Large Promotional Banner (학생 공유용) -->
+            <img src="assets/header_banner.png" style="width: 100%; display: block;" onerror="this.style.display='none'" alt="밀당PT 배너">
+            
+            <!-- Professional Report Title Bar -->
+            <div style="background: #0F172A; color: white; padding: 2.5rem 2.5rem; border-top: 5px solid #F59E0B; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #FCD34D; letter-spacing: 2px;">MILDANG PT EDUCATION CONSULTING</div>
+                <h1 style="font-size: 2.2rem; font-weight: 800; margin: 0 0 1rem 0; line-height: 1.3;">대입 맞춤형 AI 종합 컨설팅 리포트</h1>
+                <div style="display: flex; gap: 3rem; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 1.5rem; margin-top: 0.5rem;">
+                    <div>
+                        <span style="font-size: 0.8rem; color: #94A3B8; display: block; margin-bottom: 0.2rem;">대상 학생</span>
+                        <span style="font-size: 1.15rem; font-weight: 700;">${profile.name || '학생명 미상'} <span style="font-size:0.9rem; font-weight:400; color:#94A3B8">(${profile.schoolName || '고등학교'})</span></span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; color: #94A3B8; display: block; margin-bottom: 0.2rem;">리포트 분과</span>
+                        <span style="font-size: 1.15rem; font-weight: 700;">생기부 첨삭 (진단)</span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; color: #94A3B8; display: block; margin-bottom: 0.2rem;">분석 일자</span>
+                        <span style="font-size: 1.15rem; font-weight: 700;">${todayStr}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    element.insertBefore(coverHeader, element.firstChild);
+
     // 캡처용 푸터 이미지 동적 추가
     const footer = document.createElement('img');
     footer.src = 'assets/footer_logo.png';
@@ -595,10 +626,12 @@ function downloadReviewImage() {
                 link.click();
                 actions.forEach(el => el.style.display = '');
                 if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
+                if (coverHeader && coverHeader.parentNode) coverHeader.parentNode.removeChild(coverHeader);
             }).catch(err => {
                 console.error('Save failed:', err);
                 actions.forEach(el => el.style.display = '');
                 if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
+                if (coverHeader && coverHeader.parentNode) coverHeader.parentNode.removeChild(coverHeader);
                 alert('이미지 생성 중 오류가 발생했습니다.');
             });
         }, 100);
