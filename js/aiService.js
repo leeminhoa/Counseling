@@ -140,7 +140,11 @@ class AIService {
         const topP = parseFloat(settings.topP ?? 1);
         const topK = parseInt(settings.topK ?? 40);
         const maxOutputTokens = parseInt(settings.maxOutputTokens ?? 8100);
-        const modelName = settings.geminiModel || this.MODEL;
+        let modelName = settings.geminiModel || this.MODEL;
+        if (modelName !== 'gemini-3.1-pro-preview') {
+            console.warn(`[Auto-Fix] Switching model '${modelName}' to 'gemini-3.1-pro-preview'.`);
+            modelName = 'gemini-3.1-pro-preview';
+        }
 
         const { student, target } = context;
 
@@ -380,6 +384,9 @@ class AIService {
             }
 
             const data = await response.json();
+            if (data.usageMetadata) {
+                console.log(`[탐구가이드 Token Usage] Input(Prompt): ${data.usageMetadata.promptTokenCount}, Output(Candidates): ${data.usageMetadata.candidatesTokenCount}, Total: ${data.usageMetadata.totalTokenCount}`);
+            }
             if (data.error) throw new Error(data.error.message);
 
             // [DEV] Local Mock Server Support
@@ -515,7 +522,11 @@ class AIService {
             throw new Error('API 키가 설정되지 않았습니다. 관리자 설정이나 데이터베이스를 확인하세요.');
         }
 
-        const modelName = settings.geminiModel || this.MODEL;
+        let modelName = settings.geminiModel || this.MODEL;
+        if (modelName !== 'gemini-3.1-pro-preview') {
+            console.warn(`[Auto-Fix] Switching model '${modelName}' to 'gemini-3.1-pro-preview'.`);
+            modelName = 'gemini-3.1-pro-preview';
+        }
         const { student, target } = context;
 
         const systemPrompt = `
