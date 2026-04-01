@@ -652,6 +652,9 @@ JSON 형식으로만 반환해. 포맷은 아래와 같아야 해.
             }
 
             const ocrData = await ocrResponse.json();
+            if (ocrData.usageMetadata) {
+                console.log(`[Step 1 OCR Token Usage] Input(Prompt): ${ocrData.usageMetadata.promptTokenCount}, Output(Candidates): ${ocrData.usageMetadata.candidatesTokenCount}, Total: ${ocrData.usageMetadata.totalTokenCount}`);
+            }
             
             const ocrCandidate = ocrData.candidates?.[0];
             if (!ocrCandidate || !ocrCandidate.content || !ocrCandidate.content.parts) {
@@ -699,6 +702,9 @@ JSON 형식으로만 반환해. 포맷은 아래와 같아야 해.
             }
 
             const data = await response.json();
+            if (data.usageMetadata) {
+                console.log(`[Step 2 Analysis Token Usage] Input(Prompt): ${data.usageMetadata.promptTokenCount}, Output(Candidates): ${data.usageMetadata.candidatesTokenCount}, Total: ${data.usageMetadata.totalTokenCount}`);
+            }
             if (data.error) throw new Error(data.error.message);
 
             if (!data.candidates || data.candidates.length === 0) {
