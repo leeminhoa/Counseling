@@ -10,7 +10,12 @@ let modalState = {
     currentTab: 'info' // 'info' or 'history'
 };
 
-function openProfileModal(initialTab = 'info') {
+function openProfileModal(initialTab = 'info', isNew = false) {
+    // If registering a new student, reset the global context first
+    if (isNew && typeof dataManager !== 'undefined' && typeof dataManager.resetData === 'function') {
+        dataManager.resetData();
+    }
+
     // Create Modal if not exists
     let modal = document.getElementById('profileModal');
     if (!modal) {
@@ -336,12 +341,16 @@ function saveProfileData() {
     // Immediate UI Update
     updateUserStatusUI();
 
-    // Refresh Stage 1 if active
+    // Refresh active views
     const activeTab = document.querySelector('.nav-item.active');
-    if (activeTab && activeTab.dataset.tab === 'stage1' && typeof renderStage1 === 'function') {
-        const container = document.getElementById('contentContainer');
-        if (stage1State && stage1State.selectedUnivId) {
-            renderUnivDetail(stage1State.selectedUnivId);
+    if (activeTab) {
+        if (activeTab.dataset.tab === 'stage1' && typeof renderStage1 === 'function') {
+            const container = document.getElementById('contentContainer');
+            if (stage1State && stage1State.selectedUnivId) {
+                renderUnivDetail(stage1State.selectedUnivId);
+            }
+        } else if (activeTab.dataset.tab === 'manager' && typeof loadStudentList === 'function') {
+            loadStudentList(document.getElementById('studentSearch')?.value || '');
         }
     }
 

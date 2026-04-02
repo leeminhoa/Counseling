@@ -17,7 +17,7 @@ async function renderManager(container) {
                         <input type="text" id="studentSearch" placeholder="이름 또는 ID 검색" 
                             style="padding: 0.8rem 1rem 0.8rem 2.8rem; border: 1px solid #E2E8F0; border-radius: 0.75rem; width: 300px; outline: none;">
                     </div>
-                    <button class="btn-primary" onclick="openProfileModal()">
+                    <button class="btn-primary" onclick="openProfileModal('info', true)">
                         <i class="fa-solid fa-plus"></i> 신규 학생 등록
                     </button>
                     <button class="btn-secondary" onclick="loadStudentList()" 
