@@ -670,7 +670,7 @@ window.loadHistoryToStage3 = function (historyItem) {
     if (typeof stage1State !== 'undefined') stage1State.selectedUnivId = mockUniv.id;
     const profile = dataManager.getProfile();
     profile.lastSelectedUniv = mockUniv;
-    dataManager.saveProfileData(profile);
+    dataManager.saveProfile(profile);
 
     dataManager.saveConsultingResult({
         type: 'recordReview',
