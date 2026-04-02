@@ -873,10 +873,19 @@ window.loadHistoryToStage2 = function (historyItem) {
         const resultView = document.getElementById('aiResult');
 
         // Extract data
-        // Check if recommend_notes is array or string or object
         let resultData = historyItem.recommend_notes || historyItem.activity_notes;
 
-        if (Array.isArray(resultData)) resultData = resultData[0];
+        // 1. If it's a string representation of an array or object, parse it
+        if (typeof resultData === 'string') {
+            try { resultData = JSON.parse(resultData); } catch (e) { }
+        }
+
+        // 2. If it's an array (or became one after parsing), take the first element
+        if (Array.isArray(resultData)) {
+            resultData = resultData[0];
+        }
+
+        // 3. If the inner element was ALSO stringified, parse it again
         if (typeof resultData === 'string') {
             try { resultData = JSON.parse(resultData); } catch (e) { }
         }
