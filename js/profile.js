@@ -393,6 +393,39 @@ window.onHistoryClick = function (id) {
     showCustomConfirm('선택하신 과거 상담 결과를 불러오시겠습니까?', () => {
         closeProfileModal();
 
+        // 1. Bulk Inject ALL History Records into Local Session using Univ/Major composite ID
+        const allHistory = Object.values(window._historyCache);
+        let injectedResults = [];
+        
+        allHistory.forEach(hist => {
+            let pNotes = hist.recommend_notes || hist.activity_notes;
+            if (typeof pNotes === 'string') { try { pNotes = JSON.parse(pNotes); } catch(e){} }
+            if (Array.isArray(pNotes)) pNotes = pNotes[0];
+            if (typeof pNotes === 'string') { try { pNotes = JSON.parse(pNotes); } catch(e){} }
+
+            if (!pNotes) return;
+
+            const compositeId = `hist_${hist.desired_univ}_${hist.desired_major}`.replace(/\s+/g, '');
+            const isStage3 = pNotes.analysis || pNotes.diagnosis || pNotes.improvement_guide;
+
+            injectedResults.push({
+                type: isStage3 ? 'recordReview' : undefined,
+                univ: {
+                    id: compositeId,
+                    univ_name: hist.desired_univ || '과거 대학',
+                    raw_major_name: hist.desired_major || '과거 학과'
+                },
+                date: hist.created_at || hist.rec_date,
+                aiResult: pNotes,
+                originalId: hist.id
+            });
+        });
+
+        // Bulk save using dataManager inner state directly to avoid triggering excessive writes
+        const data = dataManager.getData();
+        data.consultingResults = injectedResults;
+        dataManager.saveData(data);
+
         // Wait for modal close transition
         setTimeout(() => {
             // Smart Routing based on JSON Schema
@@ -401,18 +434,30 @@ window.onHistoryClick = function (id) {
             if (Array.isArray(parsedNotes)) parsedNotes = parsedNotes[0];
             if (typeof parsedNotes === 'string') { try { parsedNotes = JSON.parse(parsedNotes); } catch(e){} }
 
+            const compositeId = `hist_${item.desired_univ}_${item.desired_major}`.replace(/\s+/g, '');
+            const mockUniv = {
+                id: compositeId,
+                univ_name: item.desired_univ || '과거 대학',
+                raw_major_name: item.desired_major || '과거 학과'
+            };
+
+            // Setup Profile/Stage1State context
+            if (typeof stage1State !== 'undefined') stage1State.selectedUnivId = mockUniv.id;
+            const profile = dataManager.getProfile();
+            profile.lastSelectedUniv = mockUniv;
+            dataManager.saveProfile(profile);
+
             if (parsedNotes && (parsedNotes.analysis || parsedNotes.diagnosis || parsedNotes.improvement_guide)) {
                 if (window.loadHistoryToStage3) {
-                    window.loadHistoryToStage3(item);
+                    // Update the loader to not need to save to dataManager again
+                    window.loadHistoryToStage3(item, mockUniv);
                 } else {
-                    console.error('loadHistoryToStage3 function not found');
                     showCustomAlert('생기부 첨삭 이력 분석기를 찾을 수 없습니다.');
                 }
             } else {
                 if (window.loadHistoryToStage2) {
-                    window.loadHistoryToStage2(item);
+                    window.loadHistoryToStage2(item, mockUniv);
                 } else {
-                    console.error('loadHistoryToStage2 function not found');
                     showCustomAlert('탐구 가이드 이력 분석기를 찾을 수 없습니다.');
                 }
             }

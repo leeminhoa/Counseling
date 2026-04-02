@@ -654,30 +654,11 @@ function downloadReviewImage() {
 }
 
 // [NEW] History Loader for Stage 3 (Student Record Analysis)
-window.loadHistoryToStage3 = function (historyItem) {
-    // [FIX] Inject into local workspace so it survives tab switches
+window.loadHistoryToStage3 = function (historyItem, mockUnivContext) {
     let resultData = historyItem.recommend_notes || historyItem.activity_notes;
     if (typeof resultData === 'string') { try { resultData = JSON.parse(resultData); } catch (e) { } }
     if (Array.isArray(resultData)) resultData = resultData[0];
     if (typeof resultData === 'string') { try { resultData = JSON.parse(resultData); } catch (e) { } }
-
-    const mockUniv = {
-        id: historyItem.id,
-        univ_name: historyItem.desired_univ || '과거 상담 대학',
-        raw_major_name: historyItem.desired_major || '과거 상담 학과'
-    };
-
-    if (typeof stage1State !== 'undefined') stage1State.selectedUnivId = mockUniv.id;
-    const profile = dataManager.getProfile();
-    profile.lastSelectedUniv = mockUniv;
-    dataManager.saveProfile(profile);
-
-    dataManager.saveConsultingResult({
-        type: 'recordReview',
-        univ: mockUniv,
-        date: historyItem.created_at,
-        aiResult: resultData
-    });
 
     handleTabChange('stage3');
 
