@@ -320,7 +320,10 @@ function saveProfileData() {
     // 1. Save Locally
     dataManager.saveProfile(newProfile);
 
-    // 2. Sync to DB (Background)
+    // Immediate local UI Update for the static top bar overlay
+    updateUserStatusUI();
+
+    // 2. Sync to DB (Await for true record insertion to update Lists)
     (async () => {
         try {
             const studentId = await dbService.upsertStudent(newProfile);
@@ -331,28 +334,23 @@ function saveProfileData() {
                 // 3. Update Local Storage with Student ID
                 const updatedProfile = { ...newProfile, studentId: studentId };
                 dataManager.saveProfile(updatedProfile);
+
+                // 4. Refresh active views strictly after DB sync ensures fresh lists
+                const activeTab = document.querySelector('.nav-item.active');
+                if (activeTab) {
+                    if (activeTab.dataset.tab === 'stage1' && typeof renderStage1 === 'function') {
+                        if (stage1State && stage1State.selectedUnivId) {
+                            renderUnivDetail(stage1State.selectedUnivId);
+                        }
+                    } else if (activeTab.dataset.tab === 'manager' && typeof loadStudentList === 'function') {
+                        loadStudentList(document.getElementById('studentSearch')?.value || '');
+                    }
+                }
             }
         } catch (err) {
             console.error('❌ DB Sync Failed:', err);
-            // showCustomAlert('프로필은 로컬에 저장되었으나, 서버 동기화에 실패했습니다.'); // Optional: suppress to avoid annoying user
         }
     })();
-
-    // Immediate UI Update
-    updateUserStatusUI();
-
-    // Refresh active views
-    const activeTab = document.querySelector('.nav-item.active');
-    if (activeTab) {
-        if (activeTab.dataset.tab === 'stage1' && typeof renderStage1 === 'function') {
-            const container = document.getElementById('contentContainer');
-            if (stage1State && stage1State.selectedUnivId) {
-                renderUnivDetail(stage1State.selectedUnivId);
-            }
-        } else if (activeTab.dataset.tab === 'manager' && typeof loadStudentList === 'function') {
-            loadStudentList(document.getElementById('studentSearch')?.value || '');
-        }
-    }
 
     // Show temporary success feedback on the save button instead of blocking alert
     const saveBtn = document.querySelector('.btn-save');
