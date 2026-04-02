@@ -811,7 +811,19 @@ function downloadImage() {
     footer.style.borderRadius = '0 0 12px 12px';
     element.appendChild(footer);
 
-    footer.onload = () => {
+    footer.onload = null;
+    footer.onerror = null;
+
+    // 헤더/푸터 등 캡처 영역 내 모든 이미지 요소 로드 완료 대기
+    const images = Array.from(element.querySelectorAll('img'));
+    Promise.all(images.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+        });
+    })).then(() => {
+        // DOM Reflow 대기 후 캡처
         setTimeout(() => {
             html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
                 const link = document.createElement('a');
@@ -826,16 +838,14 @@ function downloadImage() {
                 actions.forEach(el => el.style.display = '');
                 if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
                 if (coverHeader && coverHeader.parentNode) coverHeader.parentNode.removeChild(coverHeader);
-                alert('이미지 생성 중 오류가 발생했습니다.');
+                if (typeof showCustomAlert === 'function') {
+                    showCustomAlert('이미지 생성 중 오류가 발생했습니다.');
+                } else {
+                    alert('이미지 생성 중 오류가 발생했습니다.');
+                }
             });
-        }, 100);
-    };
-
-    footer.onerror = () => {
-        if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
-        actions.forEach(el => el.style.display = '');
-        alert('푸터 이미지를 불러오지 못했습니다. 다시 시도해주세요.');
-    }
+        }, 400); // DOM 레이아웃 업데이트 반영을 위한 지연 시간
+    });
 }
 
 /**
@@ -864,7 +874,7 @@ window.loadHistoryToStage2 = function (historyItem) {
 
         // Extract data
         // Check if recommend_notes is array or string or object
-        let resultData = historyItem.activity_notes || historyItem.recommend_notes;
+        let resultData = historyItem.recommend_notes || historyItem.activity_notes;
 
         if (Array.isArray(resultData)) resultData = resultData[0];
         if (typeof resultData === 'string') {
