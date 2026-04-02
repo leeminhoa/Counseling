@@ -616,8 +616,19 @@ function downloadReviewImage() {
     footer.style.borderRadius = '0 0 12px 12px';
     element.appendChild(footer);
 
-    footer.onload = () => {
-        // Wait a brief moment to ensure UI updates before capture
+    footer.onload = null;
+    footer.onerror = null;
+
+    // 헤더/푸터 등 캡처 영역 내 모든 이미지 요소 로드 완료 대기
+    const images = Array.from(element.querySelectorAll('img'));
+    Promise.all(images.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+        });
+    })).then(() => {
+        // DOM Reflow 대기 후 캡처
         setTimeout(() => {
             html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {
                 const link = document.createElement('a');
@@ -632,14 +643,66 @@ function downloadReviewImage() {
                 actions.forEach(el => el.style.display = '');
                 if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
                 if (coverHeader && coverHeader.parentNode) coverHeader.parentNode.removeChild(coverHeader);
-                alert('이미지 생성 중 오류가 발생했습니다.');
+                if (typeof showCustomAlert === 'function') {
+                    showCustomAlert('이미지 생성 중 오류가 발생했습니다.');
+                } else {
+                    alert('이미지 생성 중 오류가 발생했습니다.');
+                }
             });
-        }, 100);
-    };
-
-    footer.onerror = () => {
-        if (footer && footer.parentNode) footer.parentNode.removeChild(footer);
-        actions.forEach(el => el.style.display = '');
-        alert('푸터 이미지를 불러오지 못했습니다. 다시 시도해주세요.');
-    }
+        }, 400); // DOM 레이아웃 업데이트 반영을 위한 지연 시간
+    });
 }
+
+// [NEW] History Loader for Stage 3 (Student Record Analysis)
+window.loadHistoryToStage3 = function (historyItem) {
+    handleTabChange('stage3');
+
+    // Slight delay to ensure DOM is ready if tab switching takes time
+    setTimeout(() => {
+        const container = document.getElementById('contentContainer');
+        if (!container) return;
+
+        // Force render Stage 3 layout
+        container.innerHTML = `
+        <div class="review-wrapper" style="opacity: 1;">
+            <div id="rrLoading" class="ai-loading-box" style="display: none;"></div>
+            <div id="rrResult" class="ai-result-grid" style="display: grid;">
+                <!-- Result injected below -->
+            </div>
+            <div id="rrInitial" class="ai-initial-view" style="display: none;"></div>
+        </div>
+        `;
+
+        const resultView = document.getElementById('rrResult');
+
+        // Extract data robustly handling double stringified structures
+        let resultData = historyItem.recommend_notes || historyItem.activity_notes;
+
+        if (typeof resultData === 'string') {
+            try { resultData = JSON.parse(resultData); } catch (e) { }
+        }
+        if (Array.isArray(resultData)) {
+            resultData = resultData[0];
+        }
+        if (typeof resultData === 'string') {
+            try { resultData = JSON.parse(resultData); } catch (e) { }
+        }
+
+        // Render
+        displayReviewResult(resultData, resultView);
+
+        // Add a banner indicating this is history
+        const banner = document.createElement('div');
+        banner.style.gridColumn = '1 / -1';
+        banner.style.background = '#ECFEFF'; // Cyan tint for Stage 3 distinguishing
+        banner.style.color = '#0E7490';
+        banner.style.padding = '1rem';
+        banner.style.borderRadius = '0.5rem';
+        banner.style.marginBottom = '1rem';
+        banner.style.textAlign = 'center';
+        banner.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> <b>과거 상담 이력 조회 모드 [생기부 첨삭]</b> (${new Date(historyItem.rec_date || historyItem.created_at).toLocaleDateString()})`;
+
+        resultView.insertBefore(banner, resultView.firstChild);
+
+    }, 100);
+};

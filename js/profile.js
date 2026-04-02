@@ -395,10 +395,26 @@ window.onHistoryClick = function (id) {
 
         // Wait for modal close transition
         setTimeout(() => {
-            if (window.loadHistoryToStage2) {
-                window.loadHistoryToStage2(item);
+            // Smart Routing based on JSON Schema
+            let parsedNotes = item.recommend_notes || item.activity_notes;
+            if (typeof parsedNotes === 'string') { try { parsedNotes = JSON.parse(parsedNotes); } catch(e){} }
+            if (Array.isArray(parsedNotes)) parsedNotes = parsedNotes[0];
+            if (typeof parsedNotes === 'string') { try { parsedNotes = JSON.parse(parsedNotes); } catch(e){} }
+
+            if (parsedNotes && (parsedNotes.analysis || parsedNotes.diagnosis || parsedNotes.improvement_guide)) {
+                if (window.loadHistoryToStage3) {
+                    window.loadHistoryToStage3(item);
+                } else {
+                    console.error('loadHistoryToStage3 function not found');
+                    showCustomAlert('생기부 첨삭 이력 분석기를 찾을 수 없습니다.');
+                }
             } else {
-                showCustomAlert('해당 기능을 실행할 수 없습니다. (Stage 2 모듈 로드 필요)');
+                if (window.loadHistoryToStage2) {
+                    window.loadHistoryToStage2(item);
+                } else {
+                    console.error('loadHistoryToStage2 function not found');
+                    showCustomAlert('탐구 가이드 이력 분석기를 찾을 수 없습니다.');
+                }
             }
         }, 300);
     });
