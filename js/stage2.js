@@ -852,6 +852,29 @@ function downloadImage() {
  * [NEW] Load History Result directly
  */
 window.loadHistoryToStage2 = function (historyItem) {
+    // [FIX] Inject into local workspace so it survives tab switches
+    let resultData = historyItem.recommend_notes || historyItem.activity_notes;
+    if (typeof resultData === 'string') { try { resultData = JSON.parse(resultData); } catch (e) { } }
+    if (Array.isArray(resultData)) resultData = resultData[0];
+    if (typeof resultData === 'string') { try { resultData = JSON.parse(resultData); } catch (e) { } }
+
+    const mockUniv = {
+        id: historyItem.id,
+        univ_name: historyItem.desired_univ || '과거 상담 대학',
+        raw_major_name: historyItem.desired_major || '과거 상담 학과'
+    };
+
+    if (typeof stage1State !== 'undefined') stage1State.selectedUnivId = mockUniv.id;
+    const profile = dataManager.getProfile();
+    profile.lastSelectedUniv = mockUniv;
+    dataManager.saveProfileData(profile);
+
+    dataManager.saveConsultingResult({
+        univ: mockUniv,
+        date: historyItem.created_at,
+        aiResult: resultData
+    });
+
     handleTabChange('stage2');
 
     // Slight delay to ensure DOM is ready if tab switching takes time
@@ -888,6 +911,14 @@ window.loadHistoryToStage2 = function (historyItem) {
         // 3. If the inner element was ALSO stringified, parse it again
         if (typeof resultData === 'string') {
             try { resultData = JSON.parse(resultData); } catch (e) { }
+        }
+
+        console.log('--- DEBUG: loadHistoryToStage2 ---');
+        console.log('Original recommend_notes:', historyItem.recommend_notes);
+        console.log('Parsed resultData:', resultData);
+        console.log('Is resultData an object?:', typeof resultData);
+        if (resultData) {
+            console.log('Keys in resultData:', Object.keys(resultData));
         }
 
         // Render
