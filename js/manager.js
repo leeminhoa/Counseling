@@ -96,7 +96,14 @@ async function loadStudentList(query = '') {
                                 ${statusBadge}
                             </div>
                         </div>
-                        <span style="font-size: 0.8rem; color: #94A3B8;">${date} 등록</span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                            <button onclick="event.stopPropagation(); deleteStudentAction('${student.id}', '${student.student_name}')" 
+                                style="background:none; border:none; color:#EF4444; font-size:1.15rem; cursor:pointer; padding:2px; opacity:0.5; transition:opacity 0.2s;"
+                                onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" title="더미 학생 삭제">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            <span style="font-size: 0.8rem; color: #94A3B8;">${date} 등록</span>
+                        </div>
                     </div>
                     
                     <h3 style="font-size: 1.1rem; font-weight: 700; color: #1E293B; margin-bottom: 0.3rem;">
@@ -185,5 +192,33 @@ async function selectStudent(id, name, schoolName, grade, memo = '', consultingS
     } catch (error) {
         console.error('Context Switch Failed:', error);
         showCustomAlert('학생 데이터를 불러오는 데 실패했습니다.');
+    }
+}
+
+async function deleteStudentAction(studentId, studentName) {
+    if (typeof showCustomConfirm === 'function') {
+        showCustomConfirm(`정말 <b>${studentName}</b> 학생의 모든 데이터를 삭제하시겠습니까?<br><span style='color:#EF4444; font-size:0.85rem;'>이 작업은 과거 상담 이력까지 모두 삭제하며 복구할 수 없습니다.</span>`, async () => {
+            const success = await dbService.deleteStudent(studentId);
+            if (success) {
+                showCustomAlert(`${studentName} 학생이 목록에서 삭제되었습니다.`);
+                // If the deleted student was the one currently loaded in memory, clear context
+                const activeProfile = dataManager.getProfile();
+                if (activeProfile && activeProfile.studentId === studentId) {
+                    if (typeof dataManager !== 'undefined' && typeof dataManager.resetData === 'function') {
+                        dataManager.resetData();
+                        if (typeof updateUserStatusUI === 'function') updateUserStatusUI();
+                    }
+                }
+                loadStudentList(document.getElementById('studentSearch')?.value || '');
+            } else {
+                showCustomAlert('학생 삭제에 실패했습니다. 관리자에게 문의하세요.');
+            }
+        });
+    } else {
+        if (confirm(`정말 ${studentName} 학생을 삭제하시겠습니까?`)) {
+            const success = await dbService.deleteStudent(studentId);
+            if (success) loadStudentList();
+            else alert('학생 삭제 실패');
+        }
     }
 }

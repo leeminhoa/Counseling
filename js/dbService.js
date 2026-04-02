@@ -454,6 +454,7 @@ class DBService {
                     memo,
                     consulting_status
                 `)
+                .is('deleted_at', null)
                 .order('created_at', { ascending: false });
 
             if (query) {
@@ -492,6 +493,33 @@ class DBService {
         } catch (error) {
             console.error('Error fetching students:', error);
             return [];
+        }
+    }
+
+    /**
+     * 특정 학생을 삭제합니다. (관련된 히스토리도 cascade 설정에 따라 삭제됨)
+     * @param {string} studentId 
+     * @returns {boolean} 성공 여부
+     */
+    async deleteStudent(studentId) {
+        if (!studentId) return false;
+        
+        try {
+            const { error } = await this.client
+                .from('students')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', studentId);
+
+            if (error) {
+                console.error('❌ Failed to soft-delete student:', error);
+                return false;
+            }
+            
+            console.log(`✅ Student ${studentId} deleted successfully.`);
+            return true;
+        } catch (err) {
+            console.error('Unexpected error on deleteStudent:', err);
+            return false;
         }
     }
 
