@@ -443,8 +443,8 @@ function renderNewReportLayout(data, container) {
 
                 <!-- Representative Outputs (Full Width) -->
                 <div class="report-section">
-                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1E293B; margin-bottom: 1rem; display: flex; align-items: center;">
-                        <i class="fa-solid fa-star" style="color: #F59E0B; margin-right: 0.5rem;"></i> 대표 산출물 (Signature Outputs)
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1E293B; margin-bottom: 1rem; display: flex; align-items: center; letter-spacing: 0px;">
+                        <i class="fa-solid fa-star" style="color: #F59E0B; margin-right: 0.5rem;"></i> 대표 산출물 <span style="font-weight: 500; font-size: 1.1rem; color: #64748B; margin-left: 0.4rem; letter-spacing: normal;">(Signature Outputs)</span>
                     </h3>
 
                     <!-- [NEW] Top Summary Grid (Image 1 style) -->
