@@ -689,7 +689,7 @@ function renderNewReportLayout(data, container) {
                 
                 <!-- Trigger Bank -->
                 <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E2E8F0;">
-                    <h4 style="font-weight: 700; color: #1E293B; margin-bottom: 1rem;">🔥 Motivation Trigger Bank (2025)</h4>
+                    <h4 style="font-weight: 700; color: #1E293B; margin-bottom: 1rem;">🔥 Motivation Trigger Bank</h4>
                     
                     <!-- Books -->
                     <div style="margin-bottom: 1.5rem;">
